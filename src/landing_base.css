@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
+
+:root {
+  --bg-dark: #120C08;
+  --bg-gradient-start: #19100A;
+  --bg-gradient-end: #090604;
+  --gold-primary: #D4AF37;
+  --gold-light: #FBE6C2;
+  --gold-mid: #E2C285;
+  --gold-dark: #9B7536;
+  --gold-glow: rgba(212, 175, 55, 0.25);
+  --text-primary: #EEDCB9;
+  --text-muted: #BC9F7A;
+  --font-serif: 'Cinzel', 'Times New Roman', serif;
+  --font-serif-decorative: 'Cinzel Decorative', 'Cinzel', serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Landing Mode: 100vh strict container, no scroll */
+.app-container.landing-mode {
+  height: 100vh;
+  max-height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(circle at 50% 45%, #2a1b10 0%, #150d08 45%, #0a0604 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Background Ambient Glow & Vignette */
+.bg-lighting {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 65vw;
+  height: 65vh;
+  max-width: 800px;
+  max-height: 800px;
+  background: radial-gradient(ellipse at center, rgba(212, 171, 99, 0.2) 0%, rgba(184, 138, 62, 0.08) 45%, rgba(0, 0, 0, 0) 75%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+.bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 40%, rgba(5, 3, 2, 0.8) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Main Hero Centered Flex Column */
+.landing-hero-center {
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  z-index: 2;
+  position: relative;
+}
+
+/* Title + Statue Wrapper */
+.hero-title-statue-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  height: clamp(260px, 38vh, 380px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+/* Title Layer behind deity */
+.hero-title-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(120px, 16vw, 280px);
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-word {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.2rem, 4.8vw, 4.8rem);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #FBE6C2 0%, #E6C687 35%, #B88E4C 70%, #6E4D1D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hero-word.left {
+  text-align: right;
+  flex: 1;
+}
+
+.hero-word.right {
+  text-align: left;
+  flex: 1;
+}
+
+/* Statue Container Focal Point */
+.statue-container {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  width: clamp(240px, 30vw, 420px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.shiva-img {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  height: 100% !important;
+  width: auto !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 15px 35px rgba(0,0,0,0.9)) drop-shadow(0 0 15px rgba(212, 175, 55, 0.15));
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease;
+}
+
+.shiva-img.active {
+  opacity: 1 !important;
+}
+
+/* Compact Description: 18-20px font size, max 650px width */
+.hero-description-compact {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(17px, 1.2vw, 20px);
+  line-height: 1.6;
+  color: rgba(238, 220, 185, 0.88);
+  max-width: 650px;
+  text-align: center;
+  margin: 0 auto;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+}
+
+/* Explore Button: 32px spacing below description */
+.btn-explore {
+  margin-top: 32px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(155, 117, 54, 0.25) 100%);
+  border: 1.5px solid #D4AF37;
+  color: #FBE6C2;
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 0.85rem 2.8rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.5), inset 0 0 15px rgba(212, 175, 55, 0.15);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.btn-explore:hover {
+  background: linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%);
+  color: #120C08;
+  box-shadow: 0 12px 35px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px) scale(1.03);
+}
+
+/* Audio & Diya Toggles */
+.audio-toggle-container {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  z-index: 10;
+}
+
+.audio-btn, .diya-btn {
+  background: rgba(18, 12, 8, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--text-muted);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.audio-btn:hover, .diya-btn:hover, .audio-btn.active, .diya-btn.active {
+  border-color: #D4AF37;
+  color: #FBE6C2;
+  background: rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
