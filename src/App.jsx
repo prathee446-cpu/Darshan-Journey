@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import HomePage from './components/HomePage';
 import ExploreTemplesPage from './components/ExploreTemplesPage';
-import ProductsPage from './components/ProductsPage';
+import ServicesPage from './components/ServicesPage';
 import BlogDetailsPage from './components/BlogDetailsPage';
 import LoginPage from './components/LoginPage';
 
@@ -31,7 +31,7 @@ export default function App() {
         onGoToHome={() => navigateTo('/home')}
         onGoToLanding={() => navigateTo('/')}
         onExploreTemples={() => navigateTo('/explore')}
-        onGoToProducts={() => navigateTo('/products')}
+        onGoToServices={() => navigateTo('/services')}
         onGoToLogin={() => navigateTo('/login')}
       />
     );
@@ -46,17 +46,17 @@ export default function App() {
         onGoToHome={() => navigateTo('/home')}
         onGoToLanding={() => navigateTo('/')}
         onExploreTemples={() => navigateTo('/explore')}
-        onGoToProducts={() => navigateTo('/products')}
+        onGoToServices={() => navigateTo('/services')}
         onGoToLogin={() => navigateTo('/login')}
         onNavigateToBlog={(newSlug) => navigateTo(`/blogs/${newSlug}`)}
       />
     );
   }
 
-  // Route: /products -> Displays Vendor Services & Offerings Products Page
-  if (currentPath === '/products') {
+  // Route: /services -> Displays Vendor Services & Offerings Page
+  if (currentPath === '/services') {
     return (
-      <ProductsPage 
+      <ServicesPage 
         onGoToHome={() => navigateTo('/home')}
         onGoToLanding={() => navigateTo('/')}
         onExploreTemples={() => navigateTo('/explore')}
@@ -71,7 +71,7 @@ export default function App() {
       <ExploreTemplesPage 
         onGoToHome={() => navigateTo('/home')}
         onGoToLanding={() => navigateTo('/')}
-        onGoToProducts={() => navigateTo('/products')}
+        onGoToServices={() => navigateTo('/services')}
         onGoToLogin={() => navigateTo('/login')}
       />
     );
@@ -83,7 +83,7 @@ export default function App() {
       <HomePage 
         onGoToLanding={() => navigateTo('/')}
         onExploreTemples={() => navigateTo('/explore')}
-        onGoToProducts={() => navigateTo('/products')}
+        onGoToServices={() => navigateTo('/services')}
         onGoToLogin={() => navigateTo('/login')}
         onGoToBlog={(slug) => navigateTo(`/blogs/${slug}`)}
       />

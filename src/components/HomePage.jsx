@@ -22,7 +22,7 @@ import TempleCalendar from './TempleCalendar';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProducts, onGoToBlog }) {
+export default function HomePage({ onGoToLanding, onExploreTemples, onGoToServices, onGoToBlog }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState('home');
   const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -73,7 +73,7 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
         onGoToHome={() => handleNavClick('home', 'hero')}
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
-        onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onOpenBooking={() => setIsBookingOpen(true)}
         onOpenDonate={() => setIsDonateOpen(true)}
       />
@@ -255,7 +255,7 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
       <Footer 
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}
-        onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onOpenBooking={() => setIsBookingOpen(true)}
       />
 

@@ -7,7 +7,7 @@ export default function LoginPage({
   onGoToHome, 
   onGoToLanding, 
   onExploreTemples, 
-  onGoToProducts, 
+  onGoToServices, 
   onGoToLogin 
 }) {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -21,7 +21,7 @@ export default function LoginPage({
         onGoToHome={onGoToHome}
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
-        onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToLogin={onGoToLogin}
         onOpenBooking={() => setIsBookingOpen(true)}
         onOpenDonate={() => setIsDonateOpen(true)}
@@ -100,7 +100,7 @@ export default function LoginPage({
       <Footer 
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
-        onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onOpenBooking={() => setIsBookingOpen(true)}
       />
 

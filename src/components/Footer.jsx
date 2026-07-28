@@ -1,7 +1,7 @@
 import React from 'react';
 import logoImg from '../assets/exact_darshan_logo.png';
 
-export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, onOpenBooking }) {
+export default function Footer({ onGoToHome, onExploreTemples, onGoToServices, onOpenBooking }) {
   const handleLinkClick = (e, action, sectionId) => {
     e.preventDefault();
     if (action) {
@@ -51,11 +51,11 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
               </li>
               <li>
                 <a 
-                  href="/products" 
+                  href="/services" 
                   className="footer-link" 
-                  onClick={(e) => handleLinkClick(e, onGoToProducts, null)}
+                  onClick={(e) => handleLinkClick(e, onGoToServices, null)}
                 >
-                  Vendor Products
+                  Vendor Services
                 </a>
               </li>
               <li>

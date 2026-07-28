@@ -7,7 +7,7 @@ export default function Navbar({
   onGoToHome, 
   onGoToLanding, 
   onExploreTemples, 
-  onGoToProducts, 
+  onGoToServices, 
   onGoToLogin,
   onOpenBooking, 
   onOpenDonate 
@@ -43,8 +43,8 @@ export default function Navbar({
       return;
     }
 
-    if (page === 'products' && onGoToProducts) {
-      onGoToProducts();
+    if (page === 'services' && onGoToServices) {
+      onGoToServices();
       return;
     }
 
@@ -107,11 +107,11 @@ export default function Navbar({
             </li>
             <li>
               <a 
-                href="/products" 
-                className={`nav-link ${activePage === 'products' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'products', null, onGoToProducts)}
+                href="/services" 
+                className={`nav-link ${activePage === 'services' ? 'active' : ''}`}
+                onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices)}
               >
-                Products
+                Services
               </a>
             </li>
             <li>
