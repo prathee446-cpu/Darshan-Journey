@@ -16,13 +16,15 @@ import {
   Flower2, 
   CheckCircle2 
 } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
 import heroBg from '../assets/temple_hero_bg.png';
 import TempleCalendar from './TempleCalendar';
 import Navbar from './Navbar';
+import ContactSection from './ContactSection';
 import Footer from './Footer';
 
-export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProducts, onGoToBlog }) {
+export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProducts, onGoToLogin, onGoToBlog }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState('home');
   const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -74,9 +76,11 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToLogin={onGoToLogin}
         onOpenBooking={() => setIsBookingOpen(true)}
         onOpenDonate={() => setIsDonateOpen(true)}
       />
+
 
       {/* ---------------- HERO SECTION ---------------- */}
       <section id="hero" className="hero-section">
@@ -251,7 +255,10 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
         </div>
       </section>
 
-      {/* ---------------- 5. FOOTER ---------------- */}
+      {/* ---------------- 5. CONTACT US SECTION ---------------- */}
+      <ContactSection />
+
+      {/* ---------------- 6. FOOTER ---------------- */}
       <Footer 
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}

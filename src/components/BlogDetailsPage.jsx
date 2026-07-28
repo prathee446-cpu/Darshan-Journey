@@ -12,7 +12,8 @@ import {
   X,
   FileQuestion
 } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
 import { getBlogBySlug, getRelatedBlogs } from '../data/blogsData';
 import Navbar from './Navbar';
 import Footer from './Footer';
