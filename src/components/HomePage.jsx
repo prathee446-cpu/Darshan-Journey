@@ -22,7 +22,14 @@ import TempleCalendar from './TempleCalendar';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProducts, onGoToBlog }) {
+export default function HomePage({ 
+  onGoToLanding, 
+  onExploreTemples, 
+  onGoToProducts, 
+  onGoToBlog,
+  onGoToAbout,
+  onOpenBooking 
+}) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState('home');
   const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -74,9 +81,11 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
       />
+
 
       {/* ---------------- HERO SECTION ---------------- */}
       <section id="hero" className="hero-section">
@@ -256,7 +265,8 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
 
       {/* ---------------- DONATE MODAL ---------------- */}

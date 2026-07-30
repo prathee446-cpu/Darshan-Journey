@@ -8,7 +8,9 @@ export default function LoginPage({
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
-  onGoToLogin 
+  onGoToLogin,
+  onGoToAbout,
+  onOpenBooking
 }) {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -23,7 +25,8 @@ export default function LoginPage({
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
         onGoToLogin={onGoToLogin}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
       />
 
@@ -101,7 +104,8 @@ export default function LoginPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
 
       {/* DONATE MODAL */}

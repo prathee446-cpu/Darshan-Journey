@@ -2875,3 +2875,1831 @@ html, body {
   border-top: 2px dashed rgba(200, 169, 106, 0.25);
 }
 
+/* ========================================================================= */
+/* ------------------------ ABOUT US PAGE STYLES -------------------------- */
+/* ========================================================================= */
+
+/* About Hero Section */
+.home-website-wrapper .about-hero {
+  position: relative;
+  width: 100%;
+  min-height: 82vh;
+  display: flex;
+  align-items: center;
+  /* Deep warm sunrise spiritual background */
+  background: radial-gradient(circle at 65% 35%, rgba(42, 27, 16, 0.95) 0%, rgba(21, 13, 8, 1) 50%, rgba(10, 6, 4, 1) 100%);
+  color: #F7EFE6;
+  overflow: hidden;
+  padding: 120px 0 80px 0;
+  border-bottom: 2px solid rgba(200, 169, 106, 0.15);
+}
+
+.home-website-wrapper .about-hero-grid {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  z-index: 5;
+}
+
+/* Left side: Premium Temple Sculpture with Diagonal Slanting Mask */
+.home-website-wrapper .about-hero-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  /* Slanting polygon cut towards the right */
+  clip-path: polygon(0 0, 100% 0, 80% 100%, 0 100%);
+  pointer-events: none;
+  border-right: 1px solid rgba(200, 169, 106, 0.2);
+}
+
+.home-website-wrapper .about-hero-img-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.home-website-wrapper .about-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  opacity: 0.82;
+}
+
+/* Edge blending overlays & golden sunrise glow */
+.home-website-wrapper .about-hero-left::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    /* Right fade out to blend with background */
+    linear-gradient(to right, transparent 55%, rgba(10, 6, 4, 0.95) 98%),
+    /* Top and bottom fade out */
+    linear-gradient(to bottom, rgba(10, 6, 4, 0.9) 0%, transparent 15%, transparent 85%, rgba(10, 6, 4, 0.95) 100%),
+    /* Soft golden tint */
+    radial-gradient(circle at center, rgba(212, 175, 55, 0.22) 0%, rgba(21, 13, 8, 0.15) 100%);
+  pointer-events: none;
+}
+
+/* Blur overlay only on outer edges of the sculpture wrapper */
+.home-website-wrapper .about-hero-blur-overlay {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(8px);
+  mask-image: linear-gradient(to right, transparent 65%, black 100%),
+              linear-gradient(to bottom, black 0%, transparent 12%, transparent 88%, black 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 65%, black 100%),
+                      linear-gradient(to bottom, black 0%, transparent 12%, transparent 88%, black 100%);
+  pointer-events: none;
+}
+
+/* Right side: Hero content */
+.home-website-wrapper .about-hero-right {
+  grid-column: 2;
+  padding-left: 5rem;
+  padding-right: 1.5rem;
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-website-wrapper .about-hero-tag {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #C8A96A;
+  letter-spacing: 0.2em;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+
+.home-website-wrapper .about-hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.5rem, 4.2vw, 3.8rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.15;
+  margin-bottom: 0.5rem;
+}
+
+.home-website-wrapper .about-hero-subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+  color: #C8A96A;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.home-website-wrapper .about-hero-desc {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: rgba(238, 220, 185, 0.85);
+  max-width: 680px;
+}
+
+/* Floating particles background for hero */
+.home-website-wrapper .about-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Two-column Content Section (Our Story) */
+.home-website-wrapper .about-story-grid {
+  display: grid;
+  grid-template-columns: 48% 52%;
+  gap: 4rem;
+  align-items: center;
+}
+
+.home-website-wrapper .about-story-img-box {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(52, 31, 29, 0.15);
+  border: 2px solid rgba(200, 169, 106, 0.25);
+  height: 480px;
+}
+
+.home-website-wrapper .about-story-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-website-wrapper .about-story-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(52, 31, 29, 0.1) 0%, rgba(52, 31, 29, 0.4) 100%);
+}
+
+.home-website-wrapper .about-story-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-website-wrapper .about-story-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.8rem, 2.8vw, 2.5rem);
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 1.5rem;
+  line-height: 1.25;
+}
+
+.home-website-wrapper .about-story-p {
+  font-size: 1.05rem;
+  line-height: 1.68;
+  color: #6E5351;
+  margin-bottom: 1.2rem;
+}
+
+.home-website-wrapper .about-story-p:last-child {
+  margin-bottom: 0;
+}
+
+.home-website-wrapper .about-story-p strong {
+  color: #341F1D;
+  font-weight: 600;
+}
+
+/* Mission & Vision Glass Cards */
+.home-website-wrapper .mission-vision-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 1rem;
+}
+
+.home-website-wrapper .about-glass-card {
+  background: rgba(255, 253, 249, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(200, 169, 106, 0.25);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 12px 40px rgba(52, 31, 29, 0.05), inset 0 0 15px rgba(255, 255, 255, 0.5);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-website-wrapper .about-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #D4AF37, #E2C285, #9B7536);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.home-website-wrapper .about-glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 45px rgba(200, 169, 106, 0.15);
+  border-color: rgba(200, 169, 106, 0.4);
+}
+
+.home-website-wrapper .about-glass-card:hover::before {
+  opacity: 1;
+}
+
+.home-website-wrapper .about-card-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(200, 169, 106, 0.15) 0%, rgba(155, 117, 54, 0.05) 100%);
+  border: 1px solid rgba(200, 169, 106, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9B7536;
+  margin-bottom: 1.8rem;
+  box-shadow: 0 6px 15px rgba(52, 31, 29, 0.02);
+}
+
+.home-website-wrapper .about-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 1rem;
+}
+
+.home-website-wrapper .about-card-desc {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #6E5351;
+}
+
+/* Six Modern Feature Cards */
+.home-website-wrapper .features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.home-website-wrapper .feature-card {
+  background: #FFFDF9;
+  border: 1px solid rgba(200, 169, 106, 0.2);
+  border-radius: 20px;
+  padding: 2.2rem 2rem;
+  box-shadow: 0 8px 30px rgba(52, 31, 29, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-website-wrapper .feature-card:hover {
+  transform: translateY(-5px);
+  border-color: #C8A96A;
+  box-shadow: 0 15px 35px rgba(200, 169, 106, 0.12);
+}
+
+.home-website-wrapper .feature-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(200, 169, 106, 0.1);
+  border: 1px solid rgba(200, 169, 106, 0.2);
+  color: #C8A96A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.4rem;
+  transition: all 0.3s ease;
+}
+
+.home-website-wrapper .feature-card:hover .feature-card-icon {
+  background: #C8A96A;
+  color: #341F1D;
+  border-color: #C8A96A;
+}
+
+.home-website-wrapper .feature-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.02em;
+}
+
+.home-website-wrapper .feature-card-desc {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #6E5351;
+}
+
+/* Core Values Section */
+.home-website-wrapper .values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.home-website-wrapper .value-card {
+  background: #FFFDF9;
+  border: 1.5px solid rgba(200, 169, 106, 0.15);
+  border-radius: 20px;
+  padding: 2.5rem 1.8rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(52, 31, 29, 0.02);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-website-wrapper .value-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: #C8A96A;
+  transition: width 0.3s ease;
+}
+
+.home-website-wrapper .value-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(200, 169, 106, 0.35);
+  box-shadow: 0 15px 35px rgba(74, 44, 42, 0.08);
+}
+
+.home-website-wrapper .value-card:hover::after {
+  width: 100%;
+}
+
+.home-website-wrapper .value-emoji {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(200, 169, 106, 0.2));
+  transition: transform 0.3s ease;
+}
+
+.home-website-wrapper .value-card:hover .value-emoji {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.home-website-wrapper .value-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.6rem;
+}
+
+.home-website-wrapper .value-card-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #6E5351;
+}
+
+/* Our Commitment Section (Full Width Premium Banner) */
+.home-website-wrapper .commitment-section {
+  position: relative;
+  background: linear-gradient(135deg, #341F1D 0%, #4A2C2A 100%);
+  color: #F7EFE6;
+  border-top: 1.5px solid rgba(200, 169, 106, 0.3);
+  border-bottom: 1.5px solid rgba(200, 169, 106, 0.3);
+  overflow: hidden;
+}
+
+.home-website-wrapper .commitment-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(200, 169, 106, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.home-website-wrapper .commitment-content {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.home-website-wrapper .commitment-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1.2rem;
+  color: #C8A96A;
+}
+
+.home-website-wrapper .commitment-heading {
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 1.2rem;
+}
+
+.home-website-wrapper .commitment-text {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: rgba(247, 239, 230, 0.88);
+  margin-bottom: 0;
+}
+
+/* Future Vision Section */
+.home-website-wrapper .about-future-section {
+  background: linear-gradient(180deg, #F7EFE6 0%, #FCF9F5 100%);
+}
+
+.home-website-wrapper .about-future-box {
+  background: #FFFDF9;
+  border: 1px solid rgba(200, 169, 106, 0.25);
+  border-radius: 28px;
+  padding: 4rem 3.5rem;
+  box-shadow: 0 12px 40px rgba(52, 31, 29, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-website-wrapper .about-future-content {
+  max-width: 750px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 5;
+}
+
+.home-website-wrapper .about-future-title {
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 1.5rem;
+}
+
+.home-website-wrapper .about-future-text {
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: #6E5351;
+}
+
+.home-website-wrapper .about-future-decor {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  font-size: 8rem;
+  color: rgba(200, 169, 106, 0.05);
+  font-family: 'Cinzel', serif;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* CTA Section Banner */
+.home-website-wrapper .about-cta-section {
+  padding-bottom: 7rem;
+}
+
+.home-website-wrapper .about-cta-banner {
+  background: linear-gradient(135deg, rgba(52, 31, 29, 0.98) 0%, rgba(74, 44, 42, 0.98) 100%), 
+              url('./assets/temple_hero_bg.png') center/cover no-repeat;
+  border: 2px solid #C8A96A;
+  border-radius: 32px;
+  padding: 5rem 3rem;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(52, 31, 29, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-website-wrapper .about-cta-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(200, 169, 106, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.home-website-wrapper .about-cta-heading {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 3.2vw, 2.8rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.home-website-wrapper .about-cta-text {
+  font-size: 1.1rem;
+  color: rgba(238, 220, 185, 0.88);
+  max-width: 650px;
+  margin: 0 auto 2.2rem auto;
+  line-height: 1.6;
+}
+
+.home-website-wrapper .about-cta-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* Temple SVGs and decorative accents */
+.home-website-wrapper .temple-accent {
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #C8A96A, transparent);
+  margin: 1rem auto 1.5rem auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .home-website-wrapper .about-story-grid {
+    gap: 2.5rem;
+  }
+  .home-website-wrapper .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .home-website-wrapper .values-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .home-website-wrapper .about-hero {
+    min-height: auto;
+    padding: 140px 1rem 60px 1rem;
+  }
+  .home-website-wrapper .about-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .home-website-wrapper .about-hero-left {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    margin-bottom: 1.5rem;
+    grid-column: 1;
+    border-right: none;
+    border-bottom: 1px solid rgba(200, 169, 106, 0.2);
+  }
+  .home-website-wrapper .about-hero-right {
+    grid-column: 1;
+    padding-left: 0;
+    text-align: center;
+  }
+  .home-website-wrapper .about-hero-desc {
+    margin: 0 auto;
+  }
+  .home-website-wrapper .about-story-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .home-website-wrapper .about-story-img-box {
+    height: 320px;
+    order: -1;
+  }
+  .home-website-wrapper .mission-vision-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .home-website-wrapper .features-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .values-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .about-future-box {
+    padding: 2.5rem 1.8rem;
+  }
+  .home-website-wrapper .about-cta-banner {
+    padding: 3.5rem 1.5rem;
+  }
+}
+
+
+/* ========================================================================= */
+/* -------------------- QUICK BOOKING PAGE STYLES ------------------------- */
+/* ========================================================================= */
+
+/* Booking Hero */
+.home-website-wrapper .booking-hero {
+  position: relative;
+  width: 100%;
+  min-height: 72vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(160deg, #19100A 0%, #2a1810 40%, #100a06 100%);
+  color: #F7EFE6;
+  overflow: hidden;
+  padding: 120px 1rem 80px 1rem;
+}
+
+.home-website-wrapper .booking-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(200,169,106,0.18) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.home-website-wrapper .booking-hero-silhouette {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 180px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 180' fill='rgba(200,169,106,0.07)'%3E%3Cpath d='M0,180 L0,80 Q30,60 60,80 L60,40 Q80,20 100,40 L100,10 Q120,-5 140,10 L140,40 Q160,20 180,40 L180,80 Q210,60 240,80 L240,180Z M300,180 L300,90 Q330,70 360,90 L360,50 Q380,30 400,50 L400,20 Q420,5 440,20 L440,50 Q460,30 480,50 L480,90 Q510,70 540,90 L540,180Z M600,180 L600,85 Q630,65 660,85 L660,45 Q685,25 710,45 L710,15 Q730,0 750,15 L750,45 Q775,25 800,45 L800,85 Q830,65 860,85 L860,180Z M920,180 L920,90 Q950,70 980,90 L980,55 Q1000,35 1020,55 L1020,25 Q1040,10 1060,25 L1060,55 Q1085,35 1110,55 L1110,90 Q1140,70 1170,90 L1170,180Z M1230,180 L1230,80 Q1260,60 1290,80 L1290,45 Q1310,25 1330,45 L1330,15 Q1350,0 1370,15 L1370,45 Q1390,25 1410,45 L1410,80 Q1430,60 1440,80 L1440,180Z'/%3E%3C/svg%3E") bottom/cover no-repeat;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.home-website-wrapper .booking-hero-content {
+  position: relative;
+  z-index: 5;
+  max-width: 780px;
+}
+
+.home-website-wrapper .booking-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(200,169,106,0.12);
+  border: 1px solid rgba(200,169,106,0.35);
+  color: #C8A96A;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.45rem 1.2rem;
+  border-radius: 99px;
+  margin-bottom: 1.2rem;
+}
+
+.home-website-wrapper .booking-hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.15;
+  margin-bottom: 0.8rem;
+}
+
+.home-website-wrapper .booking-hero-subtitle {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.1rem;
+  color: rgba(238,220,185,0.82);
+  line-height: 1.65;
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
+}
+
+.home-website-wrapper .booking-trust-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.8rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.home-website-wrapper .trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(238,220,185,0.9);
+}
+
+.home-website-wrapper .trust-badge-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(200,169,106,0.2);
+  border: 1.5px solid #C8A96A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C8A96A;
+  font-size: 0.7rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+/* Step Progress Indicator */
+.home-website-wrapper .booking-steps-wrapper {
+  background: #FFFDF9;
+  border-bottom: 1px solid rgba(200,169,106,0.15);
+  padding: 2rem 0;
+  position: sticky;
+  top: 90px;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(52,31,29,0.05);
+}
+
+.home-website-wrapper .booking-steps-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0 1rem;
+}
+
+.home-website-wrapper .booking-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.home-website-wrapper .booking-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.home-website-wrapper .booking-step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(200,169,106,0.3);
+  background: #FFFDF9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #9E7D3F;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.home-website-wrapper .booking-step-item.active .booking-step-circle {
+  background: linear-gradient(135deg, #D4AF37, #C8A96A);
+  border-color: #D4AF37;
+  color: #341F1D;
+  box-shadow: 0 0 0 4px rgba(212,175,55,0.2);
+}
+
+.home-website-wrapper .booking-step-item.done .booking-step-circle {
+  background: #4A2C2A;
+  border-color: #4A2C2A;
+  color: #C8A96A;
+}
+
+.home-website-wrapper .booking-step-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9E7D3F;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.home-website-wrapper .booking-step-item.active .booking-step-label {
+  color: #341F1D;
+  font-weight: 700;
+}
+
+.home-website-wrapper .booking-step-item.done .booking-step-label {
+  color: #4A2C2A;
+}
+
+.home-website-wrapper .booking-step-line {
+  width: clamp(40px, 6vw, 80px);
+  height: 2px;
+  background: rgba(200,169,106,0.2);
+  margin: 0 4px;
+  margin-bottom: 1.4rem;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.home-website-wrapper .booking-step-line.done {
+  background: #C8A96A;
+}
+
+/* Booking Layout */
+.home-website-wrapper .booking-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Booking Form Card */
+.home-website-wrapper .booking-form-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(200,169,106,0.2);
+  border-radius: 24px;
+  padding: 3rem;
+  box-shadow: 0 12px 40px rgba(52,31,29,0.06);
+}
+
+.home-website-wrapper .booking-form-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.home-website-wrapper .booking-form-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(200,169,106,0.4), transparent);
+}
+
+.home-website-wrapper .booking-form-section-desc {
+  font-size: 0.88rem;
+  color: #9E7D3F;
+  margin-bottom: 2rem;
+}
+
+.home-website-wrapper .booking-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  margin-bottom: 1.4rem;
+}
+
+.home-website-wrapper .booking-field-full {
+  grid-column: 1 / -1;
+}
+
+.home-website-wrapper .booking-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.home-website-wrapper .booking-field-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #341F1D;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.home-website-wrapper .booking-field-required {
+  color: #C8A96A;
+  font-size: 0.9rem;
+}
+
+.home-website-wrapper .booking-input,
+.home-website-wrapper .booking-select,
+.home-website-wrapper .booking-textarea {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border: 1.5px solid rgba(200,169,106,0.3);
+  border-radius: 12px;
+  background: #FFFDF9;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: #341F1D;
+  outline: none;
+  transition: all 0.25s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.home-website-wrapper .booking-input:focus,
+.home-website-wrapper .booking-select:focus,
+.home-website-wrapper .booking-textarea:focus {
+  border-color: #C8A96A;
+  box-shadow: 0 0 0 3px rgba(200,169,106,0.15);
+  background: #FFFFFF;
+}
+
+.home-website-wrapper .booking-input.error,
+.home-website-wrapper .booking-select.error {
+  border-color: #e05252;
+  box-shadow: 0 0 0 3px rgba(224,82,82,0.1);
+}
+
+.home-website-wrapper .booking-field-error {
+  font-size: 0.78rem;
+  color: #e05252;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.home-website-wrapper .booking-select-wrapper {
+  position: relative;
+}
+
+.home-website-wrapper .booking-select-wrapper::after {
+  content: '▾';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9E7D3F;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.home-website-wrapper .booking-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* Devotee Count Grid */
+.home-website-wrapper .devotee-count-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.home-website-wrapper .devotee-count-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.home-website-wrapper .devotee-count-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6E5351;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.home-website-wrapper .devotee-count-controls {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid rgba(200,169,106,0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FFFDF9;
+}
+
+.home-website-wrapper .devotee-count-btn {
+  background: none;
+  border: none;
+  padding: 0.6rem 0.9rem;
+  color: #9E7D3F;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.home-website-wrapper .devotee-count-btn:hover {
+  background: #C8A96A;
+  color: #341F1D;
+}
+
+.home-website-wrapper .devotee-count-val {
+  flex: 1;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: #341F1D;
+  font-size: 1rem;
+}
+
+/* Special Requirements Checkboxes */
+.home-website-wrapper .booking-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.home-website-wrapper .booking-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #341F1D;
+  font-weight: 500;
+}
+
+.home-website-wrapper .booking-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #C8A96A;
+  cursor: pointer;
+}
+
+/* Form Divider */
+.home-website-wrapper .booking-form-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,169,106,0.3), transparent);
+  margin: 2rem 0;
+}
+
+/* Form Action Buttons */
+.home-website-wrapper .booking-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.home-website-wrapper .btn-booking-primary {
+  flex: 1;
+  background: linear-gradient(135deg, #C8A96A 0%, #D4AF37 100%);
+  color: #341F1D;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 25px rgba(200,169,106,0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+}
+
+.home-website-wrapper .btn-booking-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 35px rgba(200,169,106,0.5);
+}
+
+.home-website-wrapper .btn-booking-secondary {
+  background: transparent;
+  color: #9E7D3F;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 1rem 1.8rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(200,169,106,0.4);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.home-website-wrapper .btn-booking-secondary:hover {
+  background: rgba(200,169,106,0.08);
+  border-color: #C8A96A;
+  color: #341F1D;
+}
+
+/* Sticky Booking Summary Sidebar */
+.home-website-wrapper .booking-sidebar {
+  position: sticky;
+  top: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.home-website-wrapper .booking-summary-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(200,169,106,0.2);
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: 0 8px 30px rgba(52,31,29,0.06);
+}
+
+.home-website-wrapper .booking-summary-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(200,169,106,0.2);
+}
+
+.home-website-wrapper .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed rgba(200,169,106,0.15);
+}
+
+.home-website-wrapper .summary-row:last-child {
+  border-bottom: none;
+}
+
+.home-website-wrapper .summary-label {
+  font-size: 0.82rem;
+  color: #9E7D3F;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.home-website-wrapper .summary-val {
+  font-size: 0.88rem;
+  color: #341F1D;
+  font-weight: 700;
+  text-align: right;
+}
+
+.home-website-wrapper .summary-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0 0 0;
+  border-top: 2px solid rgba(200,169,106,0.3);
+  margin-top: 0.5rem;
+}
+
+.home-website-wrapper .summary-total-label {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #341F1D;
+}
+
+.home-website-wrapper .summary-total-val {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #9E7D3F;
+}
+
+/* AI Assistant Card */
+.home-website-wrapper .ai-assistant-card {
+  background: linear-gradient(135deg, #341F1D 0%, #4A2C2A 100%);
+  border: 1px solid rgba(200,169,106,0.3);
+  border-radius: 20px;
+  padding: 1.8rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-website-wrapper .ai-assistant-card::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,169,106,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.home-website-wrapper .ai-assistant-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(200,169,106,0.15);
+  border: 1px solid rgba(200,169,106,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C8A96A;
+  margin-bottom: 1rem;
+}
+
+.home-website-wrapper .ai-assistant-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 0.5rem;
+}
+
+.home-website-wrapper .ai-assistant-desc {
+  font-size: 0.85rem;
+  color: rgba(238,220,185,0.75);
+  line-height: 1.55;
+  margin-bottom: 1.2rem;
+}
+
+.home-website-wrapper .btn-ai-guide {
+  width: 100%;
+  background: rgba(200,169,106,0.15);
+  border: 1.5px solid rgba(200,169,106,0.4);
+  color: #C8A96A;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.home-website-wrapper .btn-ai-guide:hover {
+  background: #C8A96A;
+  color: #341F1D;
+}
+
+/* Popular Bookings / Temple Cards */
+.home-website-wrapper .popular-temples-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.8rem;
+}
+
+.home-website-wrapper .popular-temple-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(200,169,106,0.15);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(52,31,29,0.04);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.home-website-wrapper .popular-temple-card:hover {
+  transform: translateY(-6px);
+  border-color: #C8A96A;
+  box-shadow: 0 16px 40px rgba(52,31,29,0.1);
+}
+
+.home-website-wrapper .popular-temple-img-box {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #341F1D, #4A2C2A);
+}
+
+.home-website-wrapper .popular-temple-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.home-website-wrapper .popular-temple-card:hover .popular-temple-img {
+  transform: scale(1.06);
+}
+
+.home-website-wrapper .popular-temple-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(52,31,29,0.65) 100%);
+}
+
+.home-website-wrapper .popular-temple-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(200,169,106,0.92);
+  color: #341F1D;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.7rem;
+  border-radius: 99px;
+  letter-spacing: 0.04em;
+}
+
+.home-website-wrapper .popular-temple-body {
+  padding: 1.2rem;
+}
+
+.home-website-wrapper .popular-temple-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.3rem;
+  line-height: 1.3;
+}
+
+.home-website-wrapper .popular-temple-location {
+  font-size: 0.8rem;
+  color: #9E7D3F;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.8rem;
+}
+
+.home-website-wrapper .popular-temple-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.home-website-wrapper .popular-temple-price {
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #341F1D;
+}
+
+.home-website-wrapper .popular-temple-price span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9E7D3F;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.home-website-wrapper .popular-temple-duration {
+  font-size: 0.8rem;
+  color: #6E5351;
+  font-weight: 600;
+  background: rgba(200,169,106,0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+}
+
+.home-website-wrapper .btn-quick-book {
+  width: 100%;
+  background: transparent;
+  border: 1.5px solid rgba(200,169,106,0.4);
+  color: #9E7D3F;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.65rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.home-website-wrapper .btn-quick-book:hover {
+  background: #C8A96A;
+  border-color: #C8A96A;
+  color: #341F1D;
+}
+
+/* Why Book With Us */
+.home-website-wrapper .why-book-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.home-website-wrapper .why-book-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(200,169,106,0.15);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(52,31,29,0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-website-wrapper .why-book-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #D4AF37, #C8A96A);
+  transition: width 0.35s ease;
+}
+
+.home-website-wrapper .why-book-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(200,169,106,0.3);
+  box-shadow: 0 16px 35px rgba(52,31,29,0.08);
+}
+
+.home-website-wrapper .why-book-card:hover::before {
+  width: 100%;
+}
+
+.home-website-wrapper .why-book-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(200,169,106,0.1);
+  border: 1px solid rgba(200,169,106,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9E7D3F;
+  margin: 0 auto 1.2rem auto;
+  transition: all 0.3s ease;
+}
+
+.home-website-wrapper .why-book-card:hover .why-book-icon {
+  background: #C8A96A;
+  color: #341F1D;
+  border-color: #C8A96A;
+}
+
+.home-website-wrapper .why-book-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.5rem;
+}
+
+.home-website-wrapper .why-book-desc {
+  font-size: 0.88rem;
+  color: #6E5351;
+  line-height: 1.55;
+}
+
+/* Booking Process Timeline */
+.home-website-wrapper .booking-process-track {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-top: 1rem;
+  position: relative;
+}
+
+.home-website-wrapper .booking-process-track::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200,169,106,0.3), rgba(200,169,106,0.3), transparent);
+  z-index: 0;
+}
+
+.home-website-wrapper .process-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.home-website-wrapper .process-step-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid rgba(200,169,106,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9E7D3F;
+  box-shadow: 0 6px 20px rgba(52,31,29,0.06);
+  transition: all 0.3s ease;
+}
+
+.home-website-wrapper .process-step:hover .process-step-icon {
+  background: #C8A96A;
+  color: #341F1D;
+  border-color: #C8A96A;
+  transform: scale(1.08);
+}
+
+.home-website-wrapper .process-step-num {
+  position: absolute;
+  top: -6px;
+  right: calc(50% - 38px);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #D4AF37;
+  color: #341F1D;
+  font-size: 0.65rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-website-wrapper .process-step-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #341F1D;
+  line-height: 1.3;
+}
+
+/* FAQ Accordion */
+.home-website-wrapper .faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.home-website-wrapper .faq-item {
+  background: #FFFFFF;
+  border: 1px solid rgba(200,169,106,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(52,31,29,0.03);
+  transition: all 0.3s ease;
+}
+
+.home-website-wrapper .faq-item.open {
+  border-color: rgba(200,169,106,0.4);
+  box-shadow: 0 8px 25px rgba(52,31,29,0.06);
+}
+
+.home-website-wrapper .faq-question {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 1.3rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+  gap: 1rem;
+}
+
+.home-website-wrapper .faq-question-text {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #341F1D;
+}
+
+.home-website-wrapper .faq-icon {
+  color: #C8A96A;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.home-website-wrapper .faq-item.open .faq-icon {
+  transform: rotate(45deg);
+}
+
+.home-website-wrapper .faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.25s ease;
+}
+
+.home-website-wrapper .faq-item.open .faq-answer {
+  max-height: 200px;
+}
+
+.home-website-wrapper .faq-answer-inner {
+  padding: 0 1.5rem 1.4rem 1.5rem;
+  font-size: 0.95rem;
+  color: #6E5351;
+  line-height: 1.65;
+}
+
+/* Booking CTA */
+.home-website-wrapper .booking-cta-section {
+  padding-bottom: 7rem;
+}
+
+.home-website-wrapper .booking-cta-banner {
+  background: linear-gradient(135deg, #341F1D 0%, #4A2C2A 60%, #341F1D 100%);
+  border: 2px solid rgba(200,169,106,0.3);
+  border-radius: 32px;
+  padding: 5rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 55px rgba(52,31,29,0.3);
+}
+
+.home-website-wrapper .booking-cta-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(200,169,106,0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.home-website-wrapper .booking-cta-heading {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 3.2vw, 2.8rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+}
+
+.home-website-wrapper .booking-cta-text {
+  font-size: 1.05rem;
+  color: rgba(238,220,185,0.85);
+  max-width: 580px;
+  margin: 0 auto 2.2rem auto;
+  line-height: 1.65;
+}
+
+.home-website-wrapper .booking-cta-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* Success Toast */
+.home-website-wrapper .booking-success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,6,4,0.7);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(6px);
+}
+
+.home-website-wrapper .booking-success-modal {
+  background: #FFFFFF;
+  border-radius: 28px;
+  padding: 3rem 2.5rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  border: 2px solid rgba(200,169,106,0.3);
+  box-shadow: 0 25px 60px rgba(52,31,29,0.25);
+  animation: bookingSuccessIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bookingSuccessIn {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.home-website-wrapper .booking-success-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(200,169,106,0.12);
+  border: 2px solid #C8A96A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9E7D3F;
+  margin: 0 auto 1.5rem auto;
+  font-size: 2rem;
+}
+
+.home-website-wrapper .booking-success-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.6rem;
+}
+
+.home-website-wrapper .booking-success-subtitle {
+  font-size: 0.95rem;
+  color: #6E5351;
+  line-height: 1.6;
+  margin-bottom: 1.8rem;
+}
+
+.home-website-wrapper .booking-ref {
+  background: rgba(200,169,106,0.08);
+  border: 1px dashed rgba(200,169,106,0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.home-website-wrapper .booking-ref-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #9E7D3F;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+
+.home-website-wrapper .booking-ref-num {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #341F1D;
+  letter-spacing: 0.1em;
+}
+
+/* Responsive — Booking */
+@media (max-width: 1100px) {
+  .home-website-wrapper .booking-layout {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .booking-sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .home-website-wrapper .popular-temples-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .home-website-wrapper .why-book-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .home-website-wrapper .booking-hero {
+    min-height: auto;
+    padding: 140px 1rem 60px 1rem;
+  }
+  .home-website-wrapper .booking-fields-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .booking-form-card {
+    padding: 1.8rem 1.2rem;
+  }
+  .home-website-wrapper .booking-sidebar {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .popular-temples-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .home-website-wrapper .why-book-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .home-website-wrapper .booking-process-track {
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .home-website-wrapper .booking-process-track::before {
+    display: none;
+  }
+  .home-website-wrapper .devotee-count-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .booking-form-actions {
+    flex-direction: column;
+  }
+  .home-website-wrapper .btn-booking-primary {
+    width: 100%;
+  }
+  .home-website-wrapper .booking-cta-banner {
+    padding: 3rem 1.5rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .home-website-wrapper .popular-temples-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .why-book-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-website-wrapper .booking-steps-track {
+    justify-content: flex-start;
+  }
+  .home-website-wrapper .booking-step-line {
+    width: 28px;
+  }
+}
+
+
+

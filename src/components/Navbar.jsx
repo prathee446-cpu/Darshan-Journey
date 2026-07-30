@@ -9,6 +9,7 @@ export default function Navbar({
   onExploreTemples, 
   onGoToProducts, 
   onGoToLogin,
+  onGoToAbout,
   onOpenBooking, 
   onOpenDonate 
 }) {
@@ -58,6 +59,26 @@ export default function Navbar({
       return;
     }
 
+    if (page === 'about') {
+      if (onGoToAbout) {
+        onGoToAbout();
+      } else {
+        window.history.pushState({}, '', '/about');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      return;
+    }
+
+    if (page === 'booking') {
+      if (onOpenBooking) {
+        onOpenBooking();
+      } else {
+        window.history.pushState({}, '', '/quick-booking');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      return;
+    }
+
     if (sectionId) {
       const el = document.getElementById(sectionId);
       if (el) {
@@ -98,9 +119,9 @@ export default function Navbar({
             </li>
             <li>
               <a 
-                href="#calendar" 
+                href="/about" 
                 className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'home', 'calendar', null)}
+                onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
               >
                 About Us
               </a>
@@ -115,13 +136,10 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <a 
-                href="#booking" 
+              <a
+                href="/quick-booking"
                 className={`nav-link ${activePage === 'booking' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onOpenBooking) onOpenBooking();
-                }}
+                onClick={(e) => handleLinkClick(e, 'booking', null, onOpenBooking)}
               >
                 Quick Booking
               </a>

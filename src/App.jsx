@@ -5,6 +5,8 @@ import ExploreTemplesPage from './components/ExploreTemplesPage';
 import ProductsPage from './components/ProductsPage';
 import BlogDetailsPage from './components/BlogDetailsPage';
 import LoginPage from './components/LoginPage';
+import AboutPage from './components/AboutPage';
+import QuickBookingPage from './components/QuickBookingPage';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -24,72 +26,68 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  // Route: /login -> Displays Placeholder Login Page
-  if (currentPath === '/login') {
-    return (
-      <LoginPage 
-        onGoToHome={() => navigateTo('/home')}
-        onGoToLanding={() => navigateTo('/')}
-        onExploreTemples={() => navigateTo('/explore')}
-        onGoToProducts={() => navigateTo('/products')}
-        onGoToLogin={() => navigateTo('/login')}
-      />
-    );
+  // Helper to normalize path (handle trailing slashes and lowercasing)
+  const normalizedPath = (currentPath || '/').toLowerCase().split('?')[0].split('#')[0].replace(/\/$/, '') || '/';
+
+  // Shared navigation callbacks
+  const navProps = {
+    onGoToHome: () => navigateTo('/home'),
+    onGoToLanding: () => navigateTo('/'),
+    onExploreTemples: () => navigateTo('/explore'),
+    onGoToProducts: () => navigateTo('/products'),
+    onGoToLogin: () => navigateTo('/login'),
+    onGoToAbout: () => navigateTo('/about'),
+    onOpenBooking: () => navigateTo('/quick-booking'),
+  };
+
+  // Route: /login
+  if (normalizedPath === '/login') {
+    return <LoginPage {...navProps} />;
   }
 
-  // Route: /blogs/:slug -> Displays Blog Details Page
-  if (currentPath.startsWith('/blogs/')) {
-    const slug = currentPath.replace('/blogs/', '');
+  // Route: /quick-booking OR /booking
+  if (normalizedPath === '/quick-booking' || normalizedPath === '/booking') {
+    return <QuickBookingPage {...navProps} />;
+  }
+
+  // Route: /about
+  if (normalizedPath === '/about') {
+    return <AboutPage {...navProps} />;
+  }
+
+  // Route: /blogs/:slug
+  if (normalizedPath.startsWith('/blogs/')) {
+    const slug = normalizedPath.replace('/blogs/', '');
     return (
-      <BlogDetailsPage 
+      <BlogDetailsPage
+        {...navProps}
         slug={slug}
-        onGoToHome={() => navigateTo('/home')}
-        onGoToLanding={() => navigateTo('/')}
-        onExploreTemples={() => navigateTo('/explore')}
-        onGoToProducts={() => navigateTo('/products')}
-        onGoToLogin={() => navigateTo('/login')}
         onNavigateToBlog={(newSlug) => navigateTo(`/blogs/${newSlug}`)}
       />
     );
   }
 
-  // Route: /products -> Displays Vendor Services & Offerings Products Page
-  if (currentPath === '/products') {
-    return (
-      <ProductsPage 
-        onGoToHome={() => navigateTo('/home')}
-        onGoToLanding={() => navigateTo('/')}
-        onExploreTemples={() => navigateTo('/explore')}
-        onGoToLogin={() => navigateTo('/login')}
-      />
-    );
+  // Route: /products
+  if (normalizedPath === '/products') {
+    return <ProductsPage {...navProps} />;
   }
 
-  // Route: /explore -> Displays Explore Temples Page
-  if (currentPath === '/explore') {
-    return (
-      <ExploreTemplesPage 
-        onGoToHome={() => navigateTo('/home')}
-        onGoToLanding={() => navigateTo('/')}
-        onGoToProducts={() => navigateTo('/products')}
-        onGoToLogin={() => navigateTo('/login')}
-      />
-    );
+  // Route: /explore
+  if (normalizedPath === '/explore') {
+    return <ExploreTemplesPage {...navProps} />;
   }
 
-  // Route: /home -> Displays Temple Website Home Page
-  if (currentPath === '/home') {
+  // Route: /home
+  if (normalizedPath === '/home') {
     return (
-      <HomePage 
-        onGoToLanding={() => navigateTo('/')}
-        onExploreTemples={() => navigateTo('/explore')}
-        onGoToProducts={() => navigateTo('/products')}
-        onGoToLogin={() => navigateTo('/login')}
+      <HomePage
+        {...navProps}
         onGoToBlog={(slug) => navigateTo(`/blogs/${slug}`)}
       />
     );
   }
 
-  // Default Route: / -> Displays Original Luxury Landing Page (Unchanged)
+  // Default Route: / -> Displays Original Luxury Landing Page
   return <LandingPage onExplore={() => navigateTo('/home')} />;
 }
+
