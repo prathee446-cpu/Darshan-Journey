@@ -90,7 +90,13 @@ const PRODUCT_SLIDES = [
   }
 ];
 
-export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTemples }) {
+export default function ProductsPage({ 
+  onGoToHome, 
+  onGoToLanding, 
+  onExploreTemples,
+  onGoToAbout,
+  onOpenBooking
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [isScrolled, setIsScrolled] = useState(false);
@@ -202,7 +208,8 @@ export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTempl
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={() => {}}
-        onOpenBooking={() => openBookingForCurrent()}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking}
         onOpenDonate={() => alert('Thank you for supporting Temple Seva!')}
       />
 
@@ -661,12 +668,12 @@ export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTempl
         </div>
       )}
 
-      {/* ---------------- FOOTER ---------------- */}
       <Footer 
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={() => {}}
-        onOpenBooking={() => openBookingForCurrent('Temple Pooja & Darshan')}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking}
       />
 
       {/* Global CSS Keyframes for Mandala Rotation */}

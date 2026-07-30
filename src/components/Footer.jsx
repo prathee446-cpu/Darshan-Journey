@@ -1,15 +1,16 @@
 import React from 'react';
 import logoImg from '../assets/exact_darshan_logo.png';
 
-export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, onOpenBooking }) {
-  const handleLinkClick = (e, action, sectionId) => {
+export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, onGoToAbout, onOpenBooking }) {
+  const handleLinkClick = (e, action, fallbackUrl) => {
     e.preventDefault();
     if (action) {
       action();
       return;
     }
-    if (sectionId) {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    if (fallbackUrl) {
+      window.history.pushState({}, '', fallbackUrl);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };
 
@@ -17,13 +18,13 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
     <footer id="footer" className="footer">
       <div className="container">
         <div className="footer-grid">
-          {/* Column 1: Brand with Logo above DARSHAN JOURNEY title */}
+          {/* Column 1: Brand with Logo */}
           <div className="footer-brand-box">
             <img src={logoImg} alt="Darshan Journey Temple Logo" className="footer-logo-img" />
             <h3 className="footer-brand-title">DARSHAN JOURNEY</h3>
             <p className="footer-tagline">Spiritual Temple Experience</p>
             <p className="footer-desc">
-              Dedicated to preserving ancient Vedic heritage, spreading spiritual wisdom, and providing a peaceful sanctuary for all devotees across Tamil Nadu.
+              Dedicated to preserving ancient Vedic heritage, spreading spiritual wisdom, and providing a peaceful sanctuary for all devotees.
             </p>
           </div>
 
@@ -35,16 +36,25 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
                 <a 
                   href="/home" 
                   className="footer-link" 
-                  onClick={(e) => handleLinkClick(e, onGoToHome, 'hero')}
+                  onClick={(e) => handleLinkClick(e, onGoToHome, '/home')}
                 >
                   Home Page
                 </a>
               </li>
               <li>
                 <a 
+                  href="/about" 
+                  className="footer-link" 
+                  onClick={(e) => handleLinkClick(e, onGoToAbout, '/about')}
+                >
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a 
                   href="/explore" 
                   className="footer-link" 
-                  onClick={(e) => handleLinkClick(e, onExploreTemples, null)}
+                  onClick={(e) => handleLinkClick(e, onExploreTemples, '/explore')}
                 >
                   Explore Temples
                 </a>
@@ -53,19 +63,16 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
                 <a 
                   href="/products" 
                   className="footer-link" 
-                  onClick={(e) => handleLinkClick(e, onGoToProducts, null)}
+                  onClick={(e) => handleLinkClick(e, onGoToProducts, '/products')}
                 >
                   Vendor Products
                 </a>
               </li>
               <li>
                 <a 
-                  href="#booking" 
+                  href="/quick-booking" 
                   className="footer-link" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (onOpenBooking) onOpenBooking();
-                  }}
+                  onClick={(e) => handleLinkClick(e, onOpenBooking, '/quick-booking')}
                 >
                   Quick Booking
                 </a>
@@ -84,6 +91,7 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
               </li>
             </ul>
           </div>
+
 
           {/* Column 3: Daily Darshan Timings */}
           <div>

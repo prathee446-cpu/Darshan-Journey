@@ -77,7 +77,13 @@ function TempleImage({ src, alt, className, style, fallbackHeight }) {
   );
 }
 
-export default function ExploreTemplesPage({ onGoToHome, onGoToLanding, onGoToProducts }) {
+export default function ExploreTemplesPage({ 
+  onGoToHome, 
+  onGoToLanding, 
+  onGoToProducts,
+  onGoToAbout,
+  onOpenBooking
+}) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -251,7 +257,8 @@ export default function ExploreTemplesPage({ onGoToHome, onGoToLanding, onGoToPr
         onGoToLanding={onGoToLanding}
         onExploreTemples={() => setSelectedTemple(null)}
         onGoToProducts={onGoToProducts}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
       />
 
@@ -848,7 +855,8 @@ export default function ExploreTemplesPage({ onGoToHome, onGoToLanding, onGoToPr
         onGoToHome={onGoToHome}
         onExploreTemples={() => setSelectedTemple(null)}
         onGoToProducts={onGoToProducts}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
 
       {/* ---------------- DONATE MODAL ---------------- */}
