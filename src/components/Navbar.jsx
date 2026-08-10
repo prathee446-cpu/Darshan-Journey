@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, User, LogOut } from 'lucide-react';
 import logoImg from '../assets/darshan-logo.jpeg';
-
-
 
 export default function Navbar({ 
   activePage = 'home',
@@ -16,6 +14,7 @@ export default function Navbar({
   onOpenDonate 
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,9 +24,25 @@ export default function Navbar({
         setIsScrolled(false);
       }
     };
+
+    // Load initial user session
+    const storedUser = localStorage.getItem('darshan_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        setUser(null);
+      }
+    }
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('darshan_user');
+    setUser(null);
+  };
 
   const handleLinkClick = (e, page, sectionId, action) => {
     e.preventDefault();
@@ -138,20 +153,39 @@ export default function Navbar({
                 Contact Us
               </a>
             </li>
-            <li>
-              <Link 
-                to="/login" 
-                className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
-                onClick={(e) => {
-                  if (onGoToLogin) {
-                    e.preventDefault();
-                    onGoToLogin();
-                  }
-                }}
-              >
-                Login
-              </Link>
-            </li>
+            {user ? (
+              <li className="nav-user-item">
+                <div className="nav-user-badge">
+                  <div className="nav-user-avatar">
+                    {user.avatar || user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="nav-user-name">{user.name}</span>
+                  <button 
+                    type="button" 
+                    className="nav-logout-btn" 
+                    onClick={handleLogout}
+                    title="Logout"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                </div>
+              </li>
+            ) : (
+              <li>
+                <Link 
+                  to="/login" 
+                  className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
+                  onClick={(e) => {
+                    if (onGoToLogin) {
+                      e.preventDefault();
+                      onGoToLogin();
+                    }
+                  }}
+                >
+                  Login
+                </Link>
+              </li>
+            )}
 
           </ul>
 

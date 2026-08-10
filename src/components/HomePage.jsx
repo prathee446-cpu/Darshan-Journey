@@ -86,6 +86,18 @@ export default function HomePage({ onGoToLanding, onExploreTemples, onGoToProduc
       <section id="hero" className="hero-section">
         <div className="hero-overlay" />
         <div className="hero-content">
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <img 
+              src={logoImg} 
+              alt="Darshan Journey Logo" 
+              style={{ 
+                height: '85px', 
+                width: 'auto', 
+                filter: 'drop-shadow(0 0 14px rgba(200, 169, 106, 0.5)) drop-shadow(0 4px 10px rgba(0,0,0,0.4))',
+                objectFit: 'contain'
+              }} 
+            />
+          </div>
           <span className="hero-subtitle-tag">WELCOME TO OUR TEMPLE</span>
           <h1 className="hero-heading">Experience Divine Peace & Spiritual Heritage</h1>
           <p className="hero-desc">

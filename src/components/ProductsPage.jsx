@@ -211,6 +211,18 @@ export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTempl
       <section id="products-hero" className="hero-section products-hero-section">
         <div className="hero-overlay" />
         <div className="hero-content">
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <img 
+              src={logoImg} 
+              alt="Darshan Journey Logo" 
+              style={{ 
+                height: '85px', 
+                width: 'auto', 
+                filter: 'drop-shadow(0 0 14px rgba(200, 169, 106, 0.5)) drop-shadow(0 4px 10px rgba(0,0,0,0.4))',
+                objectFit: 'contain'
+              }} 
+            />
+          </div>
           <span className="hero-subtitle-tag">PRODUCT OFFERINGS</span>
           <h1 className="hero-heading" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', marginBottom: '1rem' }}>
             Temple Services & Sacred Offerings

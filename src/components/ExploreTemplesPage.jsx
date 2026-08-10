@@ -626,6 +626,18 @@ export default function ExploreTemplesPage({ onGoToHome, onGoToLanding, onGoToPr
           <section className="explore-hero-section">
             <div className="hero-overlay" />
             <div className="hero-content">
+              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <img 
+                  src={logoImg} 
+                  alt="Darshan Journey Logo" 
+                  style={{ 
+                    height: '85px', 
+                    width: 'auto', 
+                    filter: 'drop-shadow(0 0 14px rgba(200, 169, 106, 0.5)) drop-shadow(0 4px 10px rgba(0,0,0,0.4))',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
               <span className="hero-subtitle-tag">DIVINE PILGRIMAGE JOURNEY</span>
               <h1 className="hero-heading">Explore Sacred Temples</h1>
               <p className="hero-desc">

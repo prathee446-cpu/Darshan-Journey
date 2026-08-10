@@ -84,6 +84,18 @@ export default function BlogDetailsPage({ slug, onGoToHome, onExploreTemples, on
 
             {/* ARTICLE HEADER CONTAINER */}
             <header className="blog-details-header">
+              <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+                <img 
+                  src={logoImg} 
+                  alt="Darshan Journey Logo" 
+                  style={{ 
+                    height: '70px', 
+                    width: 'auto', 
+                    filter: 'drop-shadow(0 0 10px rgba(200, 169, 106, 0.4))',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
               <span className="blog-detail-category-tag">
                 {blog.categoryBadge || blog.category}
               </span>
