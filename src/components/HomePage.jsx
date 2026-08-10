@@ -19,6 +19,7 @@ import {
 import logoImg from '../assets/exact_darshan_logo.png';
 import heroBg from '../assets/temple_hero_bg.png';
 import TempleCalendar from './TempleCalendar';
+import TestimonialsSection from './TestimonialsSection';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
@@ -260,7 +261,10 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* ---------------- 5. FOOTER ---------------- */}
+      {/* ---------------- 5. DEVOTEE TESTIMONIALS & TRUST STATS ---------------- */}
+      <TestimonialsSection onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))} />
+
+      {/* ---------------- 6. FOOTER ---------------- */}
       <Footer 
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}

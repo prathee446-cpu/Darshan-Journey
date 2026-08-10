@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import TestimonialsSection from './TestimonialsSection';
 
 // Assets
 import logoImg from '../assets/exact_darshan_logo.png';
@@ -395,8 +396,11 @@ export default function AboutPage({
         </div>
       </section>
 
+      {/* ---------------- DEVOTEE TESTIMONIALS & TRUST STATS ---------------- */}
+      <TestimonialsSection onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))} />
+
       {/* ========================================================================= */}
-      {/* 8. CTA SECTION */}
+      {/* 8. CALL TO ACTION SECTION */}
       {/* ========================================================================= */}
       <section className="section about-cta-section">
         <div className="container">
