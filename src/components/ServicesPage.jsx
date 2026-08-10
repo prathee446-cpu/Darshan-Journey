@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -27,6 +28,7 @@ import product5Img from '../assets/product_5_astrology.jpg';
 import product6Img from '../assets/product_6_flower.jpg';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { useAuth } from '../context/AuthContext';
 
 // MongoDB Backend Fetch Helper for Product Categories
 export const fetchProductCategories = async () => {
@@ -252,6 +254,9 @@ export default function ServicesPage({
   onOpenBooking,
   onSelectCategory
 }) {
+  const navigate = useNavigate();
+  const { isAuthenticated, setPendingService } = useAuth();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [isScrolled, setIsScrolled] = useState(false);
@@ -270,6 +275,20 @@ export default function ServicesPage({
     6: 'spiritual-books',
     7: 'temple-offerings',
     8: 'devotional-wear'
+  };
+
+  // Service Selection & Category Routing Handler
+  const handleSelectServiceForBooking = (selectedService) => {
+    const targetService = selectedService || currentSlide;
+    const categorySlug = targetService.categorySlug || SLIDE_CATEGORY_MAP[targetService.id] || 'pooja-essentials';
+
+    if (isAuthenticated) {
+      navigate(`/services/category/${categorySlug}`, { state: { categorySlug, service: targetService } });
+    } else {
+      setPendingService({ ...targetService, categorySlug, redirectUrl: `/services/category/${categorySlug}` });
+      if (onGoToLogin) onGoToLogin();
+      else navigate('/login');
+    }
   };
 
   // Fetch product categories from MongoDB backend & set 6-second autoplay interval
@@ -321,13 +340,7 @@ export default function ServicesPage({
   };
 
   const openBookingForCurrent = (serviceName) => {
-    const categorySlug = currentSlide.categorySlug || SLIDE_CATEGORY_MAP[currentSlide.id] || 'pooja-essentials';
-    if (onSelectCategory) {
-      onSelectCategory(categorySlug);
-      return;
-    }
-    setBookingServiceName(serviceName || currentSlide.serviceName);
-    setIsBookingOpen(true);
+    handleSelectServiceForBooking(currentSlide);
   };
 
   // Animation variants for smooth text transitions
@@ -837,7 +850,7 @@ export default function ServicesPage({
                     </div>
 
                     <button
-                      onClick={() => openBookingForCurrent(seva.serviceName)}
+                      onClick={() => handleSelectServiceForBooking(seva)}
                       style={{
                         backgroundColor: '#C89B4B',
                         color: '#3B241C',

@@ -4,10 +4,17 @@ import LandingPage from './components/LandingPage';
 import HomePage from './components/HomePage';
 import ExploreTemplesPage from './components/ExploreTemplesPage';
 import ServicesPage from './components/ServicesPage';
+import ServiceCategoryListPage from './components/ServiceCategoryListPage';
+import ServiceItemDetailsPage from './components/ServiceItemDetailsPage';
+import ServiceDetailsPage from './components/ServiceDetailsPage';
+import ServicePaymentSummaryPage from './components/ServicePaymentSummaryPage';
+import ServiceBookingConfirmedPage from './components/ServiceBookingConfirmedPage';
 import BlogDetailsPage from './components/BlogDetailsPage';
 import LoginPage from './components/LoginPage';
 import AboutPage from './components/AboutPage';
 import QuickBookingPage from './components/QuickBookingPage';
+import DateTimeWidget from './components/DateTimeWidget';
+import { AuthProvider } from './context/AuthContext';
 
 function BlogDetailsWrapper(props) {
   const navigate = useNavigate();
@@ -59,6 +66,26 @@ function AppRoutes() {
         element={<ServicesPage {...navProps} />} 
       />
       <Route 
+        path="/services/category/:slug" 
+        element={<ServiceCategoryListPage {...navProps} />} 
+      />
+      <Route 
+        path="/services/item/:id" 
+        element={<ServiceItemDetailsPage {...navProps} />} 
+      />
+      <Route 
+        path="/services/details" 
+        element={<ServiceDetailsPage {...navProps} />} 
+      />
+      <Route 
+        path="/services/summary" 
+        element={<ServicePaymentSummaryPage {...navProps} />} 
+      />
+      <Route 
+        path="/services/confirmed" 
+        element={<ServiceBookingConfirmedPage {...navProps} />} 
+      />
+      <Route 
         path="/products" 
         element={<ServicesPage {...navProps} />} 
       />
@@ -92,9 +119,11 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+        <DateTimeWidget />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
-

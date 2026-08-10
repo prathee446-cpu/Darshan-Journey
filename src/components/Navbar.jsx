@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import logoImg from '../assets/darshan-logo.jpeg';
 
-
-
 export default function Navbar({ 
   activePage = 'home',
   onGoToHome, 
@@ -20,7 +18,7 @@ export default function Navbar({
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
+      if (window.scrollY > 40) {
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
@@ -97,87 +95,83 @@ export default function Navbar({
 
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
-      <div className="container">
-        <div className="navbar-inner">
-          {/* Left: Temple Logo */}
-          <a 
-            href="/home" 
-            className="nav-logo" 
-            onClick={(e) => handleLinkClick(e, 'home', null, onGoToHome)}
-          >
-            <img src={logoImg} alt="Darshan Journey Temple" className="nav-logo-img" />
-            <span className="nav-logo-text">DARSHAN JOURNEY</span>
-          </a>
+      <div className="navbar-inner">
+        {/* Left: Uploaded Darshan Journey Golden Logo */}
+        <a 
+          href="/home" 
+          className="nav-logo" 
+          onClick={(e) => handleLinkClick(e, 'home', null, onGoToHome)}
+        >
+          <img src={logoImg} alt="Darshan Journey Logo" className="nav-logo-img" />
+        </a>
 
-          {/* Center: Perfectly Centered Navigation Links with Equal Spacing */}
-          <ul className="nav-menu">
-            <li>
-              <a 
-                href="/home" 
-                className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
-              >
-                Home
-              </a>
-            </li>
-            <li>
-              <a 
-                href="/about" 
-                className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
-              >
-                About Us
-              </a>
-            </li>
-            <li>
-              <a 
-                href="/services" 
-                className={`nav-link ${activePage === 'services' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices)}
-              >
-                Services
-              </a>
-            </li>
-            <li>
-              <a
-                href="/quick-booking"
-                className={`nav-link ${activePage === 'booking' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'booking', null, onOpenBooking)}
-              >
-                Quick Booking
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#contact" 
-                className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'home', 'contact', null)}
-              >
-                Contact Us
-              </a>
-            </li>
-            <li>
-              <Link 
-                to="/login" 
-                className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
-                onClick={(e) => {
-                  if (onGoToLogin) {
-                    e.preventDefault();
-                    onGoToLogin();
-                  }
-                }}
-              >
-                Login
-              </Link>
-            </li>
+        {/* Center: Navigation Items */}
+        <ul className="nav-menu">
+          <li>
+            <a 
+              href="/home" 
+              className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
+            >
+              Home
+            </a>
+          </li>
+          <li>
+            <a 
+              href="/about" 
+              className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
+            >
+              About Us
+            </a>
+          </li>
+          <li>
+            <a 
+              href="/services" 
+              className={`nav-link ${activePage === 'services' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices)}
+            >
+              Services
+            </a>
+          </li>
+          <li>
+            <a
+              href="/quick-booking"
+              className={`nav-link ${activePage === 'booking' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'booking', null, onOpenBooking)}
+            >
+              Quick Booking
+            </a>
+          </li>
+          <li>
+            <a 
+              href="#contact" 
+              className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'home', 'contact', null)}
+            >
+              Contact Us
+            </a>
+          </li>
+          <li>
+            <Link 
+              to="/login" 
+              className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
+              onClick={(e) => {
+                if (onGoToLogin) {
+                  e.preventDefault();
+                  onGoToLogin();
+                }
+              }}
+            >
+              Login
+            </Link>
+          </li>
+        </ul>
 
-          </ul>
-
-          {/* Right: Donate Button */}
-          <button className="btn-donate" onClick={() => onOpenDonate && onOpenDonate()}>
-            <Heart size={16} fill="#C8A96A" /> Donate
-          </button>
-        </div>
+        {/* Right: Donate Button */}
+        <button className="btn-donate" onClick={() => onOpenDonate && onOpenDonate()}>
+          <Heart size={16} fill="#C8A96A" /> Donate
+        </button>
       </div>
     </nav>
   );

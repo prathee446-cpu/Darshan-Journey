@@ -509,3 +509,52 @@ export async function fetchLiveTempleFromWeb(templeName) {
     return null;
   }
 }
+
+/**
+ * Primary Real-Time Temple Web Search Function:
+ * 1. Queries backend Express route POST /api/temples/search-web
+ * 2. If backend server is offline or fails, falls back to direct client-side web search API
+ */
+export async function fetchLiveTempleSearchFromBackend(searchQuery) {
+  if (!searchQuery || !searchQuery.trim()) {
+    throw new Error('Please enter a temple search query first.');
+  }
+
+  const cleanQuery = searchQuery.trim();
+
+  // Step 1: Try Express Backend API (/api/temples/search-web)
+  try {
+    const response = await fetch('/api/temples/search-web', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: cleanQuery })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && Array.isArray(data.results) && data.results.length > 0) {
+        return data.results;
+      }
+      if (data.message) {
+        throw new Error(data.message);
+      }
+    }
+  } catch (err) {
+    console.warn("Backend /api/temples/search-web unreachable, using client live web search API fallback:", err);
+  }
+
+  // Step 2: Fallback to Direct Real-Time Live Web API (Wikipedia)
+  const singleResult = await fetchLiveTempleFromWeb(cleanQuery);
+  if (singleResult) {
+    return [{
+      name: singleResult.name,
+      location: singleResult.address,
+      description: singleResult.history,
+      source: 'Wikipedia',
+      url: singleResult.website,
+      fullTempleObj: singleResult
+    }];
+  }
+
+  throw new Error(`No live web search results found for "${cleanQuery}". Please try a different temple name.`);
+}

@@ -20,6 +20,7 @@ import logoImg from '../assets/darshan-logo.jpeg';
 
 import heroBg from '../assets/temple_hero_bg.png';
 import TempleCalendar from './TempleCalendar';
+import TestimonialsSection from './TestimonialsSection';
 import Navbar from './Navbar';
 import ContactSection from './ContactSection';
 import Footer from './Footer';
@@ -266,7 +267,10 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* ---------------- 5. CONTACT US SECTION ---------------- */}
+      {/* ---------------- 5. DEVOTEE TESTIMONIALS & TRUST STATS ---------------- */}
+      <TestimonialsSection onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))} />
+
+      {/* ---------------- 6. CONTACT US SECTION ---------------- */}
       <ContactSection />
 
       {/* ---------------- 6. FOOTER ---------------- */}

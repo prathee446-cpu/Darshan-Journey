@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Check, Sparkles, User, Phone, ShieldCheck } from 'lucide-react';
 import GoldParticles from './GoldParticles';
@@ -6,7 +7,7 @@ import templeNightBg from '../assets/temple_night_bg.png';
 import darshanLogo from '../assets/darshan-logo.jpeg';
 import Navbar from './Navbar';
 import Footer from './Footer';
-
+import { useAuth } from '../context/AuthContext';
 
 // Motion Stagger Variants
 const formContainerVariants = {
@@ -54,6 +55,9 @@ export default function LoginPage({
   onGoToAbout,
   onOpenBooking
 }) {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -89,6 +93,22 @@ export default function LoginPage({
     }, 4000);
   };
 
+  const handleSuccessfulAuth = (userData) => {
+    const pendingService = login(userData);
+    if (pendingService) {
+      showToast('✨ Signed in! Automatically continuing your selected Seva reservation...');
+      const targetPath = pendingService.redirectUrl || (pendingService.categorySlug ? `/services/category/${pendingService.categorySlug}` : '/services/details');
+      setTimeout(() => {
+        navigate(targetPath, { state: { service: pendingService, categorySlug: pendingService.categorySlug } });
+      }, 1200);
+    } else {
+      setTimeout(() => {
+        if (onGoToHome) onGoToHome();
+        else navigate('/home');
+      }, 1200);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSignUp && password !== confirmPassword) {
@@ -99,14 +119,17 @@ export default function LoginPage({
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      const userData = {
+        fullName: fullName || 'Devotee',
+        email: email || 'devotee@darshanjourney.com',
+        phone: phone || '+91 98765 43210'
+      };
       if (isSignUp) {
         showToast(`🙏 Sacred Welcome, ${fullName || 'Devotee'}! Your account has been registered.`);
       } else {
         showToast('✨ Signed in successfully! Continuing your spiritual journey...');
       }
-      setTimeout(() => {
-        if (onGoToHome) onGoToHome();
-      }, 1500);
+      handleSuccessfulAuth(userData);
     }, 900);
   };
 
@@ -114,9 +137,12 @@ export default function LoginPage({
     showToast('🌐 Connecting securely with Google...');
     setTimeout(() => {
       showToast('✨ Google authentication successful! Welcome Devotee.');
-      setTimeout(() => {
-        if (onGoToHome) onGoToHome();
-      }, 1500);
+      const userData = {
+        fullName: 'Devotee',
+        email: 'devotee@gmail.com',
+        phone: '+91 98765 43210'
+      };
+      handleSuccessfulAuth(userData);
     }, 1000);
   };
 
