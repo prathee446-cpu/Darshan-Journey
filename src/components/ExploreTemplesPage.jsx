@@ -28,7 +28,8 @@ import {
   Flame,
   Info
 } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
 import { REAL_TAMIL_NADU_TEMPLES, fetchLiveTempleFromWeb } from '../services/templeDataService';
 import { isFuzzyMatch, getInstantSuggestions } from '../utils/searchUtils';
 import Navbar from './Navbar';

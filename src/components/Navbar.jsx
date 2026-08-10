@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
+
 
 export default function Navbar({ 
   activePage = 'home',
@@ -146,25 +149,28 @@ export default function Navbar({
             </li>
             <li>
               <a 
-                href="#footer" 
+                href="#contact" 
                 className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={(e) => handleLinkClick(e, 'home', 'contact', null)}
               >
                 Contact Us
               </a>
             </li>
             <li>
-              <a 
-                href="/login" 
+              <Link 
+                to="/login" 
                 className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'login', null, onGoToLogin)}
+                onClick={(e) => {
+                  if (onGoToLogin) {
+                    e.preventDefault();
+                    onGoToLogin();
+                  }
+                }}
               >
                 Login
-              </a>
+              </Link>
             </li>
+
           </ul>
 
           {/* Right: Donate Button */}

@@ -16,10 +16,12 @@ import {
   Flower2, 
   CheckCircle2 
 } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
 import heroBg from '../assets/temple_hero_bg.png';
 import TempleCalendar from './TempleCalendar';
 import Navbar from './Navbar';
+import ContactSection from './ContactSection';
 import Footer from './Footer';
 
 export default function HomePage({ 
@@ -27,6 +29,7 @@ export default function HomePage({
   onExploreTemples, 
   onGoToProducts, 
   onGoToServices,
+  onGoToLogin,
   onGoToBlog,
   onGoToAbout,
   onOpenBooking 
@@ -83,6 +86,7 @@ export default function HomePage({
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
         onGoToServices={onGoToServices}
+        onGoToLogin={onGoToLogin}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
@@ -262,7 +266,10 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* ---------------- 5. FOOTER ---------------- */}
+      {/* ---------------- 5. CONTACT US SECTION ---------------- */}
+      <ContactSection />
+
+      {/* ---------------- 6. FOOTER ---------------- */}
       <Footer 
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}

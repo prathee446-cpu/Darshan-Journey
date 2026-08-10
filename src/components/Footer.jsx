@@ -1,5 +1,6 @@
 import React from 'react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
 
 export default function Footer({ 
   onGoToHome, 
@@ -86,12 +87,9 @@ export default function Footer({
               </li>
               <li>
                 <a 
-                  href="#footer" 
+                  href="#contact" 
                   className="footer-link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  onClick={(e) => handleLinkClick(e, onGoToHome, 'contact')}
                 >
                   Contact Us
                 </a>
