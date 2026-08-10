@@ -8,6 +8,7 @@ export default function LoginPage({
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onGoToLogin,
   onGoToAbout,
   onOpenBooking
@@ -24,6 +25,7 @@ export default function LoginPage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToLogin={onGoToLogin}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
@@ -104,6 +106,7 @@ export default function LoginPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import HomePage from './components/HomePage';
 import ExploreTemplesPage from './components/ExploreTemplesPage';
-import ProductsPage from './components/ProductsPage';
+import ServicesPage from './components/ServicesPage';
 import BlogDetailsPage from './components/BlogDetailsPage';
 import LoginPage from './components/LoginPage';
 import AboutPage from './components/AboutPage';
@@ -34,7 +34,8 @@ export default function App() {
     onGoToHome: () => navigateTo('/home'),
     onGoToLanding: () => navigateTo('/'),
     onExploreTemples: () => navigateTo('/explore'),
-    onGoToProducts: () => navigateTo('/products'),
+    onGoToProducts: () => navigateTo('/services'),
+    onGoToServices: () => navigateTo('/services'),
     onGoToLogin: () => navigateTo('/login'),
     onGoToAbout: () => navigateTo('/about'),
     onOpenBooking: () => navigateTo('/quick-booking'),
@@ -67,9 +68,9 @@ export default function App() {
     );
   }
 
-  // Route: /products
-  if (normalizedPath === '/products') {
-    return <ProductsPage {...navProps} />;
+  // Route: /services OR /products
+  if (normalizedPath === '/services' || normalizedPath === '/products') {
+    return <ServicesPage {...navProps} />;
   }
 
   // Route: /explore

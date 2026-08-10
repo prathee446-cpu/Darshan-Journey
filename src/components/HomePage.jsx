@@ -26,6 +26,7 @@ export default function HomePage({
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onGoToBlog,
   onGoToAbout,
   onOpenBooking 
@@ -81,6 +82,7 @@ export default function HomePage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
@@ -265,6 +267,7 @@ export default function HomePage({
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />

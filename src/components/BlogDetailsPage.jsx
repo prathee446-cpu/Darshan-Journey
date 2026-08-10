@@ -22,6 +22,7 @@ export default function BlogDetailsPage({
   onGoToHome, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onNavigateToBlog,
   onGoToAbout,
   onOpenBooking
@@ -61,6 +62,7 @@ export default function BlogDetailsPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
@@ -222,6 +224,7 @@ export default function BlogDetailsPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
