@@ -1386,6 +1386,20 @@ html, body {
   gap: 0.2rem;
 }
 
+/* Main Layout Container & Flex Footer Positioning */
+.home-website-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+.home-website-wrapper > main,
+.home-website-wrapper > section {
+  flex: 1 0 auto;
+}
+
 /* Footer Section */
 .home-website-wrapper .footer {
   background-color: #341F1D;
@@ -1393,6 +1407,7 @@ html, body {
   padding: 5rem 0 2rem 0;
   border-top: 3px solid #C8A96A;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .home-website-wrapper .footer-grid {

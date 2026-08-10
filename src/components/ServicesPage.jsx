@@ -18,7 +18,6 @@ import {
   Clock
 } from 'lucide-react';
 import logoImg from '../assets/darshan-logo.jpeg';
-
 import heroBg from '../assets/temple_hero_bg.png';
 import product1Img from '../assets/product_1_pooja.jpg';
 import product2Img from '../assets/product_2_prashad.jpg';
@@ -29,67 +28,108 @@ import product6Img from '../assets/product_6_flower.jpg';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-// 6 Sacred Service Slides Data
+// MongoDB Backend Fetch Helper for Product Categories
+export const fetchProductCategories = async () => {
+  try {
+    const res = await fetch('/api/products/categories');
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Backend categories fetch warning (using defaults):', err);
+  }
+  return [];
+};
+
+// 8 Sacred Product & Service Slides Data (Preserving latest 8-category system from ac8cfd6)
 const SERVICE_SLIDES = [
   {
     id: 1,
     number: "01",
-    tag: "DAILY RITUALS",
-    title: "Daily Pooja & Archana Seva",
-    description: "Book personalized daily Archana and Abhishekam performed in your name and gotra by revered temple priests in sacred sanctums across Tamil Nadu.",
-    cta: "Book Pooja Now",
-    serviceName: "Daily Pooja & Archana",
+    tag: "SACRED ESSENTIALS",
+    title: "Pooja Essentials",
+    description: "Everything you need for your daily pooja including lamps, camphor, incense sticks, cotton wicks, pooja plates, bells, and sacred accessories.",
+    cta: "Shop Now",
+    serviceName: "Pooja Essentials",
+    categorySlug: "pooja-essentials",
     image: product1Img
   },
   {
     id: 2,
     number: "02",
-    tag: "HOLY BLESSINGS",
-    title: "Sacred Prashad Delivery",
-    description: "Receive blessed Mahaprashad, holy kumkum, vibhuti, dry fruits, and sacred flowers delivered fresh and untouched to your doorstep anywhere in India.",
-    cta: "Order Prashad",
-    serviceName: "Sacred Prashad Delivery",
+    tag: "DIVINE BLESSINGS",
+    title: "Temple Prasadam",
+    description: "Order authentic temple prasadam such as Laddu, Panchamirtham, Puliyodarai, Chakkarai Pongal, Holy Vibhuti, and Kumkum.",
+    cta: "Order Now",
+    serviceName: "Temple Prasadam",
+    categorySlug: "temple-prasadam",
     image: product2Img
   },
   {
     id: 3,
     number: "03",
-    tag: "DIGITAL DEVOTION",
-    title: "Virtual Live Aarti & Darshan",
-    description: "Participate in real-time 4K morning and evening Aarti streams directly from sanctum sanctorum of ancient shrines with live Vedic chanting.",
-    cta: "Join Live Stream",
-    serviceName: "Virtual Live Darshan",
+    tag: "HOLY ADORNMENTS",
+    title: "Spiritual Accessories",
+    description: "Premium Rudraksha malas, Tulsi malas, crystal malas, divine pendants, bracelets, and sacred accessories.",
+    cta: "Explore Collection",
+    serviceName: "Spiritual Accessories",
+    categorySlug: "spiritual-accessories",
     image: product3Img
   },
   {
     id: 4,
     number: "04",
-    tag: "VEDIC SANCTIFICATION",
-    title: "Special Rudrabhishekam Seva",
-    description: "Elaborate liquid offerings of holy Ganga water, unpasteurized cow milk, pure ghee, honey, and Bilva leaves for health, peace, & prosperity.",
-    cta: "Reserve Ritual",
-    serviceName: "Special Rudrabhishekam",
+    tag: "SANCTUM ART",
+    title: "Divine Idols & Frames",
+    description: "Beautiful handcrafted idols and devotional photo frames for your home temple.",
+    cta: "View Collection",
+    serviceName: "Divine Idols & Frames",
+    categorySlug: "idols-and-frames",
     image: product4Img
   },
   {
     id: 5,
     number: "05",
-    tag: "COSMIC WISDOM",
-    title: "Vedic Astrology Guidance",
-    description: "Consult certified hereditary temple astrologers for Janam Kundali analysis, Nakshatra remedies, and calculation of auspicious Muhurats.",
-    cta: "Consult Astrologer",
-    serviceName: "Vedic Astrology Guidance",
+    tag: "BRASSWARE & LIGHT",
+    title: "Brass Lamps & Pooja Items",
+    description: "Traditional brass lamps, aarthi plates, kalasam, bells, deepams, and pooja utensils.",
+    cta: "Shop Now",
+    serviceName: "Brass Lamps & Pooja Items",
+    categorySlug: "lamps-and-pooja-items",
     image: product5Img
   },
   {
     id: 6,
     number: "06",
-    tag: "SACRED OFFERINGS",
-    title: "Fresh Flower & Diya Stalls",
-    description: "Pre-order fresh fragrant marigold garlands, lotus flower baskets, and pure cow ghee brass diyas for your physical visit.",
-    cta: "Pre-Order Offerings",
-    serviceName: "Flower & Diya Stalls",
+    tag: "DIVINE WISDOM",
+    title: "Sacred Books",
+    description: "Bhagavad Gita, Ramayanam, Vishnu Sahasranamam, Lalitha Sahasranamam, Hanuman Chalisa, and devotional books.",
+    cta: "Browse Books",
+    serviceName: "Sacred Books",
+    categorySlug: "spiritual-books",
     image: product6Img
+  },
+  {
+    id: 7,
+    number: "07",
+    tag: "RITUAL OFFERINGS",
+    title: "Temple Offerings",
+    description: "Coconut, flower garlands, fruits, silk vastram, honey, milk, ghee, and offerings for temple rituals.",
+    cta: "Order Offerings",
+    serviceName: "Temple Offerings",
+    categorySlug: "temple-offerings",
+    image: product1Img
+  },
+  {
+    id: 8,
+    number: "08",
+    tag: "TEMPLE ATTIRE",
+    title: "Traditional Devotional Wear",
+    description: "Silk sarees, veshti, angavastram, pooja shawls, and traditional temple clothing.",
+    cta: "Shop Now",
+    serviceName: "Traditional Devotional Wear",
+    categorySlug: "devotional-wear",
+    image: product2Img
   }
 ];
 
@@ -209,18 +249,37 @@ export default function ServicesPage({
   onExploreTemples, 
   onGoToAbout, 
   onGoToLogin, 
-  onOpenBooking 
+  onOpenBooking,
+  onSelectCategory
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [isScrolled, setIsScrolled] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingServiceName, setBookingServiceName] = useState('');
+  const [mongoCategories, setMongoCategories] = useState([]);
 
   const currentSlide = SERVICE_SLIDES[currentIndex];
 
-  // Handle scroll effect for navbar
+  const SLIDE_CATEGORY_MAP = {
+    1: 'pooja-essentials',
+    2: 'temple-prasadam',
+    3: 'spiritual-accessories',
+    4: 'idols-and-frames',
+    5: 'lamps-and-pooja-items',
+    6: 'spiritual-books',
+    7: 'temple-offerings',
+    8: 'devotional-wear'
+  };
+
+  // Fetch product categories from MongoDB backend & set 6-second autoplay interval
   useEffect(() => {
+    fetchProductCategories().then(cats => {
+      if (cats && cats.length > 0) {
+        setMongoCategories(cats);
+      }
+    });
+
     const handleScroll = () => {
       if (window.scrollY > 40) {
         setIsScrolled(true);
@@ -229,7 +288,17 @@ export default function ServicesPage({
       }
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // 6-Second Autoplay Slider Interval
+    const timer = setInterval(() => {
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % SERVICE_SLIDES.length);
+    }, 6000);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearInterval(timer);
+    };
   }, []);
 
   const handleNext = () => {
@@ -243,31 +312,68 @@ export default function ServicesPage({
   };
 
   const handleCircleClick = () => {
+    const categorySlug = currentSlide.categorySlug || SLIDE_CATEGORY_MAP[currentSlide.id] || 'pooja-essentials';
+    if (onSelectCategory) {
+      onSelectCategory(categorySlug);
+      return;
+    }
     handleNext();
   };
 
   const openBookingForCurrent = (serviceName) => {
+    const categorySlug = currentSlide.categorySlug || SLIDE_CATEGORY_MAP[currentSlide.id] || 'pooja-essentials';
+    if (onSelectCategory) {
+      onSelectCategory(categorySlug);
+      return;
+    }
     setBookingServiceName(serviceName || currentSlide.serviceName);
     setIsBookingOpen(true);
   };
 
-  // Variants for left content sliding out to left (-60px) / sliding in from right (+60px)
-  const leftContentVariants = {
+  // Animation variants for smooth text transitions
+  const textVariants = {
     initial: (dir) => ({
-      x: dir > 0 ? 60 : -60,
-      opacity: 0
+      opacity: 0,
+      y: dir > 0 ? 30 : -30,
     }),
     animate: {
-      x: 0,
       opacity: 1,
+      y: 0,
       transition: {
-        duration: 0.8,
+        duration: 0.6,
         ease: [0.16, 1, 0.3, 1]
       }
     },
     exit: (dir) => ({
-      x: dir > 0 ? -60 : 60,
       opacity: 0,
+      y: dir > 0 ? -30 : 30,
+      transition: {
+        duration: 0.4,
+        ease: [0.7, 0, 0.84, 0]
+      }
+    })
+  };
+
+  // Animation variants for the circular 3D statue container
+  const circleVariants = {
+    initial: (dir) => ({
+      rotateY: dir > 0 ? 90 : -90,
+      opacity: 0,
+      scale: 0.85
+    }),
+    animate: {
+      rotateY: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.75,
+        ease: [0.16, 1, 0.3, 1]
+      }
+    },
+    exit: (dir) => ({
+      rotateY: dir > 0 ? -90 : 90,
+      opacity: 0,
+      scale: 0.85,
       transition: {
         duration: 0.5,
         ease: [0.7, 0, 0.84, 0]
@@ -275,51 +381,13 @@ export default function ServicesPage({
     })
   };
 
-  // Variants for 3D Circle Y-axis rotation
-  const circle3DVariants = {
-    initial: {
-      rotateY: 90,
-      scale: 0.88,
-      opacity: 0.4
-    },
-    animate: {
-      rotateY: 0,
-      scale: 1,
-      opacity: 1,
-      transition: {
-        duration: 0.8,
-        ease: [0.16, 1, 0.3, 1]
-      }
-    },
-    exit: {
-      rotateY: -90,
-      scale: 0.88,
-      opacity: 0.4,
-      transition: {
-        duration: 0.5,
-        ease: [0.7, 0, 0.84, 0]
-      }
-    }
-  };
-
   return (
-    <div 
-      className="home-website-wrapper services-page-container" 
-      style={{
-        backgroundColor: '#F7F1E8',
-        color: '#3B241C',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        overflowX: 'hidden',
-        position: 'relative'
-      }}
-    >
-      {/* ---------------- NAVBAR HEADER ---------------- */}
+    <div className="home-website-wrapper" style={{ backgroundColor: '#FDFBF7', color: '#3B241C', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {/* ---------------- NAVBAR ---------------- */}
       <Navbar 
         activePage="services"
         onGoToHome={onGoToHome}
+        onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToServices={() => {}}
         onGoToAbout={onGoToAbout}
@@ -331,143 +399,96 @@ export default function ServicesPage({
         onOpenDonate={() => alert('Thank you for supporting Temple Seva!')}
       />
 
-      {/* ---------------- HERO SECTION ---------------- */}
-      <section id="services-hero" className="hero-section services-hero-section">
-        <div className="hero-overlay" />
-        <div className="hero-content">
-          <span className="hero-subtitle-tag">SERVICE OFFERINGS</span>
-          <h1 className="hero-heading" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', marginBottom: '1rem' }}>
-            Temple Services & Sacred Offerings
-          </h1>
-          <p className="hero-desc" style={{ maxWidth: '750px', margin: '0 auto' }}>
-            "Discover divine sevas, sacred rituals, prashad, virtual darshan, and spiritual offerings designed to enrich your devotional journey."
-          </p>
-        </div>
-      </section>
-
-      {/* ---------------- MAIN SPLIT SCREEN HERO SLIDER ---------------- */}
-      <main 
-        style={{
-          paddingTop: '60px',
-          paddingBottom: '80px',
-          display: 'flex',
-          alignItems: 'center',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Background Mandala Decorative Elements */}
+      {/* ---------------- HERO / SLIDER SECTION ---------------- */}
+      <main style={{ padding: '120px 2rem 60px 2rem', position: 'relative', overflow: 'hidden', minHeight: '85vh', display: 'flex', alignItems: 'center' }}>
+        
+        {/* Subtle Background Radial Glow */}
         <div 
           style={{
             position: 'absolute',
-            top: '-10%',
-            left: '-5%',
-            width: '500px',
-            height: '500px',
-            borderRadius: '50%',
-            border: '1px dashed rgba(200, 155, 75, 0.15)',
+            top: '40%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '70vw',
+            height: '70vh',
+            background: 'radial-gradient(circle, rgba(200, 155, 75, 0.08) 0%, rgba(253, 251, 247, 0) 70%)',
             pointerEvents: 'none',
-            animation: 'spinMandala 60s linear infinite'
+            zIndex: 0
           }}
         />
 
-        <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem', width: '100%', position: 'relative', zIndex: 10 }}>
-          <div 
-            className="services-split-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '4rem',
-              alignItems: 'center'
-            }}
-          >
+        <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
+          
+          {/* Main 2-Column Split Grid */}
+          <div className="services-split-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '4rem', alignItems: 'center' }}>
             
-            {/* ---------------- LEFT SIDE: CONTENT & CTA ---------------- */}
-            <div style={{ position: 'relative', minHeight: '440px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              
+            {/* LEFT COLUMN: Text Content & Actions */}
+            <div className="services-left-content" style={{ position: 'relative', zIndex: 2 }}>
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={currentSlide.id}
                   custom={direction}
-                  variants={leftContentVariants}
+                  variants={textVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  style={{ position: 'relative', zIndex: 2 }}
                 >
-                  {/* Huge Faded Background Slide Number */}
-                  <span 
-                    style={{
-                      fontFamily: "'Cinzel', serif",
-                      fontSize: '11rem',
-                      fontWeight: 900,
-                      color: 'rgba(200, 155, 75, 0.12)',
-                      position: 'absolute',
-                      top: '-70px',
-                      left: '-20px',
-                      userSelect: 'none',
-                      pointerEvents: 'none',
-                      lineHeight: 1,
-                      zIndex: -1
-                    }}
-                  >
-                    {currentSlide.number}
-                  </span>
-
-                  {/* Category Pill Tag */}
+                  {/* Numbering + Tag */}
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.2rem' }}>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#C89B4B' }} />
                     <span style={{ fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.18em', color: '#A57C52', textTransform: 'uppercase' }}>
-                      {currentSlide.tag} • {currentSlide.number} / 06
+                      {currentSlide.tag} • {currentSlide.number} / 08
                     </span>
                   </div>
 
                   {/* Main Title */}
                   <h1 
-                    style={{
-                      fontFamily: "'Cinzel', serif",
-                      fontSize: '3.2rem',
-                      fontWeight: 800,
-                      color: '#3B241C',
+                    style={{ 
+                      fontFamily: "'Cinzel', serif", 
+                      fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)', 
+                      fontWeight: 800, 
+                      color: '#3B241C', 
                       lineHeight: 1.15,
-                      marginBottom: '1.2rem'
+                      marginBottom: '1.5rem',
+                      letterSpacing: '-0.01em'
                     }}
                   >
                     {currentSlide.title}
                   </h1>
 
-                  {/* Main Description */}
+                  {/* Description */}
                   <p 
-                    style={{
-                      fontSize: '1.1rem',
-                      color: '#5C3A2E',
-                      lineHeight: 1.65,
-                      marginBottom: '2.2rem',
-                      maxWidth: '540px'
+                    style={{ 
+                      fontSize: 'clamp(1rem, 1.2vw, 1.15rem)', 
+                      color: '#5C3A2E', 
+                      lineHeight: 1.7, 
+                      marginBottom: '2.5rem',
+                      maxWidth: '560px',
+                      fontWeight: 400
                     }}
                   >
                     {currentSlide.description}
                   </p>
 
-                  {/* CTA Button & Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  {/* Primary CTA Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3.5rem' }}>
                     <button
                       onClick={() => openBookingForCurrent(currentSlide.serviceName)}
                       style={{
                         backgroundColor: '#C89B4B',
                         color: '#3B241C',
-                        border: 'none',
-                        borderRadius: '99px',
-                        padding: '1rem 2.2rem',
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontSize: '1rem',
                         fontWeight: 800,
-                        fontSize: '1.05rem',
+                        padding: '1rem 2.5rem',
+                        borderRadius: '99px',
+                        border: 'none',
                         cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
                         boxShadow: '0 8px 25px rgba(200, 155, 75, 0.35)',
-                        transition: 'all 0.3s ease'
+                        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.6rem'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = '#3B241C';
@@ -480,21 +501,75 @@ export default function ServicesPage({
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      {currentSlide.cta} <ArrowRight size={20} />
+                      {currentSlide.cta} <ArrowRight size={18} />
                     </button>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#A57C52', fontSize: '0.88rem', fontWeight: 600 }}>
-                      <ShieldCheck size={18} style={{ color: '#C89B4B' }} />
-                      <span>Verified Vedic Priests</span>
-                    </div>
                   </div>
                 </motion.div>
               </AnimatePresence>
 
-              {/* Slider Navigation Controls (Dots + Arrows) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginTop: '3.5rem', zIndex: 10 }}>
-                {/* 6 Step Indicators */}
-                <div style={{ display: 'flex', gap: '8px' }}>
+              {/* Slider Bottom Navigation Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(200, 155, 75, 0.25)' }}>
+                {/* Arrow Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  <button 
+                    onClick={handlePrev} 
+                    aria-label="Previous Slide"
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      border: '1.5px solid #C89B4B',
+                      backgroundColor: 'transparent',
+                      color: '#3B241C',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#C89B4B';
+                      e.currentTarget.style.color = '#FFFDF9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#3B241C';
+                    }}
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  <button 
+                    onClick={handleNext} 
+                    aria-label="Next Slide"
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      border: '1.5px solid #C89B4B',
+                      backgroundColor: 'transparent',
+                      color: '#3B241C',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#C89B4B';
+                      e.currentTarget.style.color = '#FFFDF9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#3B241C';
+                    }}
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+
+                {/* Dots Indicator */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {SERVICE_SLIDES.map((slide, idx) => (
                     <button
                       key={slide.id}
@@ -502,125 +577,44 @@ export default function ServicesPage({
                         setDirection(idx > currentIndex ? 1 : -1);
                         setCurrentIndex(idx);
                       }}
+                      aria-label={`Go to slide ${idx + 1}`}
                       style={{
-                        width: idx === currentIndex ? '32px' : '10px',
-                        height: '10px',
+                        width: idx === currentIndex ? '28px' : '8px',
+                        height: '8px',
                         borderRadius: '99px',
-                        backgroundColor: idx === currentIndex ? '#C89B4B' : 'rgba(165, 124, 82, 0.3)',
+                        backgroundColor: idx === currentIndex ? '#C89B4B' : 'rgba(200, 155, 75, 0.3)',
                         border: 'none',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease'
                       }}
-                      title={`Go to slide ${idx + 1}`}
                     />
                   ))}
-                </div>
-
-                {/* Arrow Controls */}
-                <div style={{ display: 'flex', gap: '0.8rem' }}>
-                  <button
-                    onClick={handlePrev}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '50%',
-                      border: '1.5px solid rgba(200, 155, 75, 0.4)',
-                      backgroundColor: '#FFFDF9',
-                      color: '#3B241C',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 15px rgba(59, 36, 28, 0.08)',
-                      transition: 'all 0.25s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#3B241C';
-                      e.currentTarget.style.color = '#C89B4B';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#FFFDF9';
-                      e.currentTarget.style.color = '#3B241C';
-                    }}
-                    title="Previous Slide"
-                  >
-                    <ChevronLeft size={22} />
-                  </button>
-
-                  <button
-                    onClick={handleNext}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '50%',
-                      border: '1.5px solid rgba(200, 155, 75, 0.4)',
-                      backgroundColor: '#FFFDF9',
-                      color: '#3B241C',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 15px rgba(59, 36, 28, 0.08)',
-                      transition: 'all 0.25s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#3B241C';
-                      e.currentTarget.style.color = '#C89B4B';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#FFFDF9';
-                      e.currentTarget.style.color = '#3B241C';
-                    }}
-                    title="Next Slide"
-                  >
-                    <ChevronRight size={22} />
-                  </button>
                 </div>
               </div>
 
             </div>
 
-            {/* ---------------- RIGHT SIDE: 3D ROTATING CIRCULAR MANDALA IMAGE CONTAINER ---------------- */}
-            <div 
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                position: 'relative',
-                perspective: '1000px'
-              }}
-            >
-              {/* Outer Continuously Rotating Decorative Ring */}
+            {/* RIGHT COLUMN: 3D Rotating Circular Sculpture Container */}
+            <div className="services-right-sculpture" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', perspective: '1000px' }}>
+              
+              {/* Outer Decorative Rotating Sun Mandala Ring */}
               <div 
                 style={{
                   position: 'absolute',
                   width: '480px',
                   height: '480px',
                   borderRadius: '50%',
-                  border: '2px dashed #C89B4B',
-                  opacity: 0.35,
-                  animation: 'spinMandala 40s linear infinite',
-                  pointerEvents: 'none'
+                  border: '1px dashed rgba(200, 155, 75, 0.4)',
+                  pointerEvents: 'none',
+                  animation: 'spinMandala 40s linear infinite'
                 }}
               />
 
-              {/* Outer Secondary Glowing Ring */}
-              <div 
-                style={{
-                  position: 'absolute',
-                  width: '440px',
-                  height: '440px',
-                  borderRadius: '50%',
-                  border: '1px solid rgba(200, 155, 75, 0.4)',
-                  pointerEvents: 'none'
-                }}
-              />
-
-              {/* 3D Rotating Circular Image Container */}
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={currentSlide.id}
-                  variants={circle3DVariants}
+                  custom={direction}
+                  variants={circleVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
@@ -691,105 +685,27 @@ export default function ServicesPage({
       </main>
 
       {/* ---------------- AVAILABLE SEVAS TODAY SECTION ---------------- */}
-      <section 
-        id="available-sevas-today" 
-        style={{
-          paddingTop: '80px',
-          paddingBottom: '100px',
-          position: 'relative',
-          backgroundColor: '#F7F1E8',
-          backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(200, 155, 75, 0.14) 0%, rgba(247, 241, 232, 0) 70%)',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Sacred Pattern / Lotus Watermark in Background */}
-        <div 
-          style={{
-            position: 'absolute',
-            right: '-80px',
-            bottom: '-80px',
-            width: '450px',
-            height: '450px',
-            borderRadius: '50%',
-            border: '1px dashed rgba(200, 155, 75, 0.18)',
-            pointerEvents: 'none',
-            animation: 'spinMandala 90s linear infinite'
-          }}
-        />
-        <div 
-          style={{
-            position: 'absolute',
-            left: '-100px',
-            top: '10%',
-            width: '350px',
-            height: '350px',
-            borderRadius: '50%',
-            border: '1px dashed rgba(200, 155, 75, 0.12)',
-            pointerEvents: 'none',
-            animation: 'spinMandala 120s linear infinite reverse'
-          }}
-        />
-
-        <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 2rem', position: 'relative', zIndex: 5 }}>
+      <section id="available-sevas-today" style={{ backgroundColor: '#FFFDF9', padding: '5rem 2rem', borderTop: '1px solid rgba(200, 155, 75, 0.2)' }}>
+        <div className="container" style={{ maxWidth: '1280px', margin: '0 auto' }}>
           
-          {/* Section Header with Entrance Animation */}
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            style={{ textAlign: 'center', marginBottom: '3.5rem' }}
-          >
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.8rem' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#C89B4B' }} />
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, letterSpacing: '0.18em', color: '#A57C52', textTransform: 'uppercase' }}>
-                LIVE AVAILABILITY
-              </span>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#C89B4B' }} />
-            </div>
-
-            <h2 
-              style={{
-                fontFamily: "'Cinzel', serif",
-                fontSize: 'clamp(2.2rem, 3.5vw, 3rem)',
-                fontWeight: 800,
-                color: '#3B241C',
-                marginBottom: '1rem',
-                lineHeight: 1.2
-              }}
-            >
-              Available Sevas Today
+          <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3.5rem auto' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, letterSpacing: '0.2em', color: '#A57C52', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>
+              SACRED RITUALS & OFFERINGS
+            </span>
+            <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#3B241C', marginBottom: '1rem' }}>
+              Available Sevas & Offerings Today
             </h2>
-
-            <p 
-              style={{
-                fontSize: '1.08rem',
-                color: '#5C3A2E',
-                maxWidth: '680px',
-                margin: '0 auto',
-                lineHeight: 1.65
-              }}
-            >
-              Explore the sevas currently available for booking and their live availability status.
+            <p style={{ color: '#5C3A2E', fontSize: '1.05rem', lineHeight: 1.6 }}>
+              Select a sacred seva to perform in your name and gotra at holy shrines across India.
             </p>
-          </motion.div>
+          </div>
 
-          {/* Staggered Grid of Seva Cards */}
           <motion.div 
             className="sevas-grid"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.12,
-                  delayChildren: 0.1
-                }
-              }
-            }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
@@ -803,29 +719,21 @@ export default function ServicesPage({
               return (
                 <motion.div
                   key={seva.id}
-                  variants={{
-                    hidden: { opacity: 0, y: 35 },
-                    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-                  }}
-                  whileHover={{ 
-                    y: -8, 
-                    boxShadow: '0 20px 45px rgba(200, 155, 75, 0.25)',
-                    borderColor: 'rgba(200, 155, 75, 0.8)'
-                  }}
+                  className="seva-card-item"
+                  whileHover={{ y: -6 }}
+                  transition={{ duration: 0.3 }}
                   style={{
-                    backgroundColor: '#FFFDF9',
+                    backgroundColor: '#FDFBF7',
                     borderRadius: '24px',
-                    border: '1.5px solid rgba(200, 155, 75, 0.35)',
                     padding: '2rem',
+                    border: '1.5px solid rgba(200, 155, 75, 0.25)',
+                    boxShadow: '0 10px 30px rgba(59, 36, 28, 0.05)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: '0 10px 30px rgba(59, 36, 28, 0.07)',
-                    transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                     position: 'relative',
                     overflow: 'hidden'
                   }}
-                  className="seva-card-item"
                 >
                   <div>
                     {/* Card Header: Icon Container + Badge */}
@@ -1062,6 +970,7 @@ export default function ServicesPage({
         </div>
       )}
 
+      {/* ---------------- FOOTER ---------------- */}
       <Footer 
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
@@ -1074,7 +983,7 @@ export default function ServicesPage({
         }}
       />
 
-      {/* Global CSS Keyframes for Mandala Rotation */}
+      {/* Global CSS Keyframes for Mandala Rotation & Pulse Dot */}
       <style>{`
         @keyframes spinMandala {
           from { transform: rotate(0deg); }
@@ -1106,16 +1015,6 @@ export default function ServicesPage({
           .services-split-grid {
             grid-template-columns: 1fr !important;
             gap: 3rem !important;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .badge-pulse-dot,
-          .seva-card-item,
-          .seva-icon-wrapper {
-            animation: none !important;
-            transition: none !important;
-            transform: none !important;
           }
         }
       `}</style>
