@@ -9831,3 +9831,222 @@ footer.footer,
   min-height: 100vh !important;
 }
 
+/* ── Google OAuth Account Chooser Modal ── */
+.google-oauth-card {
+  position: relative;
+  width: min(92%, 410px);
+  max-width: 410px;
+  background: #1C1512;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 20px;
+  padding: 1.75rem 1.6rem 1.4rem 1.6rem;
+  color: #F8F5F0;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(212, 175, 55, 0.2);
+  font-family: 'Poppins', sans-serif;
+  margin: auto;
+  z-index: 100000;
+  animation: googleModalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes googleModalPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.google-oauth-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #D7C7B4;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.google-oauth-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFF;
+}
+
+.google-oauth-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.google-oauth-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #F8F5F0;
+  margin: 0 0 0.3rem 0;
+}
+
+.google-oauth-subtitle {
+  font-size: 0.88rem;
+  color: #B8A593;
+  margin: 0;
+}
+
+.google-app-highlight {
+  color: #D4AF37;
+  font-weight: 600;
+}
+
+.google-accounts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.google-account-section-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8C7867;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.google-account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.google-account-row:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.google-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D4AF37, #AA7C11);
+  color: #1A0E04;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.google-avatar-circle.icon-circle {
+  background: rgba(255, 255, 255, 0.08);
+  color: #D7C7B4;
+}
+
+.google-account-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.google-account-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #F8F5F0;
+}
+
+.google-account-email {
+  font-size: 0.8rem;
+  color: #B8A593;
+}
+
+.google-custom-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.google-custom-input {
+  flex: 1;
+  padding: 0.65rem 0.9rem;
+  background: rgba(15, 10, 6, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
+  color: #FFF;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.google-custom-input:focus {
+  border-color: #D4AF37;
+}
+
+.google-custom-submit-btn {
+  padding: 0.65rem 1.2rem;
+  background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+  border: none;
+  border-radius: 10px;
+  color: #1A0E04;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.google-custom-submit-btn:hover {
+  opacity: 0.9;
+}
+
+.google-oauth-loading-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.google-auth-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(212, 175, 55, 0.2);
+  border-top-color: #4285F4;
+  border-right-color: #EA4335;
+  border-bottom-color: #FBBC05;
+  border-left-color: #34A853;
+  border-radius: 50%;
+  margin: 0 auto 1.2rem auto;
+  animation: googleSpin 0.9s linear infinite;
+}
+
+@keyframes googleSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.google-auth-loading-text {
+  font-size: 0.92rem;
+  color: #D7C7B4;
+  font-weight: 500;
+}
+
+.google-oauth-disclaimer {
+  font-size: 0.75rem;
+  color: #7D6B5C;
+  line-height: 1.45;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1rem;
+}
+
+

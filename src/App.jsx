@@ -13,6 +13,7 @@ import BlogDetailsPage from './components/BlogDetailsPage';
 import LoginPage from './components/LoginPage';
 import AboutPage from './components/AboutPage';
 import QuickBookingPage from './components/QuickBookingPage';
+import ContactPage from './components/ContactPage';
 import DateTimeWidget from './components/DateTimeWidget';
 import { AuthProvider } from './context/AuthContext';
 
@@ -39,6 +40,7 @@ function AppRoutes() {
     onGoToServices: () => { navigate('/services'); window.scrollTo(0, 0); },
     onGoToLogin: () => { navigate('/login'); window.scrollTo(0, 0); },
     onGoToAbout: () => { navigate('/about'); window.scrollTo(0, 0); },
+    onGoToContact: () => { navigate('/contact'); window.scrollTo(0, 0); },
     onOpenBooking: () => { navigate('/quick-booking'); window.scrollTo(0, 0); },
   };
 
@@ -104,6 +106,10 @@ function AppRoutes() {
       <Route 
         path="/login" 
         element={<LoginPage {...navProps} />} 
+      />
+      <Route 
+        path="/contact" 
+        element={<ContactPage {...navProps} />} 
       />
       <Route 
         path="/blogs/:slug" 
