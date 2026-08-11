@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { REAL_TAMIL_NADU_TEMPLES } from '../services/templeDataService';
+import { createBookingRecord } from '../services/bookingService';
 import {
   CalendarDays, MapPin, Users, Clock, Sparkles,
   ChevronRight, Plus, Minus, Shield, Heart, Phone, Mail,
@@ -980,9 +981,32 @@ export default function QuickBookingPage({
   const prevStep = () => setStep(s => Math.max(0, s - 1));
 
   /* ── Payment confirm ── */
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     if (paymentExpired) return;
-    setBookingId(generateBookingId());
+    const bookingPayload = {
+      templeName: selectedTemple?.name || form.templeName || 'Meenakshi Amman Temple',
+      serviceType: darshanType?.name || poojaService?.name || 'VIP Special Priority Darshan',
+      bookingDate: form.date || '2026-08-20',
+      timeSlot: form.timeSlot || 'Morning (07:00 AM)',
+      devoteesCount: (form.adults || 1) + (form.children || 0) + (form.seniors || 0),
+      devoteeName: form.customerName || 'Devotee',
+      devoteeEmail: form.email || 'devotee@example.com',
+      devoteePhone: form.mobile || '+91 98765 43210',
+      requirements: form.requirements || [],
+      specialNotes: form.specialRequests || '',
+      totalAmount: grandTotal || 501
+    };
+
+    try {
+      const apiResult = await createBookingRecord(bookingPayload);
+      if (apiResult && apiResult.booking && apiResult.booking.refNumber) {
+        setBookingId(apiResult.booking.refNumber);
+      } else {
+        setBookingId(generateBookingId());
+      }
+    } catch (err) {
+      setBookingId(generateBookingId());
+    }
     setTransactionId(generateTransactionId());
     setShowSuccess(true);
   };

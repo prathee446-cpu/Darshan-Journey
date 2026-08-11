@@ -25,10 +25,11 @@ export function AuthProvider({ children }) {
 
   const login = (userData) => {
     const formattedUser = {
+      id: userData?.id || userData?._id,
       name: userData?.fullName || userData?.name || 'Devotee',
       email: userData?.email || 'devotee@darshanjourney.com',
       phone: userData?.phone || '+91 98765 43210',
-      token: 'jwt_token_' + Date.now()
+      token: userData?.token || ('jwt_token_' + Date.now())
     };
     setUser(formattedUser);
     localStorage.setItem('darshan_user', JSON.stringify(formattedUser));
