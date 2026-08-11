@@ -91,7 +91,7 @@ const PRODUCT_SLIDES = [
   }
 ];
 
-export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTemples }) {
+export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTemples, onGoToLogin, onGoToContact }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [isScrolled, setIsScrolled] = useState(false);
@@ -203,6 +203,8 @@ export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTempl
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={() => {}}
+        onGoToLogin={onGoToLogin}
+        onGoToContact={onGoToContact}
         onOpenBooking={() => openBookingForCurrent()}
         onOpenDonate={() => alert('Thank you for supporting Temple Seva!')}
       />
@@ -679,6 +681,7 @@ export default function ProductsPage({ onGoToHome, onGoToLanding, onExploreTempl
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={() => {}}
+        onGoToContact={onGoToContact}
         onOpenBooking={() => openBookingForCurrent('Temple Pooja & Darshan')}
       />
 

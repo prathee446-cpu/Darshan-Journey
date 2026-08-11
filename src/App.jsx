@@ -6,6 +6,7 @@ import ExploreTemplesPage from './components/ExploreTemplesPage';
 import ProductsPage from './components/ProductsPage';
 import BlogDetailsPage from './components/BlogDetailsPage';
 import LoginPage from './components/LoginPage';
+import ContactPage from './components/ContactPage';
 
 function BlogDetailsWrapper() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ function BlogDetailsWrapper() {
       onExploreTemples={() => navigate('/explore')}
       onGoToProducts={() => navigate('/products')}
       onGoToLogin={() => navigate('/login')}
+      onGoToContact={() => navigate('/contact')}
       onNavigateToBlog={(newSlug) => navigate(`/blogs/${newSlug}`)}
     />
   );
@@ -40,6 +42,7 @@ function AppRoutes() {
             onExploreTemples={() => navigate('/explore')}
             onGoToProducts={() => navigate('/products')}
             onGoToLogin={() => navigate('/login')}
+            onGoToContact={() => navigate('/contact')}
             onGoToBlog={(slug) => navigate(`/blogs/${slug}`)}
           />
         } 
@@ -52,6 +55,7 @@ function AppRoutes() {
             onGoToLanding={() => navigate('/')}
             onGoToProducts={() => navigate('/products')}
             onGoToLogin={() => navigate('/login')}
+            onGoToContact={() => navigate('/contact')}
           />
         } 
       />
@@ -63,6 +67,7 @@ function AppRoutes() {
             onGoToLanding={() => navigate('/')}
             onExploreTemples={() => navigate('/explore')}
             onGoToLogin={() => navigate('/login')}
+            onGoToContact={() => navigate('/contact')}
           />
         } 
       />
@@ -79,6 +84,20 @@ function AppRoutes() {
             onExploreTemples={() => navigate('/explore')}
             onGoToProducts={() => navigate('/products')}
             onGoToLogin={() => navigate('/login')}
+            onGoToContact={() => navigate('/contact')}
+          />
+        } 
+      />
+      <Route 
+        path="/contact" 
+        element={
+          <ContactPage 
+            onGoToHome={() => navigate('/home')}
+            onGoToLanding={() => navigate('/')}
+            onExploreTemples={() => navigate('/explore')}
+            onGoToProducts={() => navigate('/products')}
+            onGoToLogin={() => navigate('/login')}
+            onGoToContact={() => navigate('/contact')}
           />
         } 
       />

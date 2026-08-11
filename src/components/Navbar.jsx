@@ -10,6 +10,7 @@ export default function Navbar({
   onExploreTemples, 
   onGoToProducts, 
   onGoToLogin,
+  onGoToContact,
   onOpenBooking, 
   onOpenDonate 
 }) {
@@ -68,6 +69,11 @@ export default function Navbar({
 
     if (page === 'explore' && onExploreTemples) {
       onExploreTemples();
+      return;
+    }
+
+    if (page === 'contact' && onGoToContact) {
+      onGoToContact();
       return;
     }
 
@@ -145,13 +151,13 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <a 
-                href="#contact" 
+              <Link 
+                to="/contact" 
                 className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
-                onClick={(e) => handleLinkClick(e, 'home', 'contact', null)}
+                onClick={(e) => handleLinkClick(e, 'contact', null, onGoToContact)}
               >
                 Contact Us
-              </a>
+              </Link>
             </li>
             {user ? (
               <li className="nav-user-item">

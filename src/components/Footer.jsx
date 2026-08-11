@@ -2,7 +2,7 @@ import React from 'react';
 import logoImg from '../assets/darshan-logo.jpeg';
 
 
-export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, onOpenBooking }) {
+export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, onGoToContact, onOpenBooking }) {
   const handleLinkClick = (e, action, sectionId) => {
     e.preventDefault();
     if (action) {
@@ -73,9 +73,9 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
               </li>
               <li>
                 <a 
-                  href="#contact" 
+                  href="/contact" 
                   className="footer-link"
-                  onClick={(e) => handleLinkClick(e, onGoToHome, 'contact')}
+                  onClick={(e) => handleLinkClick(e, onGoToContact, null)}
                 >
                   Contact Us
                 </a>

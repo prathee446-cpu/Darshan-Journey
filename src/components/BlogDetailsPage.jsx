@@ -18,7 +18,7 @@ import { getBlogBySlug, getRelatedBlogs } from '../data/blogsData';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-export default function BlogDetailsPage({ slug, onGoToHome, onExploreTemples, onGoToProducts, onNavigateToBlog }) {
+export default function BlogDetailsPage({ slug, onGoToHome, onExploreTemples, onGoToProducts, onGoToLogin, onGoToContact, onNavigateToBlog }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -54,6 +54,8 @@ export default function BlogDetailsPage({ slug, onGoToHome, onExploreTemples, on
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToLogin={onGoToLogin}
+        onGoToContact={onGoToContact}
         onOpenBooking={() => setIsBookingOpen(true)}
         onOpenDonate={() => setIsDonateOpen(true)}
       />
@@ -226,6 +228,7 @@ export default function BlogDetailsPage({ slug, onGoToHome, onExploreTemples, on
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToContact={onGoToContact}
         onOpenBooking={() => setIsBookingOpen(true)}
       />
 

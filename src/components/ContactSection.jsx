@@ -10,7 +10,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 
-export default function ContactSection() {
+export default function ContactSection({ onGoToHome }) {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -72,7 +72,13 @@ export default function ContactSection() {
       {/* ---------------- 2. BREADCRUMB NAV ---------------- */}
       <div className="contact-breadcrumb-bar">
         <div className="contact-container">
-          <span className="breadcrumb-link">Home</span>
+          <span 
+            className="breadcrumb-link" 
+            onClick={onGoToHome}
+            style={{ cursor: onGoToHome ? 'pointer' : 'default' }}
+          >
+            Home
+          </span>
           <span className="breadcrumb-sep">&gt;</span>
           <span className="breadcrumb-link">Support</span>
           <span className="breadcrumb-sep">&gt;</span>
