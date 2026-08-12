@@ -24,6 +24,14 @@ function BlogDetailsWrapper(props) {
     <BlogDetailsPage 
       {...props}
       slug={slug}
+      onGoToHome={() => navigate('/home')}
+      onGoToLanding={() => navigate('/')}
+      onExploreTemples={() => navigate('/explore')}
+      onGoToProducts={() => navigate('/services')}
+      onGoToServices={() => navigate('/services')}
+      onGoToLogin={() => navigate('/login')}
+      onGoToContact={() => navigate('/contact')}
+      onGoToAbout={() => navigate('/about')}
       onNavigateToBlog={(newSlug) => navigate(`/blogs/${newSlug}`)}
     />
   );

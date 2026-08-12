@@ -80,7 +80,7 @@ export default function LoginPage({
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
 
-  // UI Feedback State
+  // UI Feedback & Auth State
   const [toastMessage, setToastMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -93,8 +93,9 @@ export default function LoginPage({
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
 
   const googleAccounts = [
-    { name: 'Prathika Devotee', email: 'prathika.devotee@gmail.com', avatar: 'P' },
-    { name: 'Darshan Pilgrimages', email: 'seva.darshan2026@gmail.com', avatar: 'D' }
+    { name: 'Devotee User', email: 'devotee.darshan@gmail.com', avatar: 'D' },
+    { name: 'Sacred Traveler', email: 'pilgrim.darshan@gmail.com', avatar: 'S' },
+    { name: 'Prathika Devotee', email: 'prathika.devotee@gmail.com', avatar: 'P' }
   ];
 
   const showToast = (msg) => {
@@ -157,37 +158,47 @@ export default function LoginPage({
       console.warn('FastAPI Auth notice (using fallback):', err);
     }
 
+    const userName = fullName || email.split('@')[0] || 'Devotee';
+    const userData = {
+      fullName: userName,
+      name: userName,
+      email: email || 'devotee@darshanjourney.com',
+      phone: phone || '+91 98765 43210'
+    };
+
     setTimeout(() => {
       setIsLoading(false);
-      const userData = {
-        fullName: fullName || 'Devotee',
-        email: email || 'devotee@darshanjourney.com',
-        phone: phone || '+91 98765 43210'
-      };
       if (isSignUp) {
-        showToast(`🙏 Sacred Welcome, ${fullName || 'Devotee'}! Your account has been registered.`);
+        showToast(`🙏 Sacred Welcome, ${userName}! Your account has been registered.`);
       } else {
         showToast('✨ Signed in successfully! Continuing your spiritual journey...');
       }
       handleSuccessfulAuth(userData);
-    }, 600);
+    }, 800);
   };
 
   const handleGoogleLogin = () => {
     setIsGoogleModalOpen(true);
+    setIsGoogleAuthenticating(false);
+    setShowCustomEmailInput(false);
+    setCustomGoogleEmail('');
   };
 
   const selectGoogleAccount = (acc) => {
     setIsGoogleAuthenticating(true);
+    const userData = {
+      fullName: acc.name,
+      name: acc.name,
+      email: acc.email,
+      avatar: acc.avatar || acc.name.charAt(0),
+      provider: 'google',
+      phone: '+91 98765 43210'
+    };
+
     setTimeout(() => {
       setIsGoogleAuthenticating(false);
       setIsGoogleModalOpen(false);
-      const userData = {
-        fullName: acc.name,
-        email: acc.email,
-        phone: '+91 98765 43210'
-      };
-      showToast(`✨ Welcome ${acc.name}! Signed in via Google.`);
+      showToast(`✨ Google authentication successful! Welcome ${acc.name}.`);
       handleSuccessfulAuth(userData);
     }, 1200);
   };
@@ -197,7 +208,11 @@ export default function LoginPage({
     if (!customGoogleEmail) return;
     const nameFromEmail = customGoogleEmail.split('@')[0];
     const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-    selectGoogleAccount({ name: formattedName, email: customGoogleEmail, avatar: formattedName.charAt(0) });
+    selectGoogleAccount({
+      name: formattedName,
+      email: customGoogleEmail,
+      avatar: formattedName.charAt(0)
+    });
   };
 
   const handleForgotPassword = (e) => {
@@ -278,25 +293,6 @@ export default function LoginPage({
               >
                 <div className="login-welcome-glow" />
 
-                {/* Sacred Lotus Watermark Illustration */}
-                <svg 
-                  className="login-lotus-watermark" 
-                  width="240" 
-                  height="240" 
-                  viewBox="0 0 100 100" 
-                  fill="none"
-                >
-                  <path 
-                    d="M50 15C55 28 65 35 80 40C65 45 55 52 50 65C45 52 35 45 20 40C35 35 45 28 50 15Z" 
-                    fill="currentColor" 
-                  />
-                  <path 
-                    d="M50 25C53 35 60 40 70 43C60 46 53 51 50 60C47 51 40 46 30 43C40 40 47 35 50 25Z" 
-                    fill="currentColor" 
-                    opacity="0.6"
-                  />
-                </svg>
-
                 {/* Official Logo at Top Centered */}
                 <div className="login-welcome-top-brand">
                   <motion.img 
@@ -343,17 +339,9 @@ export default function LoginPage({
                 exit={{ opacity: 0, x: isSignUp ? 25 : -25 }}
                 transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
               >
-                {/* Official Logo above Sign In / Create Account Heading */}
-                <div className="login-card-header" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>
-                  <motion.img 
-                    src={darshanLogo} 
-                    alt="Darshan Journey Logo" 
-                    className="login-form-logo"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: 'easeInOut' }}
-                  />
-                  <h2 className="login-welcome-title" style={{ fontSize: '1.75rem' }}>
+                {/* Card Heading */}
+                <div className="login-card-header" style={{ textAlign: 'left', marginBottom: '0.85rem' }}>
+                  <h2 className="login-welcome-title">
                     {isSignUp ? 'Create Account' : 'Sign In'}
                   </h2>
                   <p className="login-welcome-subtitle">
@@ -368,7 +356,7 @@ export default function LoginPage({
                     variants={formContainerVariants}
                     initial="hidden"
                     animate="visible"
-                    style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: isSignUp ? '0.45rem' : '0.75rem' }}
                   >
                     {isSignUp && (
                       <>
@@ -513,7 +501,7 @@ export default function LoginPage({
                 </form>
 
                 {/* Divider */}
-                <div className="login-divider-row" style={{ margin: '1rem 0 0.85rem 0' }}>
+                <div className="login-divider-row" style={{ margin: isSignUp ? '0.4rem 0 0.35rem 0' : '0.85rem 0 0.65rem 0' }}>
                   <div className="login-divider-line" />
                   <span className="login-divider-text">OR</span>
                   <div className="login-divider-line" />
@@ -535,7 +523,7 @@ export default function LoginPage({
                 </button>
 
                 {/* Bottom Toggle Text */}
-                <div className="login-bottom-toggle" style={{ marginTop: '1rem' }}>
+                <div className="login-bottom-toggle" style={{ marginTop: isSignUp ? '0.35rem' : '0.75rem' }}>
                   {isSignUp ? (
                     <>
                       Already have an account?

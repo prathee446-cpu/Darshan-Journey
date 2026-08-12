@@ -8,6 +8,7 @@ export default function Footer({
   onGoToProducts, 
   onGoToServices, 
   onGoToAbout, 
+  onGoToContact,
   onOpenBooking 
 }) {
   const handleLinkClick = (e, action, fallbackUrl) => {
@@ -87,9 +88,9 @@ export default function Footer({
               </li>
               <li>
                 <a 
-                  href="#contact" 
+                  href="/contact" 
                   className="footer-link"
-                  onClick={(e) => handleLinkClick(e, onGoToHome, 'contact')}
+                  onClick={(e) => handleLinkClick(e, onGoToContact, null)}
                 >
                   Contact Us
                 </a>

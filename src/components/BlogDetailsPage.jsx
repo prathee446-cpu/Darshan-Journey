@@ -24,6 +24,8 @@ export default function BlogDetailsPage({
   onExploreTemples, 
   onGoToProducts, 
   onGoToServices,
+  onGoToLogin,
+  onGoToContact,
   onNavigateToBlog,
   onGoToAbout,
   onOpenBooking
@@ -64,6 +66,8 @@ export default function BlogDetailsPage({
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
         onGoToServices={onGoToServices}
+        onGoToLogin={onGoToLogin}
+        onGoToContact={onGoToContact}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
@@ -95,6 +99,18 @@ export default function BlogDetailsPage({
 
             {/* ARTICLE HEADER CONTAINER */}
             <header className="blog-details-header">
+              <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+                <img 
+                  src={logoImg} 
+                  alt="Darshan Journey Logo" 
+                  style={{ 
+                    height: '70px', 
+                    width: 'auto', 
+                    filter: 'drop-shadow(0 0 10px rgba(200, 169, 106, 0.4))',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
               <span className="blog-detail-category-tag">
                 {blog.categoryBadge || blog.category}
               </span>
@@ -226,6 +242,8 @@ export default function BlogDetailsPage({
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
         onGoToServices={onGoToServices}
+        onGoToLogin={onGoToLogin}
+        onGoToContact={onGoToContact}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />

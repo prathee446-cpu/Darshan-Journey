@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, User, LogOut } from 'lucide-react';
 import logoImg from '../assets/darshan-logo.jpeg';
 
 export default function Navbar({ 
@@ -9,6 +9,7 @@ export default function Navbar({
   onGoToLanding, 
   onExploreTemples, 
   onGoToServices, 
+  onGoToProducts,
   onGoToLogin,
   onGoToAbout,
   onGoToContact,
@@ -16,6 +17,7 @@ export default function Navbar({
   onOpenDonate 
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,80 +27,57 @@ export default function Navbar({
         setIsScrolled(false);
       }
     };
+
+    const checkUser = () => {
+      const savedUser = localStorage.getItem('darshan_user');
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    checkUser();
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('storage', checkUser);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', checkUser);
+    };
   }, []);
 
-  const handleLinkClick = (e, page, sectionId, action) => {
-    e.preventDefault();
-    if (action) {
-      action();
+  const handleLogout = () => {
+    localStorage.removeItem('darshan_user');
+    setUser(null);
+  };
+
+  const handleLinkClick = (e, targetNav, sectionId, customAction) => {
+    if (customAction) {
+      e.preventDefault();
+      customAction();
       return;
     }
 
-    if (page === 'home' && onGoToHome) {
-      onGoToHome();
-      if (sectionId) {
-        setTimeout(() => {
-          document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+    if (activePage === 'home' && sectionId) {
+      e.preventDefault();
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
       }
-      return;
-    }
-
-    if (page === 'services' && onGoToServices) {
-      onGoToServices();
-      return;
-    }
-
-    if (page === 'explore' && onExploreTemples) {
-      onExploreTemples();
-      return;
-    }
-
-    if (page === 'login' && onGoToLogin) {
-      onGoToLogin();
-      return;
-    }
-
-    if (page === 'contact') {
-      if (onGoToContact) {
-        onGoToContact();
-      } else {
-        window.history.pushState({}, '', '/contact');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-      return;
-    }
-
-    if (page === 'about') {
-      if (onGoToAbout) {
-        onGoToAbout();
-      } else {
-        window.history.pushState({}, '', '/about');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-      return;
-    }
-
-    if (page === 'booking') {
-      if (onOpenBooking) {
-        onOpenBooking();
-      } else {
-        window.history.pushState({}, '', '/quick-booking');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-      return;
-    }
-
-    if (sectionId) {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      } else if (onGoToHome) {
+    } else if (activePage !== 'home') {
+      if (onGoToHome) {
+        e.preventDefault();
         onGoToHome();
         setTimeout(() => {
-          document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+          if (sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
+          }
         }, 100);
       }
     }
@@ -106,18 +85,22 @@ export default function Navbar({
 
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
-      <div className="navbar-inner">
+      <div className="container nav-container">
         {/* Left: Uploaded Darshan Journey Golden Logo */}
         <a 
           href="/home" 
           className="nav-logo" 
-          onClick={(e) => handleLinkClick(e, 'home', null, onGoToHome)}
+          onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
         >
           <img src={logoImg} alt="Darshan Journey Logo" className="nav-logo-img" />
+          <div className="nav-logo-text">
+            <span className="logo-title">DARSHAN JOURNEY</span>
+            <span className="logo-sub">SPIRITUAL TEMPLE EXPERIENCE</span>
+          </div>
         </a>
 
-        {/* Center: Navigation Items */}
-        <ul className="nav-menu">
+        {/* Center: Navigation Links */}
+        <ul className="nav-links">
           <li>
             <a 
               href="/home" 
@@ -128,19 +111,28 @@ export default function Navbar({
             </a>
           </li>
           <li>
-            <a 
-              href="/about" 
+            <Link 
+              to="/about" 
               className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
               onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
             >
-              About Us
-            </a>
+              About
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/explore" 
+              className={`nav-link ${activePage === 'explore' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'explore', null, onExploreTemples)}
+            >
+              Explore Temples
+            </Link>
           </li>
           <li>
             <a 
               href="/services" 
-              className={`nav-link ${activePage === 'services' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices)}
+              className={`nav-link ${activePage === 'products' || activePage === 'services' ? 'active' : ''}`}
+              onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices || onGoToProducts)}
             >
               Services
             </a>
@@ -163,20 +155,39 @@ export default function Navbar({
               Contact Us
             </Link>
           </li>
-          <li>
-            <Link 
-              to="/login" 
-              className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
-              onClick={(e) => {
-                if (onGoToLogin) {
-                  e.preventDefault();
-                  onGoToLogin();
-                }
-              }}
-            >
-              Login
-            </Link>
-          </li>
+          {user ? (
+            <li className="nav-user-item">
+              <div className="nav-user-badge">
+                <div className="nav-user-avatar">
+                  {user.avatar || (user.name ? user.name.charAt(0).toUpperCase() : 'U')}
+                </div>
+                <span className="nav-user-name">{user.name || user.fullName || 'Devotee'}</span>
+                <button 
+                  type="button" 
+                  className="nav-logout-btn" 
+                  onClick={handleLogout}
+                  title="Logout"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+            </li>
+          ) : (
+            <li>
+              <Link 
+                to="/login" 
+                className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
+                onClick={(e) => {
+                  if (onGoToLogin) {
+                    e.preventDefault();
+                    onGoToLogin();
+                  }
+                }}
+              >
+                Login
+              </Link>
+            </li>
+          )}
         </ul>
 
         {/* Right: Donate Button */}

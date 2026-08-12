@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, ArrowRight } from 'lucide-react';
+import logoImg from '../assets/darshan-logo.png';
 
 export default function AuthModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
@@ -15,6 +16,17 @@ export default function AuthModal({ isOpen, onClose }) {
         </button>
         
         <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
+          <img 
+            src={logoImg} 
+            alt="Darshan Journey Official Logo" 
+            style={{ 
+              height: '65px', 
+              width: 'auto', 
+              marginBottom: '0.8rem', 
+              filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.4))',
+              objectFit: 'contain'
+            }} 
+          />
           <h2 style={{ 
             fontFamily: 'var(--font-serif)', 
             fontSize: '1.8rem', 
