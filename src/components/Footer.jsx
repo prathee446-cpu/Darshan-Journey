@@ -1,7 +1,15 @@
 import React from 'react';
 import logoImg from '../assets/exact_darshan_logo.png';
 
-export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, onGoToAbout, onOpenBooking }) {
+export default function Footer({ 
+  onGoToHome, 
+  onExploreTemples, 
+  onGoToProducts, 
+  onGoToServices,
+  onGoToAbout, 
+  onGoToContact,
+  onOpenBooking 
+}) {
   const handleLinkClick = (e, action, fallbackUrl) => {
     e.preventDefault();
     if (action) {
@@ -34,9 +42,9 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
             <ul className="footer-links">
               <li>
                 <a 
-                  href="/home" 
+                  href="/" 
                   className="footer-link" 
-                  onClick={(e) => handleLinkClick(e, onGoToHome, '/home')}
+                  onClick={(e) => handleLinkClick(e, onGoToHome, '/')}
                 >
                   Home Page
                 </a>
@@ -61,11 +69,11 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
               </li>
               <li>
                 <a 
-                  href="/products" 
+                  href="/services" 
                   className="footer-link" 
-                  onClick={(e) => handleLinkClick(e, onGoToProducts, '/products')}
+                  onClick={(e) => handleLinkClick(e, onGoToServices || onGoToProducts, '/services')}
                 >
-                  Vendor Products
+                  Services & Sevas
                 </a>
               </li>
               <li>
@@ -79,12 +87,9 @@ export default function Footer({ onGoToHome, onExploreTemples, onGoToProducts, o
               </li>
               <li>
                 <a 
-                  href="#footer" 
+                  href="/contact" 
                   className="footer-link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  onClick={(e) => handleLinkClick(e, onGoToContact, '/contact')}
                 >
                   Contact Us
                 </a>
