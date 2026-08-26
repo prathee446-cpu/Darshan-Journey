@@ -10,11 +10,69 @@ import {
   ArrowRight, 
   X, 
   CheckCircle2, 
-  Heart 
+  Heart,
+  Star
 } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import TestimonialsSection from './TestimonialsSection';
+
+// Refactored Devotee (Customer) and Temple reviews dataset
+const DEVOTEE_REVIEWS = [
+  {
+    id: 1,
+    stars: 5,
+    review: "Everything was simple and well organized. I could find the temple details and plan my visit without any confusion.",
+    name: "Priya R",
+    location: "Chennai, Tamil Nadu"
+  },
+  {
+    id: 2,
+    stars: 5,
+    review: "Planning our family yatra was seamless. All temple timings, pooja rates and transit recommendations were highly accurate.",
+    name: "Arjun K",
+    location: "Coimbatore, Tamil Nadu"
+  },
+  {
+    id: 3,
+    stars: 5,
+    review: "The AI guide was a blessing. It answered our ritual queries instantly and made our pilgrimage completely stress-free.",
+    name: "Sneha R",
+    location: "Bengaluru, Karnataka"
+  }
+];
+
+const TEMPLE_REVIEWS = [
+  {
+    id: 1,
+    stars: 5,
+    review: "Beautiful temple with a peaceful atmosphere. The darshan experience was truly memorable.",
+    templeName: "Tirupati Balaji Temple",
+    location: "Tirupati, Andhra Pradesh",
+    reviewerName: "Rahul K",
+    visitDate: "July 2026",
+    image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: 2,
+    stars: 5,
+    review: "The temple was beautifully maintained and the spiritual atmosphere was wonderful.",
+    templeName: "Ramanathaswamy Temple",
+    location: "Rameswaram, Tamil Nadu",
+    reviewerName: "Ananya S",
+    visitDate: "June 2026",
+    image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: 3,
+    stars: 5,
+    review: "Very peaceful experience. The temple architecture and surroundings were amazing.",
+    templeName: "Meenakshi Amman Temple",
+    location: "Madurai, Tamil Nadu",
+    reviewerName: "Karthik R",
+    visitDate: "May 2026",
+    image: "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=400&q=80"
+  }
+];
 
 // Assets
 import logoImg from '../assets/darshan-logo.jpeg';
@@ -396,42 +454,107 @@ export default function AboutPage({
         </div>
       </section>
 
-      {/* ---------------- DEVOTEE TESTIMONIALS & TRUST STATS ---------------- */}
-      <TestimonialsSection onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))} />
+      {/* ========================================================================= */}
+      {/* 8. VOICES OF OUR DEVOTEES (CUSTOMER REVIEWS) */}
+      {/* ========================================================================= */}
+      <section className="section about-devotees-section">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-tag">VOICES OF OUR DEVOTEES</span>
+            <h2 className="section-title" style={{ color: '#FFFFFF' }}>Voices of Our Devotees</h2>
+            <p className="section-desc" style={{ color: '#BC9F7A' }}>
+              Real experiences from devotees who travelled with Darshan Journey.
+            </p>
+          </div>
+
+          <motion.div 
+            className="about-devotees-grid"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={containerVariants}
+          >
+            {DEVOTEE_REVIEWS.map((review) => (
+              <motion.div 
+                key={review.id} 
+                className="compact-review-card" 
+                variants={itemVariants}
+              >
+                <div>
+                  <div className="compact-review-stars">
+                    {Array.from({ length: review.stars }).map((_, i) => (
+                      <Star key={i} size={16} fill="#D4AF37" color="#D4AF37" style={{ display: 'inline-block', marginRight: '2px' }} />
+                    ))}
+                  </div>
+                  <p className="compact-review-text">
+                    "{review.review}"
+                  </p>
+                </div>
+                <div className="compact-review-author">
+                  <h4 className="compact-review-name">— {review.name}</h4>
+                  <span className="compact-review-location">{review.location}</span>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
 
       {/* ========================================================================= */}
-      {/* 8. CALL TO ACTION SECTION */}
+      {/* 9. TEMPLE REVIEWS */}
       {/* ========================================================================= */}
-      <section className="section about-cta-section">
+      <section className="section about-temple-reviews-section">
         <div className="container">
-          <motion.div 
-            className="about-cta-banner"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="about-cta-heading">Begin Your Divine Journey Today</h2>
-            <p className="about-cta-text">
-              Discover sacred temples, explore timeless traditions, and experience spirituality like never before.
+          <div className="section-header">
+            <span className="section-tag">TEMPLE REVIEWS</span>
+            <h2 className="section-title" style={{ color: '#341F1D' }}>Temple Reviews</h2>
+            <p className="section-desc" style={{ color: '#6E5351' }}>
+              Discover what devotees experienced at sacred destinations.
             </p>
-            <div className="about-cta-buttons">
-              <button 
-                className="btn-primary" 
-                onClick={onExploreTemples}
+          </div>
+
+          <motion.div 
+            className="about-temple-reviews-grid"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={containerVariants}
+          >
+            {TEMPLE_REVIEWS.map((review) => (
+              <motion.div 
+                key={review.id} 
+                className="compact-temple-card" 
+                variants={itemVariants}
               >
-                Explore Temples <ArrowRight size={18} />
-              </button>
-              
-              <button 
-                className="btn-outline"
-                onClick={() => {
-                  document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Contact Us
-              </button>
-            </div>
+                <div className="temple-review-thumbnail-wrap">
+                  <img 
+                    src={review.image} 
+                    alt={review.templeName} 
+                    className="temple-review-thumbnail"
+                  />
+                </div>
+                <div className="temple-review-content">
+                  <div>
+                    <div className="temple-review-stars">
+                      {Array.from({ length: review.stars }).map((_, i) => (
+                        <Star key={i} size={14} fill="#D4AF37" color="#D4AF37" style={{ display: 'inline-block', marginRight: '2px' }} />
+                      ))}
+                    </div>
+                    <p className="temple-review-text">
+                      "{review.review}"
+                    </p>
+                  </div>
+                  <div className="temple-review-details">
+                    <h4 className="temple-review-name">{review.templeName}</h4>
+                    <div className="temple-review-location">{review.location}</div>
+                    <div className="temple-review-meta">
+                      <span>— {review.reviewerName}</span>
+                      <span>Visited: {review.visitDate}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </section>
