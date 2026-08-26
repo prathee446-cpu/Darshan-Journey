@@ -1,14 +1,14 @@
 import React from 'react';
 import logoImg from '../assets/exact_darshan_logo.png';
 
-export default function Footer({ 
-  onGoToHome, 
-  onExploreTemples, 
-  onGoToProducts, 
+export default function Footer({
+  onGoToHome,
+  onExploreTemples,
+  onGoToProducts,
   onGoToServices,
-  onGoToAbout, 
+  onGoToAbout,
   onGoToContact,
-  onOpenBooking 
+  onOpenBooking
 }) {
   const handleLinkClick = (e, action, fallbackUrl) => {
     e.preventDefault();
@@ -41,53 +41,53 @@ export default function Footer({
             <h4 className="footer-heading">Quick Links</h4>
             <ul className="footer-links">
               <li>
-                <a 
-                  href="/" 
-                  className="footer-link" 
+                <a
+                  href="/"
+                  className="footer-link"
                   onClick={(e) => handleLinkClick(e, onGoToHome, '/')}
                 >
                   Home Page
                 </a>
               </li>
               <li>
-                <a 
-                  href="/about" 
-                  className="footer-link" 
+                <a
+                  href="/about"
+                  className="footer-link"
                   onClick={(e) => handleLinkClick(e, onGoToAbout, '/about')}
                 >
                   About Us
                 </a>
               </li>
               <li>
-                <a 
-                  href="/explore" 
-                  className="footer-link" 
+                <a
+                  href="/explore"
+                  className="footer-link"
                   onClick={(e) => handleLinkClick(e, onExploreTemples, '/explore')}
                 >
                   Explore Temples
                 </a>
               </li>
               <li>
-                <a 
-                  href="/services" 
-                  className="footer-link" 
+                <a
+                  href="/services"
+                  className="footer-link"
                   onClick={(e) => handleLinkClick(e, onGoToServices || onGoToProducts, '/services')}
                 >
                   Services & Sevas
                 </a>
               </li>
               <li>
-                <a 
-                  href="/quick-booking" 
-                  className="footer-link" 
+                <a
+                  href="/quick-booking"
+                  className="footer-link"
                   onClick={(e) => handleLinkClick(e, onOpenBooking, '/quick-booking')}
                 >
                   Quick Booking
                 </a>
               </li>
               <li>
-                <a 
-                  href="/contact" 
+                <a
+                  href="/contact"
                   className="footer-link"
                   onClick={(e) => handleLinkClick(e, onGoToContact, '/contact')}
                 >

@@ -4,19 +4,19 @@ import { Heart, User, LogOut } from 'lucide-react';
 import logoImg from '../assets/exact_darshan_logo.png';
 import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ 
+export default function Navbar({
   activePage = 'home',
-  onGoToHome, 
-  onGoToLanding, 
-  onExploreTemples, 
-  onGoToServices, 
+  onGoToHome,
+  onGoToLanding,
+  onExploreTemples,
+  onGoToServices,
   onGoToProducts,
   onGoToLogin,
   onGoToAbout,
   onGoToContact,
   onGoToDashboard,
-  onOpenBooking, 
-  onOpenDonate 
+  onOpenBooking,
+  onOpenDonate
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const authContext = useAuth();
@@ -135,9 +135,9 @@ export default function Navbar({
       <div className="container">
         <div className="navbar-inner">
           {/* Left: Temple Logo */}
-          <a 
-            href="/" 
-            className="nav-logo" 
+          <a
+            href="/"
+            className="nav-logo"
             onClick={(e) => handleLinkClick(e, 'home', null, onGoToHome)}
           >
             <img src={logoImg} alt="Darshan Journey Temple" className="nav-logo-img" />
@@ -147,8 +147,8 @@ export default function Navbar({
           {/* Center: Navigation Links */}
           <ul className="nav-menu">
             <li>
-              <a 
-                href="/" 
+              <a
+                href="/"
                 className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
                 onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
               >
@@ -156,8 +156,8 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <a 
-                href="/about" 
+              <a
+                href="/about"
                 className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
                 onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
               >
@@ -165,8 +165,8 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <a 
-                href="/services" 
+              <a
+                href="/services"
                 className={`nav-link ${activePage === 'products' || activePage === 'services' ? 'active' : ''}`}
                 onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices || onGoToProducts)}
               >
@@ -183,8 +183,8 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <a 
-                href="/contact" 
+              <a
+                href="/contact"
                 className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
                 onClick={(e) => handleLinkClick(e, 'contact', null, onGoToContact)}
               >
@@ -193,13 +193,13 @@ export default function Navbar({
             </li>
             {user ? (
               <li style={{ display: 'flex', alignItems: 'center' }}>
-                <a 
+                <a
                   href="/dashboard"
                   className={`nav-link ${activePage === 'dashboard' ? 'active' : ''}`}
                   onClick={(e) => handleLinkClick(e, 'dashboard', null, onGoToDashboard)}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                 >
-                  <span 
+                  <span
                     style={{
                       width: '24px',
                       height: '24px',
@@ -239,8 +239,8 @@ export default function Navbar({
               </li>
             ) : (
               <li>
-                <a 
-                  href="/login" 
+                <a
+                  href="/login"
                   className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
                   onClick={(e) => handleLinkClick(e, 'login', null, onGoToLogin)}
                 >

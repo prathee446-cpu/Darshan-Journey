@@ -1,1045 +1,1859 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { REAL_TAMIL_NADU_TEMPLES } from '../services/templeDataService';
 import {
-  CalendarDays, MapPin, Users, Clock, Sparkles,
-  ChevronRight, Plus, Minus, Shield, Heart, Phone, Mail,
-  Lock, Headphones, X, Search,
-  QrCode, Timer, Download, Star, Home, Eye,
-  Check, AlertCircle, Copy,
-  Printer, ChevronDown, Wifi, Image as ImageIcon,
-  ChevronLeft, Globe, Ticket, Info, ChevronUp,
-  Accessibility, Car, Building, Compass,
+  CalendarDays, MapPin, Users, Clock, Star, CheckCircle2, Sparkles,
+  Plus, Minus, Shield, Phone, Mail, Headphones, X, Search,
+  Printer, ChevronLeft, ChevronRight, ChevronDown, Info, Edit3, ArrowLeft,
+  Check, Globe, Copy, User, Settings, CreditCard
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-/* ─────────── CONSTANTS ─────────── */
+/* ═══════════════════════════════════════════════════════════════
+   CONSTANTS & DATA
+   ═══════════════════════════════════════════════════════════════ */
 
-/**
- * DEVOTEE_CATEGORIES — configurable from backend/admin.
- * Update ageRange here to reflect policy changes without touching JSX.
- */
-const DEVOTEE_CATEGORIES = [
-  { field: 'adults',   label: 'Adults',          ageRange: '13+ years',  icon: '👤', min: 1 },
-  { field: 'children', label: 'Children',         ageRange: '5–12 years', icon: '👶', min: 0 },
-  { field: 'seniors',  label: 'Senior Citizens',  ageRange: '60+ years',  icon: '🧓', min: 0 },
+const DARSHAN_TYPES = [
+  { id: 'general', name: 'General Darshan', desc: 'Standard entry to sanctum', price: 0, duration: '2–3 Hours', icon: '🙏' },
+  { id: 'vip', name: 'VIP Darshan', desc: 'Priority entry with reduced wait', price: 1200, duration: '1–2 Hours', icon: '⭐' },
+  { id: 'special', name: 'Special Darshan', desc: 'Close-up darshan & blessings', price: 800, duration: '45–60 Min', icon: '✨' },
+  { id: 'free', name: 'Other / Free Entry', desc: 'Open public temple darshan', price: 0, duration: 'Open', icon: '🕉️' },
 ];
 
-const DEFAULT_DARSHAN_TYPES = [
-  { id: 'general',  name: 'General Darshan',  desc: 'Standard entry to the sanctum',            price: 0,    duration: '2–3 Hours',  icon: '🙏' },
-  { id: 'vip',      name: 'VIP Darshan',       desc: 'Priority entry with reduced waiting time', price: 1200, duration: '1–2 Hours',  icon: '⭐' },
-  { id: 'special',  name: 'Special Darshan',   desc: 'Close-up darshan with personal blessings', price: 800,  duration: '45–60 Min', icon: '✨' },
-  { id: 'free',     name: 'Free Entry',         desc: 'Open public darshan during temple hours',  price: 0,    duration: 'Open',       icon: '🕉️' },
-];
-
-const DEFAULT_POOJA_SERVICES = [
-  { id: 'archana',    name: 'Archana',       desc: 'Chanting of names and offering flowers',      price: 501,  duration: '20 min',  icon: '📿' },
-  { id: 'abhishekam', name: 'Abhishekam',    desc: 'Traditional ritual bath offering to deity',   price: 2200, duration: '45 min',  icon: '🪔' },
-  { id: 'aarti',      name: 'Aarti',         desc: 'Lamp offering ceremony with devotional songs', price: 350,  duration: '15 min',  icon: '🪔' },
-  { id: 'homam',      name: 'Homam',         desc: 'Sacred fire ritual with mantras',              price: 4500, duration: '90 min',  icon: '🔥' },
-  { id: 'special',    name: 'Special Pooja', desc: 'Comprehensive pooja package with prasad',      price: 1500, duration: '30 min',  icon: '🌺' },
-];
-
-const DEFAULT_TIME_SLOTS = [
-  { id: 't1', label: '05:00 AM – 07:00 AM', sublabel: 'Pratah Darshan',    availability: 'available' },
-  { id: 't2', label: '08:00 AM – 10:00 AM', sublabel: 'Madhyan Darshan',   availability: 'available' },
-  { id: 't3', label: '11:00 AM – 01:00 PM', sublabel: 'Tritiya Prahara',   availability: 'limited'   },
-  { id: 't4', label: '02:00 PM – 04:00 PM', sublabel: 'Chakarana Darshan', availability: 'available' },
-  { id: 't5', label: '05:00 PM – 07:00 PM', sublabel: 'Sandhya Darshan',   availability: 'booked'    },
-  { id: 't6', label: '08:00 PM – 09:00 PM', sublabel: 'Sayam Darshan',     availability: 'available' },
-];
-
-const ADDITIONAL_REQ = [
-  { id: 'wheelchair', label: 'Wheelchair Assistance', icon: <Accessibility size={16} /> },
-  { id: 'transport',  label: 'Transport Required',    icon: <Car size={16} />           },
-  { id: 'accomm',    label: 'Accommodation',          icon: <Building size={16} />      },
-  { id: 'guide',     label: 'Guide Required',         icon: <Compass size={16} />       },
+const POOJA_SERVICES = [
+  { id: 'archana', name: 'Archana', desc: 'Name chanting & flower offering', price: 501, duration: '20 min', icon: '📿' },
+  { id: 'abhishekam', name: 'Abhishekam', desc: 'Ritual holy bath for deity', price: 2200, duration: '45 min', icon: '🪔' },
+  { id: 'aarti', name: 'Aarti', desc: 'Lamp offering & mantras', price: 350, duration: '15 min', icon: '🪔' },
+  { id: 'homam', name: 'Homam', desc: 'Sacred fire ritual', price: 4500, duration: '90 min', icon: '🔥' },
+  { id: 'none', name: 'No Service', desc: 'Proceed with darshan only', price: 0, duration: '—', icon: '🚫' },
 ];
 
 const PAYMENT_METHODS = [
-  { id: 'upi',        label: 'UPI',        icon: '📲', color: '#7C3AED' },
-  { id: 'gpay',       label: 'Google Pay', icon: '🟢', color: '#34A853' },
-  { id: 'phonepe',    label: 'PhonePe',    icon: '🟣', color: '#5F259F' },
-  { id: 'paytm',      label: 'Paytm',      icon: '🔵', color: '#00BAF2' },
-  { id: 'bhim',       label: 'BHIM',       icon: '🇮🇳', color: '#FF6600' },
-  { id: 'card',       label: 'Card',       icon: '💳', color: '#1A1A2E' },
-  { id: 'netbanking', label: 'Net Banking', icon: '🏦', color: '#0F4C75' },
+  { id: 'upi', label: 'UPI', icon: '📲' },
+  { id: 'gpay', label: 'Google Pay', icon: '💳' },
+  { id: 'phonepe', label: 'PhonePe', icon: '💜' },
+  { id: 'paytm', label: 'Paytm', icon: '🔵' },
 ];
 
-const STEP_LABELS = ['Location & Temple', 'Booking Details', 'Payment'];
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════ */
 
-const ACCORDION_ORDER = ['darshan', 'pooja', 'datetime', 'devotees', 'customer', 'requirements'];
-
-/* ─────────── HELPERS ─────────── */
-function generateBookingId() {
-  const ts   = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `DJ-${ts}-${rand}`;
+function parseTimeToMinutes(timeStr) {
+  if (!timeStr) return 360;
+  const cleaned = timeStr.trim().toUpperCase();
+  const match = cleaned.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+  if (!match) return 360;
+  let [, h, m, period] = match;
+  h = parseInt(h, 10);
+  m = parseInt(m, 10);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  return h * 60 + m;
 }
-function generateTransactionId() {
-  return 'TXN' + Math.random().toString(36).substring(2, 12).toUpperCase();
+
+function minutesToTimeStr(mins) {
+  let h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${String(m).padStart(2, '0')} ${period}`;
 }
 
-/* ─────────── MINI QR CODE ─────────── */
-function QRCode({ value, size = 160 }) {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !value) return;
-    const ctx    = canvas.getContext('2d');
-    const cs     = Math.floor(size / 25);
-    const actual = cs * 25;
-    canvas.width  = actual;
-    canvas.height = actual;
-
-    let hash = 0;
-    for (let i = 0; i < value.length; i++) {
-      hash = ((hash << 5) - hash) + value.charCodeAt(i);
-      hash |= 0;
+function generateTempleTimeSlots(temple, dateStr) {
+  if (!temple) return [];
+  const openMin = parseTimeToMinutes(temple.openingTime || '6:00 AM');
+  const closeMin = parseTimeToMinutes(temple.closingTime || '8:30 PM');
+  let breakStart = -1, breakEnd = -1;
+  if (temple.afternoonBreak) {
+    const parts = temple.afternoonBreak.split('–').map(s => s.trim());
+    if (parts.length === 2) {
+      breakStart = parseTimeToMinutes(parts[0]);
+      breakEnd = parseTimeToMinutes(parts[1]);
     }
+  }
+  const slots = [];
+  for (let start = openMin; start + 60 <= closeMin; start += 60) {
+    const end = start + 60;
+    if (breakStart >= 0 && breakEnd >= 0 && start < breakEnd && end > breakStart) continue;
+    const label = `${minutesToTimeStr(start)} – ${minutesToTimeStr(end)}`;
+    let status = 'available';
+    if (dateStr) {
+      const dateObj = new Date(dateStr);
+      const hash = (dateObj.getDate() * 17 + start * 3 + (temple.id || 1) * 7) % 100;
+      if (hash < 10) status = 'booked';
+      else if (hash < 30) status = 'limited';
+    }
+    slots.push({ id: `slot-${start}`, label, status });
+  }
+  return slots;
+}
 
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, actual, actual);
+function generateDateOptions(count = 7) {
+  const dates = [];
+  const today = new Date();
+  for (let i = 1; i <= count; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayNum = d.getDate();
+    const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+    dates.push({ iso, display: `${dayNum} ${monthName}`, sub: dayName });
+  }
+  return dates;
+}
 
-    const drawFinder = (x, y) => {
-      ctx.fillStyle = '#341F1D';
-      ctx.fillRect(x * cs, y * cs, 7 * cs, 7 * cs);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect((x + 1) * cs, (y + 1) * cs, 5 * cs, 5 * cs);
-      ctx.fillStyle = '#341F1D';
-      ctx.fillRect((x + 2) * cs, (y + 2) * cs, 3 * cs, 3 * cs);
-    };
-    drawFinder(1, 1); drawFinder(17, 1); drawFinder(1, 17);
+function generateRef() {
+  return 'DJ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
-    ctx.fillStyle = '#C8A96A';
-    ctx.fillRect(11 * cs, 11 * cs, 3 * cs, 3 * cs);
+/* ═══════════════════════════════════════════════════════════════
+   QR CODE COMPONENT — Real Scannable QR via API
+   ═══════════════════════════════════════════════════════════════ */
 
-    const seed = Math.abs(hash);
-    const lcg  = s => (1664525 * s + 1013904223) & 0xFFFFFFFF;
-    let rng = seed;
+function ScanQRCode({ value, size = 180, darkColor = '341F1D' }) {
+  if (!value) return null;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&color=${darkColor}&bgcolor=FFFFFF&margin=6&format=png`;
+  return (
+    <img
+      src={qrUrl}
+      alt="QR Code"
+      width={size}
+      height={size}
+      style={{
+        borderRadius: '12px',
+        border: '1.5px solid rgba(200,169,106,0.25)',
+        background: '#FFFFFF',
+        display: 'block',
+      }}
+    />
+  );
+}
 
-    ctx.fillStyle = '#341F1D';
-    for (let row = 1; row < 24; row++) {
-      for (let col = 1; col < 24; col++) {
-        if ((row < 8 && col < 8) || (row < 8 && col > 16) || (row > 16 && col < 8)) continue;
-        if (row >= 11 && row <= 13 && col >= 11 && col <= 13) continue;
-        rng = lcg(rng);
-        const cc = value.charCodeAt((row * 25 + col) % value.length) || 0;
-        if (((rng ^ cc) & 0xFF) > 100) {
-          ctx.fillRect(col * cs, row * cs, cs, cs);
-        }
+/* ═══════════════════════════════════════════════════════════════
+   STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+const S = {
+  card: {
+    background: '#FFFFFF',
+    borderRadius: '16px',
+    border: '1.5px solid rgba(200,169,106,0.2)',
+    padding: '1.5rem',
+    boxShadow: '0 4px 18px rgba(52,31,29,0.04)',
+  },
+  sectionIcon: (color = '#C8A96A') => ({
+    width: '34px', height: '34px', borderRadius: '10px',
+    background: `rgba(200,169,106,0.12)`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0, color,
+  }),
+  sectionTitle: {
+    fontFamily: "'Cinzel', serif",
+    fontSize: '1.05rem',
+    fontWeight: 700,
+    color: '#341F1D',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    margin: 0,
+  },
+  btnPrimary: {
+    background: 'linear-gradient(135deg, #C8A96A 0%, #D4AF37 100%)',
+    color: '#341F1D',
+    border: 'none',
+    borderRadius: '10px',
+    padding: '0.8rem 1.6rem',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '0.9rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    boxShadow: '0 4px 15px rgba(200,169,106,0.3)',
+    transition: 'all 0.25s ease',
+  },
+  btnOutline: {
+    background: '#FFFFFF',
+    color: '#341F1D',
+    border: '1.5px solid rgba(200,169,106,0.4)',
+    borderRadius: '10px',
+    padding: '0.7rem 1.3rem',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.4rem',
+    transition: 'all 0.25s ease',
+  },
+  input: {
+    width: '100%',
+    padding: '0.7rem 0.9rem',
+    borderRadius: '10px',
+    border: '1.5px solid rgba(200,169,106,0.3)',
+    background: '#FFFDF9',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '0.88rem',
+    color: '#341F1D',
+    outline: 'none',
+    boxSizing: 'border-box',
+  },
+  summaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.35rem 0',
+    fontSize: '0.85rem',
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════════════════ */
+
+export default function QuickBookingPage({
+  onGoToHome, onGoToLanding, onExploreTemples, onGoToProducts,
+  onGoToLogin, onGoToAbout, onOpenBooking
+}) {
+  const temples = REAL_TAMIL_NADU_TEMPLES;
+
+  /* ─── Route Sync ─── */
+  const [currentPageView, setCurrentPageView] = useState(() => {
+    const path = window.location.pathname.toLowerCase();
+    return (path.includes('/booking') && !path.endsWith('/quick-booking')) ? 'booking' : 'location';
+  });
+
+  const [activeStepNum, setActiveStepNum] = useState(() => {
+    return currentPageView === 'booking' ? 2 : 1;
+  });
+
+  /* ─── Location State ─── */
+  const [selectedState, setSelectedState] = useState('Tamil Nadu');
+  const [selectedCityDistrict, setSelectedCityDistrict] = useState('');
+  const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState('');
+
+  /* ─── Temple State ─── */
+  const [templeSearchQuery, setTempleSearchQuery] = useState('');
+  const [selectedTempleId, setSelectedTempleId] = useState(null);
+  const [isTempleDetailsOpen, setIsTempleDetailsOpen] = useState(false);
+
+  /* ─── Booking Details State ─── */
+  const [darshanType, setDarshanType] = useState(null);
+  const [poojaService, setPoojaService] = useState(null);
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [calendarViewDate, setCalendarViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [selectedDateIso, setSelectedDateIso] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+
+  const [devotees, setDevotees] = useState({ adults: 1, children: 0, seniors: 0 });
+
+  const { user: authUser, updateUser } = useAuth();
+  const [customer, setCustomer] = useState(() => {
+    // Auto-populate from authenticated user session
+    if (authUser) {
+      return {
+        fullName: authUser.fullName || authUser.name || '',
+        mobile: authUser.phone || authUser.mobile || '',
+        email: authUser.email || '',
+        address: authUser.address || '',
+        emergencyContact: authUser.emergencyContact || ''
+      };
+    }
+    try {
+      const saved = localStorage.getItem('darshan_user') || localStorage.getItem('currentUser');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          fullName: parsed.fullName || parsed.name || '',
+          mobile: parsed.phone || parsed.mobile || '',
+          email: parsed.email || '',
+          address: parsed.address || '',
+          emergencyContact: parsed.emergencyContact || ''
+        };
       }
+    } catch (e) { /* ignore */ }
+    return { fullName: '', mobile: '', email: '', address: '', emergencyContact: '' };
+  });
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [customerForm, setCustomerForm] = useState(customer);
+  const [customerErrors, setCustomerErrors] = useState({});
+
+  // Synchronize customer details whenever authUser updates or loads
+  useEffect(() => {
+    if (authUser) {
+      const updated = {
+        fullName: customer.fullName || authUser.fullName || authUser.name || '',
+        mobile: customer.mobile || authUser.phone || authUser.mobile || '',
+        email: customer.email || authUser.email || '',
+        address: customer.address || authUser.address || '',
+        emergencyContact: customer.emergencyContact || authUser.emergencyContact || ''
+      };
+      setCustomer(updated);
+      setCustomerForm(updated);
     }
+  }, [authUser]);
 
-    ctx.fillStyle = '#341F1D';
-    ctx.fillRect(18 * cs, 18 * cs, 5 * cs, 5 * cs);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(19 * cs, 19 * cs, 3 * cs, 3 * cs);
-    ctx.fillStyle = '#C8A96A';
-    ctx.fillRect(20 * cs, 20 * cs, cs, cs);
-  }, [value, size]);
+  /* ─── Sequential Section Accordions ─── */
+  const [visibleSections, setVisibleSections] = useState({
+    darshan: true, pooja: false, date: false, time: false, devotees: false, customer: false, summary: false,
+  });
 
-  return <canvas ref={canvasRef} style={{ display: 'block', borderRadius: '8px', imageRendering: 'pixelated' }} />;
-}
+  /* ─── Payment State ─── */
+  const [paymentStep, setPaymentStep] = useState(1); // 1: pay, 2: processing, 3: success
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
+  const [bookingRef, setBookingRef] = useState('');
 
-/* ─────────── COUNTDOWN TIMER ─────────── */
-function CountdownTimer({ onExpire }) {
-  const [seconds, setSeconds] = useState(600);
-  const [expired, setExpired] = useState(false);
+  /* ─── Derived Lists & Selections ─── */
+  const uniqueLocations = useMemo(() => {
+    const list = Array.from(new Set(temples.map(t => t.district))).sort();
+    return list;
+  }, [temples]);
+
+  const filteredLocationsForPopup = useMemo(() => {
+    if (!locationSearchQuery.trim()) return uniqueLocations;
+    const q = locationSearchQuery.toLowerCase();
+    return uniqueLocations.filter(loc => loc.toLowerCase().includes(q));
+  }, [uniqueLocations, locationSearchQuery]);
+
+  const filteredTemples = useMemo(() => {
+    return temples.filter(t => {
+      if (selectedCityDistrict && t.district.toLowerCase() !== selectedCityDistrict.toLowerCase()) {
+        return false;
+      }
+      if (templeSearchQuery.trim()) {
+        const q = templeSearchQuery.toLowerCase();
+        const matchName = t.name.toLowerCase().includes(q);
+        const matchDist = t.district.toLowerCase().includes(q);
+        const matchAddr = t.address.toLowerCase().includes(q);
+        if (!matchName && !matchDist && !matchAddr) return false;
+      }
+      return true;
+    });
+  }, [temples, selectedCityDistrict, templeSearchQuery]);
+
+  const selectedTemple = useMemo(() => {
+    return temples.find(t => t.id === selectedTempleId) || null;
+  }, [temples, selectedTempleId]);
+
+  const availableTimeSlots = useMemo(() => {
+    return generateTempleTimeSlots(selectedTemple, selectedDateIso);
+  }, [selectedTemple, selectedDateIso]);
+
+  const selectedDarshanObj = DARSHAN_TYPES.find(d => d.id === darshanType);
+  const selectedPoojaObj = POOJA_SERVICES.find(p => p.id === poojaService);
+  const totalDevotees = devotees.adults + devotees.children + devotees.seniors;
+  const baseDarshanTotal = (selectedDarshanObj?.price || 0) * totalDevotees;
+  const serviceTotal = selectedPoojaObj?.price || 0;
+  const subtotal = baseDarshanTotal + serviceTotal;
+  const gstAmount = Math.round(subtotal * 0.05);
+  const grandTotal = subtotal + gstAmount;
+
+  const isCustomerValid = Boolean(
+    customer.fullName.trim() && customer.mobile.trim() &&
+    customer.email.trim() && customer.emergencyContact.trim()
+  );
+
+  const canContinueToPayment = Boolean(
+    selectedTemple && darshanType && poojaService && selectedDateIso && selectedTimeSlot &&
+    totalDevotees >= 1 && isCustomerValid
+  );
+
+  /* ─── Auto-Open Next Section Handler ─── */
+  useEffect(() => {
+    if (darshanType) {
+      setVisibleSections(prev => ({ ...prev, pooja: true }));
+    }
+  }, [darshanType]);
 
   useEffect(() => {
-    if (seconds <= 0) { setExpired(true); onExpire?.(); return; }
-    const t = setInterval(() => setSeconds(s => s - 1), 1000);
-    return () => clearInterval(t);
-  }, [seconds, onExpire]);
+    if (poojaService) {
+      setVisibleSections(prev => ({ ...prev, date: true }));
+    }
+  }, [poojaService]);
 
-  const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-  const secs = String(seconds % 60).padStart(2, '0');
+  useEffect(() => {
+    if (selectedDateIso) {
+      setVisibleSections(prev => ({ ...prev, time: true }));
+    }
+  }, [selectedDateIso]);
 
-  return (
-    <div className={`qb-countdown ${seconds < 60 ? 'urgent' : ''} ${expired ? 'expired' : ''}`}>
-      <Timer size={16} />
-      {expired
-        ? <span>Payment window expired</span>
-        : <span>Time remaining: <strong>{mins}:{secs}</strong></span>}
-    </div>
-  );
-}
+  useEffect(() => {
+    if (selectedTimeSlot) {
+      setVisibleSections(prev => ({ ...prev, devotees: true, customer: true, summary: true }));
+    }
+  }, [selectedTimeSlot]);
 
-/* ─────────── SUCCESS CHECKMARK ─────────── */
-function SuccessCheckmark() {
-  return (
-    <div className="qb-success-check-wrapper">
-      <svg className="qb-success-check-svg" viewBox="0 0 130 130" fill="none">
-        <circle className="qb-check-circle" cx="65" cy="65" r="60" stroke="#22C55E" strokeWidth="5" fill="none" />
-        <polyline className="qb-check-mark" points="35,65 55,85 95,45" stroke="#22C55E" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
+  /* ─── Navigation & Step Transitions ─── */
+  const navigateToBookingPage = () => {
+    if (!selectedTemple) return;
+    window.history.pushState({}, '', '/quick-booking/booking');
+    setCurrentPageView('booking');
+    setActiveStepNum(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-/* ─────────── TEMPLE IMAGE WITH FALLBACK ─────────── */
-function TempleImg({ src, alt, className, style, height = '180px' }) {
-  const [err, setErr] = useState(false);
-  useEffect(() => { setErr(false); }, [src]);
+  const navigateToLocationPage = () => {
+    window.history.pushState({}, '', '/quick-booking');
+    setCurrentPageView('location');
+    setActiveStepNum(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  if (!src || err) {
+  const handleContinueToReviewPayment = () => {
+    if (!canContinueToPayment) return;
+    setBookingRef(generateRef());
+    setPaymentStep(1);
+    setActiveStepNum(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCompletePayment = () => {
+    setPaymentStep(2);
+    setTimeout(() => setPaymentStep(3), 1800);
+  };
+
+  const handleBookAnother = () => {
+    setSelectedTempleId(null);
+    setDarshanType(null);
+    setPoojaService(null);
+    setSelectedDateIso('');
+    setSelectedTimeSlot(null);
+    setVisibleSections({ darshan: true, pooja: false, date: false, time: false, devotees: false, customer: false, summary: false });
+    navigateToLocationPage();
+  };
+
+  /* ─── Devotee Counters ─── */
+  const handleDevoteeChange = (field, delta) => {
+    setDevotees(prev => {
+      const minVal = field === 'adults' ? 1 : 0;
+      return { ...prev, [field]: Math.max(minVal, prev[field] + delta) };
+    });
+  };
+
+  /* ─── Customer Form Save ─── */
+  const handleSaveCustomer = (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!customerForm.fullName.trim()) errs.fullName = 'Full Name is required';
+    if (!customerForm.mobile.trim() || customerForm.mobile.length < 10) errs.mobile = 'Valid 10-digit phone is required';
+    if (!customerForm.email.trim() || !/\S+@\S+\.\S+/.test(customerForm.email)) errs.email = 'Valid email is required';
+    if (!customerForm.emergencyContact.trim() || customerForm.emergencyContact.length < 10) errs.emergencyContact = 'Emergency contact is required';
+    if (Object.keys(errs).length) { setCustomerErrors(errs); return; }
+    setCustomer(customerForm);
+    localStorage.setItem('darshan_user', JSON.stringify(customerForm));
+    if (updateUser) {
+      updateUser({
+        fullName: customerForm.fullName,
+        phone: customerForm.mobile,
+        mobile: customerForm.mobile,
+        email: customerForm.email,
+        address: customerForm.address,
+        emergencyContact: customerForm.emergencyContact
+      });
+    }
+    setCustomerErrors({});
+    setIsEditingCustomer(false);
+  };
+
+  /* ═══════════════════════════════════════════════════════════════
+     RENDER: COMPACT 3-STEP INDICATOR
+     ═══════════════════════════════════════════════════════════════ */
+
+  const renderStepIndicator = () => {
+    const steps = [
+      { num: '01', label: 'Location & Temple', done: activeStepNum > 1, active: activeStepNum === 1 },
+      { num: '02', label: 'Booking Details', done: activeStepNum > 2, active: activeStepNum === 2 },
+      { num: '03', label: 'Review & Payment', done: activeStepNum > 3, active: activeStepNum === 3 },
+    ];
     return (
-      <div className={`qb-temple-img-fallback ${className || ''}`} style={{ ...style, minHeight: height }}>
-        <ImageIcon size={32} style={{ color: '#C8A96A', opacity: 0.6 }} />
-        <span>Temple image unavailable</span>
+      <div style={{
+        background: '#FFFDF9',
+        borderBottom: '1px solid rgba(200,169,106,0.2)',
+        padding: '0.8rem 1rem',
+      }}>
+        <div style={{
+          maxWidth: '720px', margin: '0 auto',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+        }}>
+          {steps.map((step, idx) => (
+            <React.Fragment key={step.num}>
+              <div
+                onClick={() => {
+                  if (step.done) {
+                    if (step.num === '01') navigateToLocationPage();
+                    else if (step.num === '02') { setActiveStepNum(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+                  }
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  cursor: step.done ? 'pointer' : 'default',
+                }}
+              >
+                <div style={{
+                  width: '24px', height: '24px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.72rem', fontWeight: 700, flexShrink: 0,
+                  background: step.done ? '#16a34a' : step.active ? 'linear-gradient(135deg, #C8A96A, #D4AF37)' : '#E5E5E5',
+                  color: step.done || step.active ? '#FFF' : '#888',
+                }}>
+                  {step.done ? <Check size={13} strokeWidth={3} /> : step.num}
+                </div>
+                <span style={{
+                  fontSize: '0.82rem',
+                  fontWeight: step.active ? 700 : 500,
+                  color: step.done ? '#16a34a' : step.active ? '#C8A96A' : '#888',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  whiteSpace: 'nowrap',
+                }}>
+                  {step.label} {step.done && '✓'}
+                </span>
+              </div>
+              {idx < steps.length - 1 && (
+                <div style={{
+                  width: '40px', height: '2px', flexShrink: 0,
+                  background: step.done ? '#16a34a' : 'rgba(200,169,106,0.25)',
+                  borderRadius: '1px',
+                }} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     );
-  }
-  return <img src={src} alt={alt} className={className} style={style} onError={() => setErr(true)} />;
-}
+  };
 
-/* ─────────── SEARCHABLE SELECT ─────────── */
-function SearchableSelect({ value, onChange, options, placeholder, disabled = false, icon }) {
-  const [open,   setOpen]   = useState(false);
-  const [search, setSearch] = useState('');
-  const wrapRef   = useRef(null);
-  const searchRef = useRef(null);
+  /* ═══════════════════════════════════════════════════════════════
+     POPUP: SMALL CENTERED LOCATION POPUP MODAL
+     ═══════════════════════════════════════════════════════════════ */
 
-  useEffect(() => {
-    const handler = e => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  useEffect(() => {
-    if (open) { setTimeout(() => searchRef.current?.focus(), 80); }
-    else       { setSearch(''); }
-  }, [open]);
-
-  const filtered = useMemo(() =>
-    options.filter(o => o.toLowerCase().includes(search.toLowerCase())),
-    [options, search]
-  );
-
-  return (
-    <div className={`qb-ss-wrap ${disabled ? 'qb-ss-disabled' : ''}`} ref={wrapRef}>
-      <button
-        type="button"
-        className={`qb-ss-trigger ${open ? 'open' : ''} ${value ? 'has-value' : ''}`}
-        onClick={() => { if (!disabled) setOpen(o => !o); }}
-        disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        {icon && <span className="qb-ss-icon">{icon}</span>}
-        <span className="qb-ss-value">{value || placeholder}</span>
-        <ChevronDown size={15} className={`qb-ss-chevron ${open ? 'rotated' : ''}`} />
-      </button>
-
-      {open && (
-        <div className="qb-ss-panel">
-          <div className="qb-ss-search-row">
-            <Search size={13} className="qb-ss-search-icon" />
-            <input
-              ref={searchRef}
-              className="qb-ss-search-inp"
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search..."
-            />
-          </div>
-          <div className="qb-ss-list" role="listbox">
-            {filtered.length === 0 ? (
-              <div className="qb-ss-empty">No results found</div>
-            ) : (
-              filtered.map(opt => (
-                <button
-                  type="button"
-                  key={opt}
-                  role="option"
-                  aria-selected={value === opt}
-                  className={`qb-ss-opt ${value === opt ? 'selected' : ''}`}
-                  onClick={() => { onChange(opt); setOpen(false); }}
-                >
-                  {value === opt && <Check size={12} className="qb-ss-opt-check" />}
-                  {opt}
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─────────── TEMPLE SEARCH MODAL ─────────── */
-function TempleSearchModal({ onClose, onSelect, preFilterDistrict = null }) {
-  const [query, setQuery] = useState('');
-  const [page,  setPage]  = useState(1);
-  const PAGE_SIZE = 12;
-  const inputRef = useRef(null);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
-
-  useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return REAL_TAMIL_NADU_TEMPLES.filter(t => {
-      const matchDist  = !preFilterDistrict || t.district === preFilterDistrict;
-      const matchQuery = !q ||
-        (t.name     || '').toLowerCase().includes(q) ||
-        (t.district || '').toLowerCase().includes(q) ||
-        (t.address  || '').toLowerCase().includes(q) ||
-        (t.category || '').toLowerCase().includes(q);
-      return matchDist && matchQuery;
-    });
-  }, [query, preFilterDistrict]);
-
-  const displayed = filtered.slice(0, page * PAGE_SIZE);
-  const hasMore   = displayed.length < filtered.length;
-
-  return (
-    <div className="qb-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <motion.div
-        className="qb-temple-modal"
-        initial={{ opacity: 0, scale: 0.93, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.93, y: 30 }}
-        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {/* Header */}
-        <div className="qb-modal-header">
-          <div className="qb-modal-title-row">
-            <div className="qb-section-icon"><Search size={18} /></div>
-            <div>
-              <h3 className="qb-modal-title">
-                {preFilterDistrict ? `Temples in ${preFilterDistrict}` : 'Search Sacred Temples'}
-              </h3>
-              <p className="qb-modal-sub">
-                {filtered.length} temple{filtered.length !== 1 ? 's' : ''} available
-                {preFilterDistrict ? ` in ${preFilterDistrict} district` : ' · Search by name, type, or area'}
-              </p>
-            </div>
-          </div>
-          <button className="qb-modal-close" onClick={onClose}><X size={20} /></button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="qb-modal-search-bar">
-          <Search size={16} className="qb-search-icon" />
-          <input
-            ref={inputRef}
-            type="text"
-            className="qb-modal-search-input"
-            placeholder="Search temple name, deity type, area..."
-            value={query}
-            onChange={e => { setQuery(e.target.value); setPage(1); }}
-          />
-          {query && (
-            <button className="qb-modal-clear" onClick={() => setQuery('')}><X size={14} /></button>
-          )}
-        </div>
-
-        {/* Temple Cards */}
-        <div className="qb-modal-list">
-          {displayed.length === 0 ? (
-            <div className="qb-modal-empty">
-              <Search size={32} style={{ color: '#C8A96A', opacity: 0.5 }} />
-              <p>No temples found{preFilterDistrict ? ` in ${preFilterDistrict}` : ''}. Try a different search.</p>
-            </div>
-          ) : (
-            displayed.map(temple => (
-              <button
-                key={temple.id}
-                className="qb-modal-temple-card"
-                onClick={() => { onSelect(temple); onClose(); }}
-              >
-                <div className="qb-modal-temple-img-wrap">
-                  <TempleImg
-                    src={temple.coverImage}
-                    alt={temple.name}
-                    className="qb-modal-temple-img"
-                    height="70px"
-                  />
-                  {temple.rating >= 4.8 && (
-                    <span className="qb-mtc-popular">⭐ Popular</span>
-                  )}
-                </div>
-                <div className="qb-modal-temple-info">
-                  <div className="qb-modal-temple-name">{temple.name}</div>
-                  <div className="qb-modal-temple-meta">
-                    <MapPin size={11} />
-                    {temple.district}
-                    {temple.deityLabel && <span className="qb-modal-deity">{temple.deityLabel}</span>}
-                  </div>
-                  <div className="qb-modal-temple-timing">
-                    <Clock size={11} /> {temple.openingTime} – {temple.closingTime}
-                    {temple.entryFee && (
-                      <span className="qb-modal-fee"> · {temple.entryFee.split('•')[0].trim()}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="qb-modal-temple-rating">
-                  <Star size={12} fill="#C8A96A" color="#C8A96A" />
-                  <span>{temple.rating}</span>
-                </div>
-              </button>
-            ))
-          )}
-
-          {hasMore && (
-            <button className="qb-modal-load-more" onClick={() => setPage(p => p + 1)}>
-              Load more temples ({filtered.length - displayed.length} remaining)
+  const renderLocationPopupModal = () => {
+    if (!isLocationPopupOpen) return null;
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1200,
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }} onClick={() => setIsLocationPopupOpen(false)}>
+        <div style={{
+          background: '#FFFFFF', borderRadius: '16px', maxWidth: '440px', width: '100%',
+          maxHeight: '520px', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          border: '1.5px solid rgba(200,169,106,0.3)', boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
+        }} onClick={e => e.stopPropagation()}>
+          {/* Header */}
+          <div style={{
+            padding: '1rem 1.2rem', background: '#341F1D', color: '#F7EFE6',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          }}>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: '0.98rem', fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>
+              Select Your Location
+            </h3>
+            <button onClick={() => setIsLocationPopupOpen(false)} style={{
+              background: 'none', border: 'none', color: '#C8A96A', cursor: 'pointer', padding: '0.2rem',
+            }}>
+              <X size={18} />
             </button>
-          )}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
+          </div>
 
-/* ─────────── COMPACT TEMPLE CARD ─────────── */
-function CompactTempleCard({ temple, onChange }) {
-  const [expanded, setExpanded] = useState(false);
+          {/* Search Box */}
+          <div style={{ padding: '0.8rem 1.2rem', background: '#FFFDF9', borderBottom: '1px solid rgba(200,169,106,0.15)', flexShrink: 0 }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={15} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#9E7D3F' }} />
+              <input
+                type="text"
+                placeholder="🔍 Search location..."
+                value={locationSearchQuery}
+                onChange={e => setLocationSearchQuery(e.target.value)}
+                style={{ ...S.input, paddingLeft: '2.4rem', fontSize: '0.85rem' }}
+                autoFocus
+              />
+            </div>
+          </div>
 
-  if (!temple) return null;
+          {/* Scrollable Results Body */}
+          <div style={{ padding: '0.8rem 1.2rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {/* All Locations Option */}
+            <div
+              onClick={() => { setSelectedCityDistrict(''); setIsLocationPopupOpen(false); }}
+              style={{
+                padding: '0.65rem 0.8rem', borderRadius: '10px', cursor: 'pointer',
+                background: selectedCityDistrict === '' ? 'rgba(200,169,106,0.12)' : '#FFFDF9',
+                border: selectedCityDistrict === '' ? '1.5px solid #C8A96A' : '1px solid rgba(200,169,106,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                fontSize: '0.85rem', fontWeight: selectedCityDistrict === '' ? 700 : 500, color: '#341F1D',
+              }}
+            >
+              <span>All Locations (Tamil Nadu)</span>
+              {selectedCityDistrict === '' && <Check size={14} style={{ color: '#C8A96A' }} />}
+            </div>
 
-  const isOpen = (() => {
-    try {
-      const now  = new Date();
-      const [h, m] = temple.openingTime.replace(/[APM\s]/gi, '').split(':').map(Number);
-      const [h2,m2] = temple.closingTime.replace(/[APM\s]/gi, '').split(':').map(Number);
-      const nowMin  = now.getHours() * 60 + now.getMinutes();
-      const openMin = (temple.openingTime.includes('PM') && h !== 12 ? h + 12 : h) * 60 + (m || 0);
-      const closeMin= (temple.closingTime.includes('PM') && h2 !== 12 ? h2 + 12 : h2) * 60 + (m2 || 0);
-      return nowMin >= openMin && nowMin <= closeMin;
-    } catch { return true; }
-  })();
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9E7D3F', textTransform: 'uppercase', marginTop: '0.4rem', marginBottom: '0.1rem' }}>
+              Districts / Cities
+            </div>
 
-  return (
-    <div className="qb-compact-temple-card">
-      <div className="qb-ctc-main">
-        <div className="qb-ctc-img-wrap">
-          <TempleImg src={temple.coverImage} alt={temple.name} className="qb-ctc-img" height="64px" />
-        </div>
-        <div className="qb-ctc-info">
-          <div className="qb-ctc-name-row">
-            <span className="qb-ctc-name">{temple.name}</span>
-            {temple.rating && (
-              <span className="qb-ctc-rating">
-                <Star size={11} fill="#C8A96A" color="#C8A96A" />
-                {temple.rating}
-              </span>
+            {filteredLocationsForPopup.length === 0 ? (
+              <p style={{ color: '#888', fontSize: '0.82rem', textAlign: 'center', padding: '1rem 0' }}>
+                No matching locations found.
+              </p>
+            ) : (
+              filteredLocationsForPopup.map(loc => {
+                const isSel = selectedCityDistrict.toLowerCase() === loc.toLowerCase();
+                return (
+                  <div
+                    key={loc}
+                    onClick={() => { setSelectedCityDistrict(loc); setIsLocationPopupOpen(false); }}
+                    style={{
+                      padding: '0.6rem 0.8rem', borderRadius: '8px', cursor: 'pointer',
+                      background: isSel ? 'rgba(200,169,106,0.12)' : '#FFFDF9',
+                      border: isSel ? '1.5px solid #C8A96A' : '1px solid rgba(200,169,106,0.12)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      fontSize: '0.85rem', fontWeight: isSel ? 700 : 500, color: '#341F1D',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <MapPin size={13} style={{ color: '#C8A96A' }} /> {loc}
+                    </span>
+                    {isSel && <Check size={14} style={{ color: '#C8A96A' }} />}
+                  </div>
+                );
+              })
             )}
           </div>
-          <div className="qb-ctc-loc">
-            <MapPin size={11} /> {temple.district}, {temple.state}
-          </div>
-          <div className="qb-ctc-meta-row">
-            <span className={`qb-ctc-status ${isOpen ? 'open' : 'closed'}`}>
-              {isOpen ? '● Open' : '● Closed'}
-            </span>
-            <span className="qb-ctc-hours"><Clock size={11} /> {temple.openingTime} – {temple.closingTime}</span>
-            {temple.entryFee && (
-              <span className="qb-ctc-fee"><Ticket size={11} /> {temple.entryFee.split('•')[0].trim()}</span>
-            )}
-          </div>
-        </div>
-        <div className="qb-ctc-actions">
-          <button className="qb-ctc-change-btn" onClick={onChange}>
-            <ChevronLeft size={13} /> Change
-          </button>
-          <button
-            className={`qb-ctc-expand-btn ${expanded ? 'active' : ''}`}
-            onClick={() => setExpanded(e => !e)}
-          >
-            <Info size={13} />
-            {expanded ? 'Hide' : 'Details'}
-            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
         </div>
       </div>
+    );
+  };
 
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            className="qb-ctc-expand-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="qb-ctc-panel-inner">
-              <div className="qb-ctc-panel-grid">
-                {temple.address && (
-                  <div className="qb-ctc-panel-item">
-                    <div className="qb-ctc-panel-label"><MapPin size={11} /> Address</div>
-                    <div className="qb-ctc-panel-val">{temple.address}</div>
+  /* ═══════════════════════════════════════════════════════════════
+     POPUP: TEMPLE DETAILS MODAL
+     ═══════════════════════════════════════════════════════════════ */
+
+  const renderTempleDetailsModal = () => {
+    if (!isTempleDetailsOpen || !selectedTemple) return null;
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }} onClick={() => setIsTempleDetailsOpen(false)}>
+        <div style={{
+          background: '#FFFFFF', borderRadius: '20px', maxWidth: '540px', width: '100%',
+          maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          border: '1.5px solid rgba(200,169,106,0.3)', boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'relative', height: '160px', flexShrink: 0 }}>
+            <img src={selectedTemple.coverImage} alt={selectedTemple.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%)' }} />
+            <button onClick={() => setIsTempleDetailsOpen(false)} style={{
+              position: 'absolute', top: '0.8rem', right: '0.8rem', background: 'rgba(0,0,0,0.5)',
+              border: 'none', color: '#FFF', width: '28px', height: '28px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>
+              <X size={16} />
+            </button>
+            <div style={{ position: 'absolute', bottom: '0.8rem', left: '1.2rem', right: '1.2rem', color: '#FFF' }}>
+              <span style={{ fontSize: '0.7rem', background: '#C8A96A', color: '#341F1D', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+                {selectedTemple.category || 'Sacred Temple'}
+              </span>
+              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.2rem', fontWeight: 700, margin: '0.2rem 0 0 0' }}>
+                {selectedTemple.name}
+              </h3>
+            </div>
+          </div>
+          <div style={{ padding: '1.2rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.85rem', color: '#341F1D' }}>
+            <div>
+              <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Address</strong>
+              <span>{selectedTemple.address}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', background: '#FFFDF9', padding: '0.7rem', borderRadius: '10px', border: '1px solid rgba(200,169,106,0.2)' }}>
+              <div>
+                <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Opening Hours</strong>
+                <span>{selectedTemple.openingTime} – {selectedTemple.closingTime}</span>
+              </div>
+              <div>
+                <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Afternoon Break</strong>
+                <span>{selectedTemple.afternoonBreak || 'None'}</span>
+              </div>
+            </div>
+            <div>
+              <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Entry & Priority Queue</strong>
+              <span>{selectedTemple.entryFee} • {selectedTemple.specialDarshan}</span>
+            </div>
+            <div>
+              <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Dress Code</strong>
+              <span style={{ fontSize: '0.8rem', color: '#6E5351' }}>{selectedTemple.dressCode}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', paddingTop: '0.4rem', borderTop: '1px dashed rgba(200,169,106,0.3)' }}>
+              <div>
+                <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Contact</strong>
+                <span>{selectedTemple.contactNumber}</span>
+              </div>
+              <div>
+                <strong style={{ color: '#9E7D3F', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase' }}>Official Website</strong>
+                {selectedTemple.website ? <a href={selectedTemple.website} target="_blank" rel="noreferrer" style={{ color: '#9E7D3F', fontWeight: 700, textDecoration: 'none' }}>Visit Portal ↗</a> : 'N/A'}
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: '0.8rem 1.2rem', background: '#FFFDF9', borderTop: '1px solid rgba(200,169,106,0.2)', textAlign: 'right' }}>
+            <button onClick={() => setIsTempleDetailsOpen(false)} style={{ ...S.btnPrimary, padding: '0.5rem 1.2rem', fontSize: '0.82rem', background: '#341F1D', color: '#C8A96A', boxShadow: 'none' }}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── State & District Popover Modals ─── */
+  const [isStatePopoverOpen, setIsStatePopoverOpen] = useState(false);
+  const [isDistrictPopoverOpen, setIsDistrictPopoverOpen] = useState(false);
+  const [stateSearchQuery, setStateSearchQuery] = useState('');
+  const [districtSearchQuery, setDistrictSearchQuery] = useState('');
+
+  const statesList = ['Tamil Nadu'];
+  const filteredStates = statesList.filter(s => s.toLowerCase().includes(stateSearchQuery.toLowerCase()));
+  const filteredDistricts = uniqueLocations.filter(d => d.toLowerCase().includes(districtSearchQuery.toLowerCase()));
+
+  const isStep1Valid = Boolean(selectedState && selectedCityDistrict && selectedTempleId);
+
+  const renderStatePopoverModal = () => {
+    if (!isStatePopoverOpen) return null;
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1250,
+        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }} onClick={() => setIsStatePopoverOpen(false)}>
+        <div style={{
+          background: '#FFFFFF', borderRadius: '16px', maxWidth: '400px', width: '100%',
+          maxHeight: '400px', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          border: '1.5px solid rgba(200,169,106,0.3)', boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{
+            padding: '0.9rem 1.2rem', background: '#341F1D', color: '#F7EFE6',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          }}>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>
+              Select State
+            </h3>
+            <button onClick={() => setIsStatePopoverOpen(false)} style={{ background: 'none', border: 'none', color: '#C8A96A', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+          <div style={{ padding: '0.8rem 1rem', background: '#FFFDF9', borderBottom: '1px solid rgba(200,169,106,0.15)', flexShrink: 0 }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', color: '#9E7D3F' }} />
+              <input
+                type="text"
+                placeholder="Search state..."
+                value={stateSearchQuery}
+                onChange={e => setStateSearchQuery(e.target.value)}
+                style={{ ...S.input, paddingLeft: '2.2rem', fontSize: '0.82rem' }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div style={{ padding: '0.6rem 1rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+            {filteredStates.map(st => (
+              <div
+                key={st}
+                onClick={() => { setSelectedState(st); setIsStatePopoverOpen(false); }}
+                style={{
+                  padding: '0.6rem 0.8rem', borderRadius: '8px', cursor: 'pointer',
+                  background: selectedState === st ? 'rgba(200,169,106,0.12)' : '#FFFDF9',
+                  border: selectedState === st ? '1.5px solid #C8A96A' : '1px solid rgba(200,169,106,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: '0.85rem', fontWeight: selectedState === st ? 700 : 500, color: '#341F1D',
+                }}
+              >
+                <span>{st}</span>
+                {selectedState === st && <Check size={14} style={{ color: '#C8A96A' }} />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDistrictPopoverModal = () => {
+    if (!isDistrictPopoverOpen) return null;
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1250,
+        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }} onClick={() => setIsDistrictPopoverOpen(false)}>
+        <div style={{
+          background: '#FFFFFF', borderRadius: '16px', maxWidth: '420px', width: '100%',
+          maxHeight: '440px', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          border: '1.5px solid rgba(200,169,106,0.3)', boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{
+            padding: '0.9rem 1.2rem', background: '#341F1D', color: '#F7EFE6',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          }}>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>
+              Select District / City ({selectedState})
+            </h3>
+            <button onClick={() => setIsDistrictPopoverOpen(false)} style={{ background: 'none', border: 'none', color: '#C8A96A', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+          <div style={{ padding: '0.8rem 1rem', background: '#FFFDF9', borderBottom: '1px solid rgba(200,169,106,0.15)', flexShrink: 0 }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', color: '#9E7D3F' }} />
+              <input
+                type="text"
+                placeholder="Search district or city..."
+                value={districtSearchQuery}
+                onChange={e => setDistrictSearchQuery(e.target.value)}
+                style={{ ...S.input, paddingLeft: '2.2rem', fontSize: '0.82rem' }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div style={{ padding: '0.6rem 1rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+            {filteredDistricts.map(dst => (
+              <div
+                key={dst}
+                onClick={() => { setSelectedCityDistrict(dst); setSelectedTempleId(null); setIsDistrictPopoverOpen(false); }}
+                style={{
+                  padding: '0.6rem 0.8rem', borderRadius: '8px', cursor: 'pointer',
+                  background: selectedCityDistrict.toLowerCase() === dst.toLowerCase() ? 'rgba(200,169,106,0.12)' : '#FFFDF9',
+                  border: selectedCityDistrict.toLowerCase() === dst.toLowerCase() ? '1.5px solid #C8A96A' : '1px solid rgba(200,169,106,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: '0.85rem', fontWeight: selectedCityDistrict.toLowerCase() === dst.toLowerCase() ? 700 : 500, color: '#341F1D',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <MapPin size={13} style={{ color: '#C8A96A' }} /> {dst}
+                </span>
+                {selectedCityDistrict.toLowerCase() === dst.toLowerCase() && <Check size={14} style={{ color: '#C8A96A' }} />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ═══════════════════════════════════════════════════════════════
+     VIEW 1: PAGE 1 — LOCATION & TEMPLE SELECTION (/quick-booking)
+     ═══════════════════════════════════════════════════════════════ */
+
+  const renderPage1LocationTemple = () => (
+    <section style={{ padding: '2rem 1rem 4rem 1rem', background: '#F7EFE6', minHeight: '65vh' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+        {/* ── Location Selection Card ── */}
+        <div style={S.card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '1.2rem' }}>
+            <div style={S.sectionIcon()}>
+              <MapPin size={18} />
+            </div>
+            <div>
+              <h3 style={S.sectionTitle}>LOCATION SELECTION</h3>
+              <p style={{ fontSize: '0.8rem', color: '#9E7D3F', margin: 0 }}>Select state and district to filter nearby temples</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            {/* State Field */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#341F1D', marginBottom: '0.3rem' }}>
+                State <span style={{ color: '#C8A96A' }}>*</span>
+              </label>
+              <div
+                onClick={() => setIsStatePopoverOpen(true)}
+                style={{ ...S.input, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Globe size={14} style={{ color: '#9E7D3F' }} /> {selectedState || 'Select State'}
+                </span>
+                <ChevronDown size={15} style={{ color: '#9E7D3F' }} />
+              </div>
+            </div>
+
+            {/* District Field */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#341F1D', marginBottom: '0.3rem' }}>
+                District / City <span style={{ color: '#C8A96A' }}>*</span>
+              </label>
+              <div
+                onClick={() => setIsDistrictPopoverOpen(true)}
+                style={{ ...S.input, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <MapPin size={14} style={{ color: '#9E7D3F' }} /> {selectedCityDistrict || 'Select District / City'}
+                </span>
+                <ChevronDown size={15} style={{ color: '#9E7D3F' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Temple Selection Card ── */}
+        <div style={S.card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.2rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={S.sectionIcon()}>
+                <Star size={18} />
+              </div>
+              <div>
+                <h3 style={S.sectionTitle}>Select Temple</h3>
+                <p style={{ fontSize: '0.8rem', color: '#9E7D3F', margin: 0 }}>
+                  {selectedCityDistrict
+                    ? `Showing temples in ${selectedCityDistrict}`
+                    : 'Choose a temple based on your selected location'}
+                </p>
+              </div>
+            </div>
+
+            {/* Temple Search Input */}
+            {selectedCityDistrict && (
+              <div style={{ position: 'relative', minWidth: '220px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', color: '#9E7D3F' }} />
+                <input
+                  type="text"
+                  placeholder="Search temple..."
+                  value={templeSearchQuery}
+                  onChange={e => setTempleSearchQuery(e.target.value)}
+                  style={{ ...S.input, paddingLeft: '2.2rem', fontSize: '0.82rem' }}
+                />
+              </div>
+            )}
+          </div>
+
+          {!selectedCityDistrict ? (
+            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#888', fontSize: '0.88rem', background: '#FFFDF9', borderRadius: '12px', border: '1px dashed rgba(200,169,106,0.3)' }}>
+              📍 Please select a District / City above to view available temples.
+            </div>
+          ) : filteredTemples.length === 0 ? (
+            <p style={{ color: '#888', fontSize: '0.88rem', textAlign: 'center', padding: '2rem 0' }}>
+              No temples found for <strong>{selectedCityDistrict}</strong>. Try selecting a different location.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {filteredTemples.map(t => {
+                const isSel = selectedTempleId === t.id;
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => setSelectedTempleId(t.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.8rem',
+                      padding: '0.85rem 1rem', borderRadius: '12px', cursor: 'pointer',
+                      border: isSel ? '2px solid #C8A96A' : '1.5px solid rgba(200,169,106,0.15)',
+                      background: isSel ? 'rgba(200,169,106,0.08)' : '#FFFDF9',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div style={{
+                      width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
+                      border: isSel ? '5px solid #C8A96A' : '2px solid #ccc',
+                      background: '#fff',
+                    }} />
+                    <img src={t.coverImage} alt={t.name} onError={e => e.target.style.display = 'none'}
+                      style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(200,169,106,0.2)' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Cinzel', serif", fontSize: '0.88rem', fontWeight: 700, color: '#341F1D' }}>{t.name}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#6E5351', marginTop: '0.1rem' }}>{t.district}, {t.state}</div>
+                    </div>
+                    {isSel && (
+                      <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                        <button type="button" onClick={() => setSelectedTempleId(null)} style={{ ...S.btnOutline, padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                          Change
+                        </button>
+                        <button type="button" onClick={() => setIsTempleDetailsOpen(true)} style={{ ...S.btnOutline, padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                          <Info size={12} /> Details
+                        </button>
+                      </div>
+                    )}
+                    {!isSel && (
+                      <div style={{ fontSize: '0.78rem', color: '#9E7D3F', fontWeight: 700, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <Star size={12} fill="#D4AF37" style={{ color: '#D4AF37' }} /> {t.rating}
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="qb-ctc-panel-item">
-                  <div className="qb-ctc-panel-label"><Clock size={11} /> Temple Hours</div>
-                  <div className="qb-ctc-panel-val">
-                    {temple.openingTime} – {temple.closingTime}
-                    {temple.afternoonBreak && <span className="qb-ctc-break"> · Break: {temple.afternoonBreak}</span>}
-                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Single Continue Button (Disabled until State + District + Temple selected) */}
+          <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
+            <button
+              type="button"
+              disabled={!isStep1Valid}
+              onClick={navigateToBookingPage}
+              style={{
+                ...S.btnPrimary,
+                opacity: isStep1Valid ? 1 : 0.45,
+                cursor: isStep1Valid ? 'pointer' : 'not-allowed',
+                boxShadow: isStep1Valid ? '0 4px 15px rgba(200,169,106,0.3)' : 'none',
+              }}
+            >
+              Continue →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  /* ═══════════════════════════════════════════════════════════════
+     VIEW 2: PAGE 2 — BOOKING DETAILS (/quick-booking/booking)
+     ═══════════════════════════════════════════════════════════════ */
+
+  const renderPage2BookingDetails = () => {
+    if (!selectedTemple) return null;
+
+    return (
+      <section style={{ padding: '1.5rem 1rem 4rem 1rem', background: '#F7EFE6', minHeight: '65vh' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+
+          {/* Compact Selected Temple Summary Banner */}
+          <div style={{ ...S.card, padding: '1rem 1.2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <img src={selectedTemple.coverImage} alt={selectedTemple.name} style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover' }} />
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 700, textTransform: 'uppercase' }}>Selected Temple</div>
+                  <h4 style={{ fontFamily: "'Cinzel', serif", fontSize: '0.95rem', fontWeight: 700, color: '#341F1D', margin: 0 }}>
+                    {selectedTemple.name} ({selectedTemple.district})
+                  </h4>
                 </div>
-                {temple.dressCode && (
-                  <div className="qb-ctc-panel-item">
-                    <div className="qb-ctc-panel-label"><Shield size={11} /> Dress Code</div>
-                    <div className="qb-ctc-panel-val">{temple.dressCode}</div>
-                  </div>
+              </div>
+              <button type="button" onClick={navigateToLocationPage} style={{ ...S.btnOutline, padding: '0.4rem 0.8rem', fontSize: '0.78rem' }}>
+                Change Temple
+              </button>
+            </div>
+          </div>
+
+          {/* ════ SEQUENTIAL ONE-BY-ONE SECTIONS ════ */}
+
+          {/* 1. DARSHAN TYPE */}
+          {visibleSections.darshan && (
+            <div style={S.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                <div style={S.sectionIcon()}><Settings size={16} /></div>
+                <h3 style={S.sectionTitle}>Darshan Type</h3>
+              </div>
+
+              {/* GRID CARDS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem' }}>
+                {DARSHAN_TYPES.map(d => {
+                  const isSel = darshanType === d.id;
+                  return (
+                    <div
+                      key={d.id}
+                      onClick={() => setDarshanType(prev => prev === d.id ? null : d.id)}
+                      style={{
+                        padding: '1rem', borderRadius: '12px', cursor: 'pointer',
+                        border: isSel ? '2.5px solid #C8A96A' : '1.5px solid rgba(200,169,106,0.2)',
+                        background: isSel ? 'rgba(200,169,106,0.08)' : '#FFFDF9',
+                        position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                        minHeight: '110px', transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {isSel && (
+                        <div style={{
+                          position: 'absolute', top: '0.6rem', right: '0.6rem',
+                          width: '18px', height: '18px', borderRadius: '50%', background: '#C8A96A',
+                          color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      )}
+                      <div>
+                        <span style={{ fontSize: '1.2rem' }}>{d.icon}</span>
+                        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.9rem', fontWeight: 700, color: '#341F1D', marginTop: '0.3rem' }}>
+                          {d.name}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#6E5351', marginTop: '0.1rem' }}>{d.desc}</div>
+                      </div>
+                      <div style={{ marginTop: '0.6rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#9E7D3F', fontWeight: 600 }}>⏱ {d.duration}</span>
+                        <strong style={{ fontFamily: "'Cinzel', serif", fontSize: '0.9rem', color: '#341F1D' }}>
+                          {d.price > 0 ? `₹${d.price}` : 'Free'}
+                        </strong>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 2. POOJA / SERVICES */}
+          {visibleSections.pooja && (
+            <div style={S.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                <div style={S.sectionIcon()}><Sparkles size={16} /></div>
+                <h3 style={S.sectionTitle}>Pooja / Services</h3>
+              </div>
+
+              {/* GRID CARDS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.8rem' }}>
+                {POOJA_SERVICES.map(p => {
+                  const isSel = poojaService === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => setPoojaService(prev => prev === p.id ? null : p.id)}
+                      style={{
+                        padding: '0.9rem', borderRadius: '12px', cursor: 'pointer',
+                        border: isSel ? '2.5px solid #C8A96A' : '1.5px solid rgba(200,169,106,0.2)',
+                        background: isSel ? 'rgba(200,169,106,0.08)' : '#FFFDF9',
+                        position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                        minHeight: '100px', transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {isSel && (
+                        <div style={{
+                          position: 'absolute', top: '0.5rem', right: '0.5rem',
+                          width: '16px', height: '16px', borderRadius: '50%', background: '#C8A96A',
+                          color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Check size={11} strokeWidth={3} />
+                        </div>
+                      )}
+                      <div>
+                        <span style={{ fontSize: '1.1rem' }}>{p.icon}</span>
+                        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: '#341F1D', marginTop: '0.2rem' }}>
+                          {p.name}
+                        </div>
+                      </div>
+                      <div style={{ marginTop: '0.5rem', textAlign: 'right' }}>
+                        <strong style={{ fontFamily: "'Cinzel', serif", fontSize: '0.88rem', color: '#341F1D' }}>
+                          {p.price > 0 ? `₹${p.price}` : 'Free'}
+                        </strong>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 3. DATE */}
+          {visibleSections.date && (
+            <div style={S.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                <div style={S.sectionIcon()}><CalendarDays size={16} /></div>
+                <h3 style={S.sectionTitle}>Select Date</h3>
+              </div>
+
+              {/* Compact Date Picker Field + Calendar Popup */}
+              <div style={{ position: 'relative', maxWidth: '300px' }}>
+                {/* Trigger Field */}
+                <div
+                  onClick={() => {
+                    if (!isDatePickerOpen) {
+                      const viewDate = selectedDateIso
+                        ? new Date(selectedDateIso + 'T00:00:00')
+                        : new Date();
+                      setCalendarViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth(), 1));
+                    }
+                    setIsDatePickerOpen(prev => !prev);
+                  }}
+                  style={{
+                    ...S.input,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <span style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    color: selectedDateIso ? '#341F1D' : '#999',
+                    fontWeight: selectedDateIso ? 600 : 400,
+                  }}>
+                    <CalendarDays size={15} style={{ color: '#9E7D3F' }} />
+                    {selectedDateIso
+                      ? new Date(selectedDateIso + 'T00:00:00').toLocaleDateString('en-IN', {
+                          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                        })
+                      : 'Select Date'}
+                  </span>
+                  <ChevronDown size={15} style={{
+                    color: '#9E7D3F',
+                    transform: isDatePickerOpen ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s ease',
+                  }} />
+                </div>
+
+                {/* Calendar Popup */}
+                {isDatePickerOpen && (
+                  <>
+                    <div
+                      style={{ position: 'fixed', inset: 0, zIndex: 1100 }}
+                      onClick={() => setIsDatePickerOpen(false)}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 1101,
+                        background: '#FFFFFF', borderRadius: '14px',
+                        border: '1.5px solid rgba(200,169,106,0.3)',
+                        boxShadow: '0 12px 36px rgba(52,31,29,0.15)',
+                        padding: '1rem', width: '300px',
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {/* Month Navigation */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        marginBottom: '0.7rem',
+                      }}>
+                        <button
+                          type="button"
+                          disabled={calendarViewDate.getFullYear() === new Date().getFullYear() && calendarViewDate.getMonth() <= new Date().getMonth()}
+                          onClick={() => setCalendarViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                          style={{
+                            background: 'none', border: '1px solid rgba(200,169,106,0.3)',
+                            borderRadius: '6px', width: '28px', height: '28px',
+                            cursor: (calendarViewDate.getFullYear() === new Date().getFullYear() && calendarViewDate.getMonth() <= new Date().getMonth()) ? 'not-allowed' : 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#9E7D3F',
+                            opacity: (calendarViewDate.getFullYear() === new Date().getFullYear() && calendarViewDate.getMonth() <= new Date().getMonth()) ? 0.3 : 1,
+                          }}
+                        >
+                          <ChevronLeft size={14} />
+                        </button>
+                        <span style={{
+                          fontFamily: "'Cinzel', serif",
+                          fontWeight: 700, color: '#341F1D', fontSize: '0.88rem',
+                        }}>
+                          {calendarViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setCalendarViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                          style={{
+                            background: 'none', border: '1px solid rgba(200,169,106,0.3)',
+                            borderRadius: '6px', width: '28px', height: '28px',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#9E7D3F',
+                          }}
+                        >
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+
+                      {/* Day-of-week Headers */}
+                      <div style={{
+                        display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+                        textAlign: 'center', marginBottom: '0.3rem',
+                      }}>
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                          <div key={day} style={{
+                            fontSize: '0.7rem', fontWeight: 700, color: '#9E7D3F',
+                            padding: '0.25rem 0',
+                          }}>
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Calendar Day Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+                        {(() => {
+                          const year = calendarViewDate.getFullYear();
+                          const month = calendarViewDate.getMonth();
+                          const firstDayOfWeek = new Date(year, month, 1).getDay();
+                          const daysInMonth = new Date(year, month + 1, 0).getDate();
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const cells = [];
+
+                          for (let i = 0; i < firstDayOfWeek; i++) {
+                            cells.push(<div key={`e-${i}`} />);
+                          }
+
+                          for (let day = 1; day <= daysInMonth; day++) {
+                            const cellDate = new Date(year, month, day);
+                            const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                            const isPast = cellDate <= today;
+                            const isSelected = selectedDateIso === iso;
+
+                            cells.push(
+                              <button
+                                key={iso}
+                                type="button"
+                                disabled={isPast}
+                                onClick={() => {
+                                  setSelectedDateIso(iso);
+                                  setSelectedTimeSlot(null);
+                                  setIsDatePickerOpen(false);
+                                }}
+                                style={{
+                                  width: '100%', aspectRatio: '1',
+                                  border: isSelected ? '2px solid #C8A96A' : '1px solid transparent',
+                                  borderRadius: '8px',
+                                  background: isSelected
+                                    ? 'linear-gradient(135deg, rgba(200,169,106,0.2), rgba(212,175,55,0.15))'
+                                    : 'transparent',
+                                  color: isPast ? '#ccc' : '#341F1D',
+                                  fontWeight: isSelected ? 800 : 500,
+                                  fontSize: '0.82rem',
+                                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                  cursor: isPast ? 'not-allowed' : 'pointer',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  transition: 'all 0.15s ease',
+                                  opacity: isPast ? 0.35 : 1,
+                                }}
+                              >
+                                {day}
+                              </button>
+                            );
+                          }
+                          return cells;
+                        })()}
+                      </div>
+                    </div>
+                  </>
                 )}
-                {temple.specialDarshan && (
-                  <div className="qb-ctc-panel-item">
-                    <div className="qb-ctc-panel-label"><Star size={11} /> Special Darshan</div>
-                    <div className="qb-ctc-panel-val">{temple.specialDarshan}</div>
+              </div>
+            </div>
+          )}
+
+          {/* 4. TIME */}
+          {visibleSections.time && (
+            <div style={S.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                <div style={S.sectionIcon()}><Clock size={16} /></div>
+                <h3 style={S.sectionTitle}>Select Time Slot</h3>
+              </div>
+
+              {/* GRID CARDS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.6rem' }}>
+                {availableTimeSlots.map(slot => {
+                  const isSel = selectedTimeSlot === slot.label;
+                  const isBooked = slot.status === 'booked';
+                  return (
+                    <button
+                      key={slot.id}
+                      type="button"
+                      disabled={isBooked}
+                      onClick={() => setSelectedTimeSlot(prev => prev === slot.label ? null : slot.label)}
+                      style={{
+                        padding: '0.65rem 0.5rem', borderRadius: '10px', cursor: isBooked ? 'not-allowed' : 'pointer',
+                        border: isBooked ? '1px dashed #ccc' : isSel ? '2.5px solid #C8A96A' : '1.5px solid rgba(200,169,106,0.2)',
+                        background: isBooked ? 'rgba(0,0,0,0.03)' : isSel ? 'rgba(200,169,106,0.12)' : '#FFFDF9',
+                        textAlign: 'center', opacity: isBooked ? 0.4 : 1, transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: isBooked ? '#888' : '#341F1D' }}>{slot.label}</div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 600, color: isBooked ? '#e05252' : slot.status === 'limited' ? '#d97706' : '#16a34a' }}>
+                        {isBooked ? 'Full' : slot.status === 'limited' ? 'Few Slots' : 'Available'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 5. DEVOTEE DETAILS */}
+          {visibleSections.devotees && (
+            <div style={S.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                <div style={S.sectionIcon()}><Users size={16} /></div>
+                <h3 style={S.sectionTitle}>Devotee Details</h3>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.8rem' }}>
+                {[
+                  { field: 'adults', label: 'Adults', sub: '13–59 yrs', min: 1 },
+                  { field: 'children', label: 'Children', sub: '5–12 yrs', min: 0 },
+                  { field: 'seniors', label: 'Senior Citizens', sub: '60+ yrs', min: 0 },
+                ].map(({ field, label, sub, min }) => (
+                  <div key={field} style={{
+                    background: '#FFFDF9', border: '1.5px solid rgba(200,169,106,0.2)',
+                    borderRadius: '10px', padding: '0.8rem', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#341F1D' }}>{label}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#9E7D3F', marginBottom: '0.5rem' }}>{sub}</div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1.5px solid rgba(200,169,106,0.3)', borderRadius: '6px', overflow: 'hidden', background: '#fff' }}>
+                      <button type="button" onClick={() => handleDevoteeChange(field, -1)} disabled={devotees[field] <= min}
+                        style={{ background: 'none', border: 'none', padding: '0.3rem 0.5rem', color: '#9E7D3F', cursor: devotees[field] <= min ? 'not-allowed' : 'pointer' }}>
+                        <Minus size={12} />
+                      </button>
+                      <span style={{ fontFamily: "'Cinzel', serif", fontWeight: 700, padding: '0 0.4rem', color: '#341F1D', minWidth: '20px' }}>{devotees[field]}</span>
+                      <button type="button" onClick={() => handleDevoteeChange(field, 1)}
+                        style={{ background: 'none', border: 'none', padding: '0.3rem 0.5rem', color: '#9E7D3F', cursor: 'pointer' }}>
+                        <Plus size={12} />
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. CUSTOMER DETAILS */}
+          {visibleSections.customer && (
+            <div style={S.card}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={S.sectionIcon()}><User size={16} /></div>
+                  <h3 style={S.sectionTitle}>Customer Details</h3>
+                </div>
+                {customer.fullName && !isEditingCustomer && (
+                  <button type="button" onClick={() => { setCustomerForm(customer); setIsEditingCustomer(true); }} style={{ ...S.btnOutline, padding: '0.35rem 0.7rem', fontSize: '0.78rem' }}>
+                    <Edit3 size={12} /> Edit
+                  </button>
                 )}
               </div>
 
-              {temple.poojaSchedule?.length > 0 && (
-                <div className="qb-ctc-panel-section">
-                  <div className="qb-ctc-panel-label"><CalendarDays size={11} /> Darshan & Pooja Timings</div>
-                  <div className="qb-ctc-pooja-chips">
-                    {temple.poojaSchedule.map((p, i) => (
-                      <span key={i} className="qb-ctc-pooja-chip">
-                        <strong>{p.name}</strong> · {p.time}
-                      </span>
-                    ))}
+              {!isEditingCustomer && customer.fullName ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem', fontSize: '0.82rem' }}>
+                  <div><span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem' }}>Name</span><strong>{customer.fullName}</strong></div>
+                  <div><span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem' }}>Mobile</span><strong>{customer.mobile}</strong></div>
+                  <div><span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem' }}>Email</span><strong>{customer.email}</strong></div>
+                  <div><span style={{ color: '#e05252', display: 'block', fontSize: '0.7rem', fontWeight: 700 }}>Emergency Contact *</span><strong style={{ color: '#341F1D' }}>{customer.emergencyContact || 'Required'}</strong></div>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveCustomer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#341F1D' }}>Full Name *</label>
+                    <input type="text" value={customerForm.fullName} onChange={e => setCustomerForm(f => ({ ...f, fullName: e.target.value }))} style={S.input} />
                   </div>
-                </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#341F1D' }}>Mobile *</label>
+                    <input type="tel" value={customerForm.mobile} onChange={e => setCustomerForm(f => ({ ...f, mobile: e.target.value }))} style={S.input} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#341F1D' }}>Email *</label>
+                    <input type="email" value={customerForm.email} onChange={e => setCustomerForm(f => ({ ...f, email: e.target.value }))} style={S.input} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#e05252' }}>Emergency Contact * (Required)</label>
+                    <input type="tel" value={customerForm.emergencyContact} onChange={e => setCustomerForm(f => ({ ...f, emergencyContact: e.target.value }))} style={{ ...S.input, border: '1.5px solid #e05252' }} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'right', marginTop: '0.4rem' }}>
+                    <button type="submit" style={{ ...S.btnPrimary, padding: '0.5rem 1.2rem', fontSize: '0.82rem' }}>Save Details</button>
+                  </div>
+                </form>
               )}
-
-              {(temple.contactNumber || temple.website) && (
-                <div className="qb-ctc-panel-contacts">
-                  {temple.contactNumber && (
-                    <a href={`tel:${temple.contactNumber}`} className="qb-ctc-contact-link">
-                      <Phone size={12} /> {temple.contactNumber}
-                    </a>
-                  )}
-                  {temple.website && (
-                    <a href={temple.website} target="_blank" rel="noopener noreferrer" className="qb-ctc-contact-link">
-                      <Globe size={12} /> Official Website ↗
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ─────────── ACCORDION SECTION ─────────── */
-function AccordionSection({ id, title, icon, isOpen, onToggle, summary, isCompleted, children }) {
-  return (
-    <div className={`qb-accordion-section ${isOpen ? 'open' : ''} ${isCompleted ? 'completed' : ''}`}>
-      <button className="qb-accordion-header" onClick={() => onToggle(id)}>
-        <div className="qb-acc-header-left">
-          <div className={`qb-acc-status-dot ${isCompleted ? 'done' : isOpen ? 'active' : ''}`}>
-            {isCompleted ? <Check size={12} /> : icon}
-          </div>
-          <div className="qb-acc-title-block">
-            <span className="qb-acc-title">{title}</span>
-            {!isOpen && summary && (
-              <span className="qb-acc-summary">{summary}</span>
-            )}
-          </div>
-        </div>
-        <div className="qb-acc-chevron">
-          {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            className="qb-accordion-body"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="qb-accordion-body-inner">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ─────────── DARSHAN OPTION CARD ─────────── */
-function DarshanOptionCard({ option, selected, onSelect }) {
-  return (
-    <label className={`qb-darshan-option ${selected ? 'selected' : ''}`}>
-      <input type="radio" name="darshan" value={option.id} checked={selected} onChange={() => onSelect(option)} className="qb-darshan-radio" />
-      <div className="qb-darshan-radio-dot">{selected && <div className="qb-darshan-radio-inner" />}</div>
-      <div className="qb-darshan-option-content">
-        <div className="qb-darshan-option-header">
-          <span className="qb-darshan-option-icon">{option.icon}</span>
-          <span className="qb-darshan-option-name">{option.name}</span>
-          <span className="qb-darshan-option-price">
-            {option.price === 0 ? <span className="qb-free-badge">Free</span> : `₹${option.price.toLocaleString()}`}
-          </span>
-        </div>
-        <div className="qb-darshan-option-desc">{option.desc}</div>
-        <div className="qb-darshan-option-meta">
-          <Clock size={11} /> {option.duration}
-        </div>
-      </div>
-      {selected && <div className="qb-darshan-option-check"><Check size={13} /></div>}
-    </label>
-  );
-}
-
-/* ─────────── POOJA SERVICE CARD ─────────── */
-function PoojaServiceCard({ service, selected, onSelect }) {
-  return (
-    <label className={`qb-pooja-option ${selected ? 'selected' : ''}`}>
-      <input type="radio" name="pooja" value={service.id} checked={selected} onChange={() => onSelect(service)} className="qb-darshan-radio" />
-      <div className="qb-darshan-radio-dot">{selected && <div className="qb-darshan-radio-inner" />}</div>
-      <div className="qb-darshan-option-content">
-        <div className="qb-darshan-option-header">
-          <span className="qb-darshan-option-icon">{service.icon}</span>
-          <span className="qb-darshan-option-name">{service.name}</span>
-          <span className="qb-darshan-option-price">₹{service.price?.toLocaleString() || '0'}</span>
-        </div>
-        <div className="qb-darshan-option-desc">{service.desc}</div>
-        <div className="qb-darshan-option-meta">
-          <Timer size={11} /> {service.duration}
-        </div>
-      </div>
-      {selected && <div className="qb-darshan-option-check"><Check size={13} /></div>}
-    </label>
-  );
-}
-
-/* ─────────── STICKY SUMMARY SIDEBAR ─────────── */
-function StickySummary({
-  selectedTemple, darshanType, poojaService, form,
-  selectedTimeSlot, subtotal, addons, gst, grandTotal,
-  onContinue, errors,
-}) {
-  const formatDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-
-  return (
-    <div className="qb-sticky-summary">
-      <div className="qb-ss-card">
-        <div className="qb-ss-card-header">
-          <Sparkles size={15} className="qb-ss-card-header-icon" />
-          <span>Booking Summary</span>
-        </div>
-
-        {selectedTemple && (
-          <div className="qb-ss-temple-strip">
-            <TempleImg src={selectedTemple.coverImage} alt={selectedTemple.name} className="qb-ss-temple-img" height="36px" />
-            <div className="qb-ss-temple-name">{selectedTemple.name}</div>
-          </div>
-        )}
-
-        <div className="qb-ss-rows">
-          {[
-            { label: 'Darshan',   val: darshanType?.name || '—' },
-            { label: 'Service',   val: poojaService?.name || 'None' },
-            { label: 'Date',      val: formatDate(form.date) },
-            { label: 'Time',      val: selectedTimeSlot?.label || '—' },
-            { label: 'Adults',    val: form.adults },
-            { label: 'Children',  val: form.children },
-            { label: 'Seniors',   val: form.seniors },
-          ].map(({ label, val }) => (
-            <div className="qb-ss-row" key={label}>
-              <span className="qb-ss-row-label">{label}</span>
-              <span className="qb-ss-row-val">{val}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="qb-ss-divider" />
-
-        <div className="qb-ss-price-rows">
-          <div className="qb-ss-price-row">
-            <span>Base Price</span>
-            <span>₹{subtotal.toLocaleString()}</span>
-          </div>
-          {addons > 0 && (
-            <div className="qb-ss-price-row">
-              <span>Add-ons</span>
-              <span>₹{addons.toLocaleString()}</span>
             </div>
           )}
-          <div className="qb-ss-price-row">
-            <span>GST (5%)</span>
-            <span>₹{gst.toLocaleString()}</span>
+
+          {/* 7. BOOKING SUMMARY & SINGLE CONTINUE BUTTON */}
+          {visibleSections.summary && (
+            <div style={{ ...S.card, border: '2px solid rgba(200,169,106,0.3)', background: '#FFFDF9' }}>
+              <h3 style={{ ...S.sectionTitle, fontSize: '0.95rem', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(200,169,106,0.2)' }}>
+                Booking Summary
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.6rem', fontSize: '0.82rem' }}>
+                <div><span style={{ color: '#6E5351' }}>Temple:</span> <strong>{selectedTemple.name}</strong></div>
+                <div><span style={{ color: '#6E5351' }}>Darshan:</span> <strong>{selectedDarshanObj?.name || '—'}</strong></div>
+                <div><span style={{ color: '#6E5351' }}>Service:</span> <strong>{selectedPoojaObj?.name || 'None'}</strong></div>
+                <div><span style={{ color: '#6E5351' }}>Date:</span> <strong>{selectedDateIso}</strong></div>
+                <div><span style={{ color: '#6E5351' }}>Time:</span> <strong>{selectedTimeSlot || '—'}</strong></div>
+                <div><span style={{ color: '#6E5351' }}>Devotees:</span> <strong>{totalDevotees} ({devotees.adults}A, {devotees.children}C, {devotees.seniors}S)</strong></div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.8rem', borderTop: '2px solid rgba(200,169,106,0.2)' }}>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: '#9E7D3F', textTransform: 'uppercase', fontWeight: 700 }}>Total Amount</span>
+                  <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.4rem', fontWeight: 800, color: '#9E7D3F' }}>₹{grandTotal.toLocaleString()}</div>
+                </div>
+
+                {/* ONLY ONE CONTINUE BUTTON ON BOOKING DETAILS PAGE */}
+                <button
+                  type="button"
+                  disabled={!canContinueToPayment}
+                  onClick={handleContinueToReviewPayment}
+                  style={{
+                    ...S.btnPrimary,
+                    opacity: canContinueToPayment ? 1 : 0.5,
+                    cursor: canContinueToPayment ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Continue <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </section>
+    );
+  };
+
+  /* ═══════════════════════════════════════════════════════════════
+     VIEW 3: STEP 3 — REVIEW & PAYMENT
+     ═══════════════════════════════════════════════════════════════ */
+
+  const renderStep3ReviewPayment = () => {
+    if (!selectedTemple) return null;
+
+    const upiId = 'darshanjourney@ybl';
+    const upiPaymentString = `upi://pay?pa=${upiId}&pn=Darshan%20Journey&am=${grandTotal}&cu=INR&tn=Booking-${bookingRef}`;
+    const bookingQRData = `DARSHAN-JOURNEY|REF:${bookingRef}|TEMPLE:${selectedTemple.name}|DATE:${selectedDateIso}|TIME:${selectedTimeSlot}|DEVOTEES:${totalDevotees}|AMT:${grandTotal}|NAME:${customer.fullName}`;
+
+    const selectedPM = PAYMENT_METHODS.find(p => p.id === selectedPaymentMethod);
+
+    /* ──── STEP 3: BOOKING CONFIRMED ──── */
+    if (paymentStep === 3) {
+      const formattedDate = selectedDateIso
+        ? new Date(selectedDateIso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+        : selectedDateIso;
+
+      return (
+        <section style={{ padding: '2rem 1rem 4rem 1rem', background: '#F7EFE6', minHeight: '60vh' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+            <div style={{ ...S.card, padding: '2rem 1.5rem' }}>
+
+              {/* Success Header */}
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{
+                  width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 0.8rem',
+                  background: 'linear-gradient(135deg, rgba(22,163,74,0.12), rgba(22,163,74,0.06))',
+                  border: '2.5px solid #16a34a',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <CheckCircle2 size={32} style={{ color: '#16a34a' }} />
+                </div>
+                <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.35rem', fontWeight: 700, color: '#341F1D', margin: '0 0 0.3rem 0', letterSpacing: '0.04em' }}>
+                  Booking Confirmed!
+                </h2>
+                <p style={{ fontSize: '0.82rem', color: '#6E5351', margin: 0 }}>
+                  Confirmation sent to <strong style={{ color: '#341F1D' }}>{customer.email}</strong>
+                </p>
+              </div>
+
+              {/* Booking Reference */}
+              <div style={{
+                background: 'linear-gradient(135deg, #341F1D, #2A1810)',
+                borderRadius: '14px', padding: '1rem 1.2rem', marginBottom: '1.2rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: '#C8A96A', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>Booking Reference</div>
+                  <div style={{ fontFamily: "'Cinzel', serif", fontSize: '1.5rem', fontWeight: 800, color: '#F7EFE6', margin: '0.15rem 0 0 0', letterSpacing: '0.1em' }}>{bookingRef}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard.writeText(bookingRef); }}
+                  style={{ background: 'rgba(200,169,106,0.15)', border: '1px solid rgba(200,169,106,0.3)', borderRadius: '8px', padding: '0.4rem 0.6rem', cursor: 'pointer', color: '#C8A96A', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem', fontWeight: 600 }}
+                >
+                  <Copy size={12} /> Copy
+                </button>
+              </div>
+
+              {/* Booking Details Grid */}
+              <div style={{
+                background: '#FFFDF9', border: '1.5px solid rgba(200,169,106,0.2)',
+                borderRadius: '12px', padding: '1rem 1.2rem', marginBottom: '1.2rem',
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9E7D3F', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.7rem', paddingBottom: '0.4rem', borderBottom: '1px solid rgba(200,169,106,0.15)' }}>
+                  Booking Details
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.7rem 1.5rem', fontSize: '0.82rem' }}>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Temple</span>
+                    <strong style={{ color: '#341F1D' }}>{selectedTemple.name}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Location</span>
+                    <strong style={{ color: '#341F1D' }}>{selectedTemple.district}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Darshan Type</span>
+                    <strong style={{ color: '#341F1D' }}>{selectedDarshanObj?.icon} {selectedDarshanObj?.name}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Service</span>
+                    <strong style={{ color: '#341F1D' }}>{selectedPoojaObj?.icon} {selectedPoojaObj?.name}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Date</span>
+                    <strong style={{ color: '#341F1D' }}>{formattedDate}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Time Slot</span>
+                    <strong style={{ color: '#341F1D' }}>{selectedTimeSlot}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Customer</span>
+                    <strong style={{ color: '#341F1D' }}>{customer.fullName}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>Devotees</span>
+                    <strong style={{ color: '#341F1D' }}>{totalDevotees} Person(s) ({devotees.adults}A, {devotees.children}C, {devotees.seniors}S)</strong>
+                  </div>
+                </div>
+
+                {/* Total Paid */}
+                <div style={{
+                  marginTop: '0.8rem', paddingTop: '0.7rem',
+                  borderTop: '1.5px dashed rgba(200,169,106,0.25)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#9E7D3F', textTransform: 'uppercase' }}>Total Paid</span>
+                  <span style={{ fontFamily: "'Cinzel', serif", fontSize: '1.3rem', fontWeight: 800, color: '#16a34a' }}>₹{grandTotal.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Scannable Booking QR Code */}
+              <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+                <p style={{ fontSize: '0.72rem', color: '#9E7D3F', fontWeight: 600, textTransform: 'uppercase', margin: '0 0 0.5rem 0', letterSpacing: '0.05em' }}>Scan at Temple Entrance</p>
+                <ScanQRCode value={bookingQRData} size={160} />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button type="button" onClick={() => window.print()} style={{ ...S.btnOutline, padding: '0.6rem 1.2rem' }}>
+                  <Printer size={14} /> Print Ticket
+                </button>
+                <button type="button" onClick={handleBookAnother} style={{ ...S.btnPrimary, padding: '0.6rem 1.4rem' }}>
+                  Book Another Darshan
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* ──── STEP 2: PROCESSING PAYMENT ──── */
+    if (paymentStep === 2) {
+      return (
+        <section style={{ padding: '2rem 1rem 4rem 1rem', background: '#F7EFE6', minHeight: '60vh' }}>
+          <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+            <div style={{ ...S.card, textAlign: 'center', padding: '3rem 2rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{
+                  width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto',
+                  border: '3px solid rgba(200,169,106,0.3)', borderTopColor: '#C8A96A',
+                  animation: 'spin 1s linear infinite',
+                }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.1rem', fontWeight: 700, color: '#341F1D', margin: '0 0 0.4rem 0' }}>
+                Processing Payment
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: '#6E5351', margin: 0 }}>
+                Verifying your payment of <strong>₹{grandTotal.toLocaleString()}</strong> via {selectedPM?.label || 'UPI'}...
+              </p>
+              <div style={{ marginTop: '1.2rem', padding: '0.6rem 1rem', background: '#FFFDF9', borderRadius: '8px', border: '1px solid rgba(200,169,106,0.15)', fontSize: '0.78rem', color: '#9E7D3F' }}>
+                <Shield size={13} style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} />
+                Secured by 256-bit SSL encryption
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* ──── STEP 1: COMPLETE PAYMENT ──── */
+    return (
+      <section style={{ padding: '2rem 1rem 4rem 1rem', background: '#F7EFE6', minHeight: '60vh' }}>
+        <div style={{ maxWidth: '920px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+
+          {/* ── LEFT: Payment Panel ── */}
+          <div style={S.card}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.2rem' }}>
+              <div style={S.sectionIcon()}><CreditCard size={16} /></div>
+              <h3 style={S.sectionTitle}>Complete Payment</h3>
+            </div>
+
+            {/* Payment Method Selector */}
+            <div style={{ marginBottom: '1.2rem' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9E7D3F', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>Payment Method</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                {PAYMENT_METHODS.map(pm => {
+                  const isSel = selectedPaymentMethod === pm.id;
+                  return (
+                    <button
+                      key={pm.id}
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod(pm.id)}
+                      style={{
+                        padding: '0.6rem 0.4rem', borderRadius: '10px', cursor: 'pointer',
+                        border: isSel ? '2px solid #C8A96A' : '1.5px solid rgba(200,169,106,0.2)',
+                        background: isSel ? 'rgba(200,169,106,0.1)' : '#FFFDF9',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem',
+                        transition: 'all 0.2s ease', position: 'relative',
+                      }}
+                    >
+                      {isSel && (
+                        <div style={{
+                          position: 'absolute', top: '-5px', right: '-5px',
+                          width: '16px', height: '16px', borderRadius: '50%', background: '#C8A96A',
+                          color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Check size={10} strokeWidth={3} />
+                        </div>
+                      )}
+                      <span style={{ fontSize: '1.1rem' }}>{pm.icon}</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: isSel ? 700 : 500, color: '#341F1D' }}>{pm.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* UPI QR Code */}
+            <div style={{
+              textAlign: 'center', padding: '1.2rem', marginBottom: '1rem',
+              background: '#FFFDF9', borderRadius: '14px',
+              border: '1.5px solid rgba(200,169,106,0.2)',
+            }}>
+              <p style={{ fontSize: '0.72rem', color: '#9E7D3F', fontWeight: 600, textTransform: 'uppercase', margin: '0 0 0.7rem 0', letterSpacing: '0.04em' }}>
+                Scan & Pay via {selectedPM?.label || 'UPI'}
+              </p>
+              <div style={{ display: 'inline-block', padding: '0.5rem', background: '#FFFFFF', borderRadius: '12px', border: '1px solid rgba(200,169,106,0.15)' }}>
+                <ScanQRCode value={upiPaymentString} size={180} />
+              </div>
+              <div style={{ marginTop: '0.7rem' }}>
+                <span style={{ fontSize: '0.7rem', color: '#9E7D3F', fontWeight: 600 }}>UPI ID</span>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  marginLeft: '0.5rem', padding: '0.3rem 0.7rem',
+                  background: 'rgba(200,169,106,0.08)', borderRadius: '6px',
+                  border: '1px solid rgba(200,169,106,0.2)',
+                }}>
+                  <code style={{ fontSize: '0.82rem', fontWeight: 700, color: '#341F1D', letterSpacing: '0.02em' }}>{upiId}</code>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(upiId)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.1rem', color: '#9E7D3F' }}
+                  >
+                    <Copy size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Amount Display */}
+            <div style={{
+              textAlign: 'center', marginBottom: '1rem',
+              padding: '0.8rem', background: 'linear-gradient(135deg, rgba(200,169,106,0.08), rgba(212,175,55,0.05))',
+              borderRadius: '10px', border: '1px solid rgba(200,169,106,0.15)',
+            }}>
+              <div style={{ fontSize: '0.72rem', color: '#9E7D3F', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em' }}>Total Payable</div>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: '2rem', fontWeight: 800, color: '#341F1D', margin: '0.1rem 0' }}>₹{grandTotal.toLocaleString()}</div>
+              <div style={{ fontSize: '0.72rem', color: '#6E5351' }}>(Incl. 5% GST: ₹{gstAmount.toLocaleString()})</div>
+            </div>
+
+            {/* Pay Button */}
+            <button
+              type="button"
+              onClick={handleCompletePayment}
+              style={{
+                ...S.btnPrimary, width: '100%', padding: '0.95rem',
+                fontSize: '0.95rem', fontWeight: 800,
+                background: 'linear-gradient(135deg, #C8A96A 0%, #D4AF37 50%, #C8A96A 100%)',
+                boxShadow: '0 6px 20px rgba(200,169,106,0.35)',
+              }}
+            >
+              <Shield size={16} /> Pay ₹{grandTotal.toLocaleString()} via {selectedPM?.label || 'UPI'}
+            </button>
+
+            <div style={{ textAlign: 'center', marginTop: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontSize: '0.72rem', color: '#9E7D3F' }}>
+              <Shield size={12} /> 100% Secure Payment · SSL Encrypted
+            </div>
+          </div>
+
+          {/* ── RIGHT: Review Summary ── */}
+          <div style={S.card}>
+            <h3 style={{ ...S.sectionTitle, fontSize: '0.95rem', marginBottom: '0.8rem', paddingBottom: '0.5rem', borderBottom: '1.5px solid rgba(200,169,106,0.2)' }}>
+              Review Summary
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', fontSize: '0.82rem' }}>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><User size={13} /> Customer</span>
+                <strong>{customer.fullName}</strong>
+              </div>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><MapPin size={13} /> Temple</span>
+                <strong>{selectedTemple.name}</strong>
+              </div>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351' }}>Darshan</span>
+                <strong>{selectedDarshanObj?.icon} {selectedDarshanObj?.name}</strong>
+              </div>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351' }}>Service</span>
+                <strong>{selectedPoojaObj?.icon} {selectedPoojaObj?.name}</strong>
+              </div>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><CalendarDays size={13} /> Date</span>
+                <strong>{selectedDateIso ? new Date(selectedDateIso + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</strong>
+              </div>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Clock size={13} /> Time</span>
+                <strong>{selectedTimeSlot || '—'}</strong>
+              </div>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Users size={13} /> Devotees</span>
+                <strong>{totalDevotees} ({devotees.adults}A, {devotees.children}C, {devotees.seniors}S)</strong>
+              </div>
+            </div>
+
+            {/* Price Breakdown */}
+            <div style={{
+              marginTop: '0.8rem', paddingTop: '0.7rem',
+              borderTop: '1.5px dashed rgba(200,169,106,0.2)',
+              display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.82rem',
+            }}>
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351' }}>Darshan ({selectedDarshanObj?.name} × {totalDevotees})</span>
+                <span>₹{baseDarshanTotal.toLocaleString()}</span>
+              </div>
+              {serviceTotal > 0 && (
+                <div style={S.summaryRow}>
+                  <span style={{ color: '#6E5351' }}>Service ({selectedPoojaObj?.name})</span>
+                  <span>₹{serviceTotal.toLocaleString()}</span>
+                </div>
+              )}
+              <div style={S.summaryRow}>
+                <span style={{ color: '#6E5351' }}>GST (5%)</span>
+                <span>₹{gstAmount.toLocaleString()}</span>
+              </div>
+              <div style={{ ...S.summaryRow, paddingTop: '0.5rem', borderTop: '1.5px solid rgba(200,169,106,0.2)', marginTop: '0.2rem' }}>
+                <strong style={{ color: '#341F1D', fontSize: '0.95rem' }}>Grand Total</strong>
+                <strong style={{ fontFamily: "'Cinzel', serif", fontSize: '1.15rem', color: '#9E7D3F' }}>₹{grandTotal.toLocaleString()}</strong>
+              </div>
+            </div>
+
+            {/* Back button */}
+            <button
+              type="button"
+              onClick={() => { setActiveStepNum(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              style={{ ...S.btnOutline, marginTop: '1rem', width: '100%', justifyContent: 'center' }}
+            >
+              <ArrowLeft size={14} /> Back to Booking Details
+            </button>
           </div>
         </div>
+      </section>
+    );
+  };
 
-        <div className="qb-ss-total">
-          <span>Total</span>
-          <span className="qb-ss-total-val">₹{grandTotal.toLocaleString()}</span>
-        </div>
+  /* ═══════════════════════════════════════════════════════════════
+     MAIN RENDER
+     ═══════════════════════════════════════════════════════════════ */
 
-        <button className="qb-ss-cta" onClick={onContinue}>
-          Continue to Payment <ChevronRight size={16} />
-        </button>
-
-        <div className="qb-ss-secure">
-          <Shield size={12} /> 100% Secure · Instant Confirmation
-        </div>
-      </div>
-
-      {/* Help */}
-      <div className="qb-help-card">
-        <div className="qb-help-icon"><Headphones size={18} /></div>
-        <p className="qb-help-title">Need Assistance?</p>
-        <a href="tel:+918800123456" className="qb-help-link"><Phone size={13} /> +91 88001 23456</a>
-        <a href="mailto:darshan@journey.in" className="qb-help-link"><Mail size={13} /> darshan@journey.in</a>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────── MOBILE BOTTOM SUMMARY BAR ─────────── */
-function MobileBottomBar({ grandTotal, onContinue }) {
   return (
-    <div className="qb-mobile-bottom-bar">
-      <div className="qb-mbb-price">
-        <span className="qb-mbb-label">Total</span>
-        <span className="qb-mbb-total">₹{grandTotal.toLocaleString()}</span>
-      </div>
-      <button className="qb-mbb-cta" onClick={onContinue}>
-        Continue to Payment <ChevronRight size={16} />
-      </button>
-    </div>
-  );
-}
-
-/* ─────────── MAIN COMPONENT ─────────── */
-export default function QuickBookingPage({
-  onGoToHome,
-  onGoToLanding,
-  onExploreTemples,
-  onGoToProducts,
-  onGoToLogin,
-  onGoToAbout,
-  onOpenBooking,
-}) {
-  /* ── Step state ── */
-  const [step,           setStep]           = useState(0);
-  const [errors,         setErrors]         = useState({});
-  const [bookingId,      setBookingId]      = useState('');
-  const [transactionId,  setTransactionId]  = useState('');
-  const [showSuccess,    setShowSuccess]    = useState(false);
-  const [paymentExpired, setPaymentExpired] = useState(false);
-  const [copied,         setCopied]         = useState(false);
-  const formTopRef = useRef(null);
-  const receiptRef = useRef(null);
-
-  /* ── Accordion state ── */
-  const [activeAccordion, setActiveAccordion] = useState('darshan');
-  const [completedAccordions, setCompletedAccordions] = useState(new Set());
-
-  /* ── Temple modal ── */
-  const [showTempleModal, setShowTempleModal] = useState(false);
-  const [selectedTemple,  setSelectedTemple]  = useState(null);
-
-  /* ── Selected booking options ── */
-  const [darshanType,  setDarshanType]  = useState(null);
-  const [poojaService, setPoojaService] = useState(null);
-
-  /* ── Derive States & Districts from data ── */
-  const allStates = useMemo(() =>
-    [...new Set(REAL_TAMIL_NADU_TEMPLES.map(t => t.state).filter(Boolean))].sort(),
-    []
-  );
-
-  /* ── Form state ── */
-  const [form, setForm] = useState({
-    state:            '',
-    district:         '',
-    place:            '',
-    templeId:         '',
-    templeName:       '',
-    templeLocation:   '',
-    date:             '',
-    timeSlot:         '',
-    adults:           1,
-    children:         0,
-    seniors:          0,
-    requirements:     [],
-    specialRequests:  '',
-    customerName:     '',
-    mobile:           '',
-    email:            '',
-    address:          '',
-    emergencyContact: '',
-    paymentMethod:    'upi',
-  });
-
-  const today = new Date().toISOString().split('T')[0];
-
-  /* ── Districts cascade from selected state ── */
-  const allDistricts = useMemo(() => {
-    if (!form.state) return [];
-    return [...new Set(
-      REAL_TAMIL_NADU_TEMPLES
-        .filter(t => t.state === form.state)
-        .map(t => t.district)
-        .filter(Boolean)
-    )].sort();
-  }, [form.state]);
-
-  /* ── Time slots: use temple schedule if available ── */
-  const timeSlots = useMemo(() => {
-    if (selectedTemple?.poojaSchedule?.length) {
-      return selectedTemple.poojaSchedule.map((p, i) => ({
-        id: `p${i}`,
-        label: p.time,
-        sublabel: p.name,
-        availability: 'available',
-      }));
-    }
-    return DEFAULT_TIME_SLOTS;
-  }, [selectedTemple]);
-
-  /* ── Pooja services: load from temple data if available ── */
-  const poojaServices = useMemo(() => {
-    if (selectedTemple?.poojaSchedule?.length) {
-      return selectedTemple.poojaSchedule.map((p, i) => ({
-        id: `ps${i}`,
-        name: p.name,
-        desc: `Traditional ${p.name.toLowerCase()} ritual`,
-        price: [501, 1100, 2200, 350, 4500][i % 5],
-        duration: p.time,
-        icon: ['📿', '🪔', '🔥', '🌺', '⭐'][i % 5],
-      }));
-    }
-    return DEFAULT_POOJA_SERVICES;
-  }, [selectedTemple]);
-
-  /* ── Price calculation ── */
-  const darshanPrice = darshanType ? darshanType.price : 0;
-  const poojaPrice   = poojaService ? (poojaService.price || 0) : 0;
-  const totalDevotees = form.adults + form.children + form.seniors;
-  const basePrice     = darshanPrice * Math.max(1, totalDevotees);
-  const addons        = form.requirements.length * 200 + poojaPrice;
-  const gst           = Math.round((basePrice + addons) * 0.05);
-  const grandTotal    = basePrice + addons + gst;
-  const subtotal      = basePrice;
-
-  /* ── Scroll to top on step change ── */
-  useEffect(() => {
-    formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [step]);
-
-  /* ── Reset accordion when entering step 1 ── */
-  useEffect(() => {
-    if (step === 1) {
-      setActiveAccordion('darshan');
-      setCompletedAccordions(new Set());
-    }
-  }, [step]);
-
-  /* ── Field handler ── */
-  const handleField = useCallback(e => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
-    setErrors(er => ({ ...er, [name]: '' }));
-  }, []);
-
-  /* ── Counter handler ── */
-  const handleCount = useCallback((field, delta) => {
-    const cat = DEVOTEE_CATEGORIES.find(c => c.field === field);
-    const minVal = cat ? cat.min : 0;
-    setForm(f => ({
-      ...f,
-      [field]: Math.max(minVal, f[field] + delta),
-    }));
-  }, []);
-
-  /* ── Requirements checkbox ── */
-  const handleReq = useCallback(id => {
-    setForm(f => ({
-      ...f,
-      requirements: f.requirements.includes(id)
-        ? f.requirements.filter(r => r !== id)
-        : [...f.requirements, id],
-    }));
-  }, []);
-
-  /* ── State change: cascade reset ── */
-  const handleStateChange = useCallback(val => {
-    setForm(f => ({ ...f, state: val, district: '', place: '', templeId: '', templeName: '', templeLocation: '', timeSlot: '' }));
-    setSelectedTemple(null);
-    setErrors(er => ({ ...er, state: '', district: '', templeName: '' }));
-  }, []);
-
-  /* ── District change: cascade reset ── */
-  const handleDistrictChange = useCallback(val => {
-    setForm(f => ({ ...f, district: val, place: '', templeId: '', templeName: '', templeLocation: '', timeSlot: '' }));
-    setSelectedTemple(null);
-    setErrors(er => ({ ...er, district: '', templeName: '' }));
-  }, []);
-
-  /* ── Temple selection ── */
-  const handleTempleSelect = useCallback(temple => {
-    setSelectedTemple(temple);
-    setForm(f => ({
-      ...f,
-      templeId:       String(temple.id),
-      templeName:     temple.name,
-      templeLocation: temple.address || `${temple.district}, ${temple.state}`,
-      state:          f.state    || temple.state    || '',
-      district:       f.district || temple.district || '',
-      timeSlot:       '',
-    }));
-    setErrors(er => ({ ...er, templeName: '' }));
-  }, []);
-
-  /* ── Accordion toggle ── */
-  const handleAccordionToggle = useCallback(id => {
-    setActiveAccordion(prev => prev === id ? null : id);
-  }, []);
-
-  /* ── Auto-advance accordion ── */
-  const advanceAccordion = useCallback(currentId => {
-    setCompletedAccordions(prev => new Set([...prev, currentId]));
-    const idx = ACCORDION_ORDER.indexOf(currentId);
-    if (idx < ACCORDION_ORDER.length - 1) {
-      setActiveAccordion(ACCORDION_ORDER[idx + 1]);
-    } else {
-      setActiveAccordion(null);
-    }
-  }, []);
-
-  /* ── Darshan select ── */
-  const handleDarshanSelect = useCallback(option => {
-    setDarshanType(option);
-    setErrors(er => ({ ...er, darshan: '' }));
-    setTimeout(() => advanceAccordion('darshan'), 400);
-  }, [advanceAccordion]);
-
-  /* ── Pooja select ── */
-  const handlePoojaSelect = useCallback(service => {
-    setPoojaService(service);
-    setTimeout(() => advanceAccordion('pooja'), 400);
-  }, [advanceAccordion]);
-
-  /* ── Skip pooja ── */
-  const handleSkipPooja = useCallback(() => {
-    setPoojaService(null);
-    advanceAccordion('pooja');
-  }, [advanceAccordion]);
-
-  /* ── Validation ── */
-  const validate = step => {
-    const errs = {};
-    if (step === 0) {
-      if (!form.state.trim())    errs.state    = 'Please select a state.';
-      if (!form.district.trim()) errs.district = 'Please select a district.';
-      if (!form.templeName)      errs.templeName = 'Please select a temple.';
-    }
-    if (step === 1) {
-      if (!darshanType)         errs.darshan   = 'Please select a darshan type.';
-      if (!form.date)           errs.date      = 'Please select a visit date.';
-      if (!form.timeSlot)       errs.timeSlot  = 'Please select a time slot.';
-      if (!form.customerName.trim()) errs.customerName = 'Customer name is required.';
-      if (!form.mobile.trim() || form.mobile.replace(/\D/g, '').length < 10)
-        errs.mobile = 'Valid 10-digit mobile number required.';
-      if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))
-        errs.email = 'Valid email address required.';
-    }
-    return errs;
-  };
-
-  /* ── Navigation ── */
-  const nextStep = () => {
-    const errs = validate(step);
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      // Open the first accordion with an error
-      if (errs.darshan) setActiveAccordion('darshan');
-      else if (errs.date || errs.timeSlot) setActiveAccordion('datetime');
-      else if (errs.customerName || errs.mobile || errs.email) setActiveAccordion('customer');
-      return;
-    }
-    setErrors({});
-    setStep(s => s + 1);
-  };
-
-  const prevStep = () => setStep(s => Math.max(0, s - 1));
-
-  /* ── Payment confirm ── */
-  const confirmPayment = () => {
-    if (paymentExpired) return;
-    setBookingId(generateBookingId());
-    setTransactionId(generateTransactionId());
-    setShowSuccess(true);
-  };
-
-  /* ── Reset ── */
-  const resetBooking = () => {
-    setShowSuccess(false);
-    setStep(0);
-    setPaymentExpired(false);
-    setSelectedTemple(null);
-    setDarshanType(null);
-    setPoojaService(null);
-    setErrors({});
-    setCompletedAccordions(new Set());
-    setForm({
-      state: '', district: '', place: '',
-      templeId: '', templeName: '', templeLocation: '',
-      date: '', timeSlot: '',
-      adults: 1, children: 0, seniors: 0,
-      requirements: [], specialRequests: '',
-      customerName: '', mobile: '', email: '', address: '', emergencyContact: '',
-      paymentMethod: 'upi',
-    });
-  };
-
-  const handleCopyBookingId = () => {
-    navigator.clipboard.writeText(bookingId).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  const selectedTimeSlot = timeSlots.find(t => t.id === form.timeSlot);
-  const qrValue          = `upi://pay?pa=darshan@journey&pn=DarshanJourney&am=${grandTotal}&cu=INR&tn=${bookingId}`;
-  const receiptDate      = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  /* ── Block body scroll when modal open ── */
-  useEffect(() => {
-    document.body.style.overflow = showTempleModal ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [showTempleModal]);
-
-  /* ── Accordion summaries ── */
-  const summaries = {
-    darshan:      darshanType ? `${darshanType.name} · ${darshanType.price === 0 ? 'Free' : `₹${darshanType.price.toLocaleString()}`}` : '',
-    pooja:        poojaService ? `${poojaService.name} · ₹${poojaService.price?.toLocaleString()}` : 'No service selected',
-    datetime:     form.date && form.timeSlot ? `${new Date(form.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · ${selectedTimeSlot?.label || ''}` : '',
-    devotees:     `${form.adults} Adult${form.adults !== 1 ? 's' : ''} · ${form.children} Child${form.children !== 1 ? 'ren' : ''} · ${form.seniors} Senior${form.seniors !== 1 ? 's' : ''}`,
-    customer:     form.customerName ? `${form.customerName} · ${form.mobile}` : '',
-    requirements: form.requirements.length > 0 ? `${form.requirements.length} service${form.requirements.length !== 1 ? 's' : ''} selected` : 'None',
-  };
-
-  /* ────────────────────────────────────────────
-     RENDER
-  ──────────────────────────────────────────── */
-  return (
-    <div className="home-website-wrapper">
+    <div className="home-website-wrapper" style={{ background: '#FFFDF9', minHeight: '100vh' }}>
       <Navbar
         activePage="booking"
         onGoToHome={onGoToHome}
@@ -1051,888 +1865,49 @@ export default function QuickBookingPage({
         onOpenBooking={onOpenBooking}
       />
 
-      {/* ── TEMPLE SEARCH MODAL ── */}
-      <AnimatePresence>
-        {showTempleModal && (
-          <TempleSearchModal
-            onClose={() => setShowTempleModal(false)}
-            onSelect={handleTempleSelect}
-            preFilterDistrict={form.district || null}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* ── COMPACT HERO ── */}
-      <section className="qb-hero">
-        <div className="qb-hero-overlay" />
-        <div className="qb-hero-content">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="qb-hero-tag"><CalendarDays size={13} /> Premium Booking Experience</div>
-            <h1 className="qb-hero-title">Quick Temple Booking</h1>
-            <p className="qb-hero-subtitle">Book your darshan in just a few simple steps.</p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── STEP INDICATOR ── */}
-      <div className="qb-steps-bar" ref={formTopRef}>
-        <div className="container">
-          <div className="qb-steps-track">
-            {STEP_LABELS.map((label, i) => (
-              <React.Fragment key={label}>
-                <div className={`qb-step-item ${i === step ? 'active' : i < step ? 'done' : ''}`}>
-                  <div className="qb-step-circle">
-                    {i < step ? <Check size={15} /> : i + 1}
-                  </div>
-                  <span className="qb-step-label">{label}</span>
-                </div>
-                {i < STEP_LABELS.length - 1 && (
-                  <div className={`qb-step-connector ${i < step ? 'done' : ''}`} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+      {/* ── Compact Top Header ── */}
+      <div style={{
+        background: 'linear-gradient(160deg, #19100A 0%, #2A1810 50%, #100A06 100%)',
+        paddingTop: '105px', paddingBottom: '1.5rem', textAlign: 'center', color: '#F7EFE6',
+        borderBottom: '1px solid rgba(200,169,106,0.3)',
+      }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 1rem' }}>
+          <h1 style={{
+            fontFamily: "'Cinzel', serif",
+            fontSize: 'clamp(1.4rem, 2.5vw, 1.9rem)',
+            fontWeight: 700, color: '#FFFFFF', margin: 0,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}>
+            Quick Booking
+          </h1>
         </div>
       </div>
 
-      {/* ── MAIN SECTION ── */}
-      <section className="qb-main-section">
-        <div className="container">
-          <AnimatePresence mode="wait">
+      {/* ── 3-Step Indicator ── */}
+      {renderStepIndicator()}
 
-            {/* ══════════════════════════════════════
-                STEP 0 — LOCATION & TEMPLE
-            ══════════════════════════════════════ */}
-            {step === 0 && (
-              <motion.div
-                key="step0"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <div className="qb-step0-layout">
-                  <div className="qb-glass-card qb-step0-card">
+      {/* ── Main View Content ── */}
+      {activeStepNum === 3
+        ? renderStep3ReviewPayment()
+        : currentPageView === 'booking'
+          ? renderPage2BookingDetails()
+          : renderPage1LocationTemple()
+      }
 
-                    {/* ─ Location Selection ─ */}
-                    <div className="qb-card-section">
-                      <div className="qb-section-header">
-                        <div className="qb-section-icon"><MapPin size={18} /></div>
-                        <div>
-                          <h2 className="qb-section-title">Location Selection</h2>
-                          <p className="qb-section-sub">Select your state and district to find nearby temples</p>
-                        </div>
-                      </div>
-
-                      <div className="qb-location-cascade">
-                        {/* Step 1: State */}
-                        <div className="qb-location-step">
-                          <div className="qb-location-step-num">1</div>
-                          <div className="qb-location-step-body">
-                            <label className="qb-field-label">
-                              State <span className="qb-required">*</span>
-                            </label>
-                            <SearchableSelect
-                              value={form.state}
-                              onChange={handleStateChange}
-                              options={allStates}
-                              placeholder="Select State"
-                              icon={<Globe size={14} />}
-                            />
-                            {errors.state && <span className="qb-error"><AlertCircle size={12} /> {errors.state}</span>}
-                          </div>
-                        </div>
-
-                        {/* Step 2: District */}
-                        <div className={`qb-location-step ${!form.state ? 'qb-loc-step-disabled' : ''}`}>
-                          <div className="qb-location-step-num">2</div>
-                          <div className="qb-location-step-body">
-                            <label className="qb-field-label">
-                              District <span className="qb-required">*</span>
-                            </label>
-                            <SearchableSelect
-                              value={form.district}
-                              onChange={handleDistrictChange}
-                              options={allDistricts}
-                              placeholder={form.state ? 'Select District' : 'Select state first'}
-                              disabled={!form.state}
-                              icon={<MapPin size={14} />}
-                            />
-                            {errors.district && <span className="qb-error"><AlertCircle size={12} /> {errors.district}</span>}
-                          </div>
-                        </div>
-
-                        {/* Step 3: City / Place */}
-                        <div className={`qb-location-step ${!form.district ? 'qb-loc-step-disabled' : ''}`}>
-                          <div className="qb-location-step-num">3</div>
-                          <div className="qb-location-step-body">
-                            <label className="qb-field-label">
-                              City / Place <span className="qb-optional">(Optional)</span>
-                            </label>
-                            <input
-                              type="text"
-                              name="place"
-                              className="qb-input"
-                              placeholder={form.district ? `e.g. ${form.district}` : 'Select district first'}
-                              value={form.place}
-                              onChange={handleField}
-                              disabled={!form.district}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="qb-divider" />
-
-                    {/* ─ Temple Selection ─ */}
-                    <div className="qb-card-section">
-                      <div className="qb-section-header">
-                        <div className="qb-section-icon"><Star size={18} /></div>
-                        <div>
-                          <h2 className="qb-section-title">Temple Selection</h2>
-                          <p className="qb-section-sub">
-                            {form.district
-                              ? `Showing temples in ${form.district} district`
-                              : `Browse from ${REAL_TAMIL_NADU_TEMPLES.length} sacred temples`}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        className={`qb-temple-search-trigger ${errors.templeName ? 'error' : ''} ${selectedTemple ? 'selected' : ''}`}
-                        onClick={() => setShowTempleModal(true)}
-                      >
-                        <Search size={16} className="qb-tst-icon" />
-                        <span className="qb-tst-text">
-                          {form.templeName
-                            || (form.district
-                              ? `Browse temples in ${form.district}...`
-                              : 'Search or browse all temples...')}
-                        </span>
-                        {form.templeName && <span className="qb-tst-change">Change</span>}
-                        {!form.templeName && <ChevronRight size={16} className="qb-tst-arrow" />}
-                      </button>
-                      {errors.templeName && <span className="qb-error"><AlertCircle size={12} /> {errors.templeName}</span>}
-
-                      {/* Compact Temple Card replaces the old chip + big sidebar */}
-                      {selectedTemple && (
-                        <div style={{ marginTop: '1rem' }}>
-                          <CompactTempleCard
-                            temple={selectedTemple}
-                            onChange={() => setShowTempleModal(true)}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Privacy Note */}
-                    <div className="qb-card-section" style={{ paddingTop: 0 }}>
-                      <div className="qb-privacy-note">
-                        <Lock size={15} />
-                        <p>Your details are encrypted and protected under India's DPDP Act 2023.</p>
-                      </div>
-
-                      {/* Continue */}
-                      <div className="qb-form-actions qb-form-actions-end" style={{ marginTop: '1rem' }}>
-                        <button type="button" className="qb-btn-primary qb-btn-continue" onClick={nextStep}>
-                          Continue to Booking Details
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ══════════════════════════════════════
-                STEP 1 — BOOKING DETAILS (ACCORDION)
-            ══════════════════════════════════════ */}
-            {step === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <div className="qb-step1-two-col">
-
-                  {/* ── LEFT: ACCORDION BOOKING FORM ── */}
-                  <div className="qb-booking-col">
-
-                    {/* Temple Summary Strip (compact card) */}
-                    {selectedTemple && (
-                      <div className="qb-glass-card" style={{ marginBottom: '1rem', overflow: 'visible' }}>
-                        <div style={{ padding: '1rem 1.25rem' }}>
-                          <CompactTempleCard
-                            temple={selectedTemple}
-                            onChange={() => setStep(0)}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Accordion Container */}
-                    <div className="qb-glass-card qb-accordion-container">
-
-                      {/* ─── DARSHAN TYPE ─── */}
-                      <AccordionSection
-                        id="darshan"
-                        title="Darshan Type"
-                        icon={<Star size={13} />}
-                        isOpen={activeAccordion === 'darshan'}
-                        onToggle={handleAccordionToggle}
-                        summary={summaries.darshan}
-                        isCompleted={completedAccordions.has('darshan') && !!darshanType}
-                      >
-                        <div className="qb-darshan-options-list">
-                          {DEFAULT_DARSHAN_TYPES.map(option => (
-                            <DarshanOptionCard
-                              key={option.id}
-                              option={option}
-                              selected={darshanType?.id === option.id}
-                              onSelect={handleDarshanSelect}
-                            />
-                          ))}
-                        </div>
-                        {errors.darshan && (
-                          <span className="qb-error" style={{ marginTop: '0.5rem', display: 'flex' }}>
-                            <AlertCircle size={12} /> {errors.darshan}
-                          </span>
-                        )}
-                      </AccordionSection>
-
-                      <div className="qb-accordion-divider" />
-
-                      {/* ─── POOJA & SERVICES ─── */}
-                      <AccordionSection
-                        id="pooja"
-                        title="Pooja & Services"
-                        icon={<Sparkles size={13} />}
-                        isOpen={activeAccordion === 'pooja'}
-                        onToggle={handleAccordionToggle}
-                        summary={summaries.pooja}
-                        isCompleted={completedAccordions.has('pooja')}
-                      >
-                        <p className="qb-acc-section-hint">
-                          Optional — Add a special pooja or ritual service to your darshan.
-                        </p>
-                        <div className="qb-darshan-options-list">
-                          {poojaServices.map(service => (
-                            <PoojaServiceCard
-                              key={service.id}
-                              service={service}
-                              selected={poojaService?.id === service.id}
-                              onSelect={handlePoojaSelect}
-                            />
-                          ))}
-                        </div>
-                        <button className="qb-skip-pooja-btn" onClick={handleSkipPooja}>
-                          Skip — No Pooja Required <ChevronRight size={14} />
-                        </button>
-                      </AccordionSection>
-
-                      <div className="qb-accordion-divider" />
-
-                      {/* ─── DATE & TIME ─── */}
-                      <AccordionSection
-                        id="datetime"
-                        title="Date & Time"
-                        icon={<CalendarDays size={13} />}
-                        isOpen={activeAccordion === 'datetime'}
-                        onToggle={handleAccordionToggle}
-                        summary={summaries.datetime}
-                        isCompleted={completedAccordions.has('datetime') && form.date && form.timeSlot}
-                      >
-                        <div className="qb-datetime-inner">
-                          <div className="qb-field-group">
-                            <label className="qb-field-label">Visit Date <span className="qb-required">*</span></label>
-                            <input
-                              type="date" name="date"
-                              className={`qb-input ${errors.date ? 'error' : ''}`}
-                              value={form.date} min={today}
-                              onChange={e => {
-                                handleField(e);
-                                setForm(f => ({ ...f, timeSlot: '' }));
-                              }}
-                            />
-                            {errors.date && <span className="qb-error"><AlertCircle size={12} /> {errors.date}</span>}
-                          </div>
-
-                          {form.date && (
-                            <div style={{ marginTop: '1rem' }}>
-                              <label className="qb-field-label" style={{ display: 'block', marginBottom: '0.6rem' }}>
-                                Available Time Slots <span className="qb-required">*</span>
-                              </label>
-                              <div className="qb-time-slots-grid-new">
-                                {timeSlots.map(ts => (
-                                  <button
-                                    key={ts.id}
-                                    type="button"
-                                    disabled={ts.availability === 'booked'}
-                                    className={`qb-time-slot-btn ${form.timeSlot === ts.id ? 'selected' : ''} ${ts.availability}`}
-                                    onClick={() => {
-                                      if (ts.availability !== 'booked') {
-                                        setForm(f => ({ ...f, timeSlot: ts.id }));
-                                        setErrors(er => ({ ...er, timeSlot: '' }));
-                                      }
-                                    }}
-                                  >
-                                    <div className="qb-tsb-time">
-                                      <Clock size={12} /> {ts.label}
-                                    </div>
-                                    <div className="qb-tsb-name">{ts.sublabel}</div>
-                                    <div className={`qb-tsb-avail ${ts.availability}`}>
-                                      {ts.availability === 'available' ? '● Available' :
-                                       ts.availability === 'limited'   ? '◐ Limited'  :
-                                       '✕ Fully Booked'}
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                              {errors.timeSlot && <span className="qb-error" style={{ marginTop: '0.5rem', display: 'flex' }}><AlertCircle size={12} /> {errors.timeSlot}</span>}
-                            </div>
-                          )}
-
-                          {form.date && form.timeSlot && (
-                            <button
-                              className="qb-acc-confirm-btn"
-                              onClick={() => advanceAccordion('datetime')}
-                            >
-                              Confirm Date & Time <Check size={14} />
-                            </button>
-                          )}
-                        </div>
-                      </AccordionSection>
-
-                      <div className="qb-accordion-divider" />
-
-                      {/* ─── DEVOTEE DETAILS ─── */}
-                      <AccordionSection
-                        id="devotees"
-                        title="Devotee Details"
-                        icon={<Users size={13} />}
-                        isOpen={activeAccordion === 'devotees'}
-                        onToggle={handleAccordionToggle}
-                        summary={summaries.devotees}
-                        isCompleted={completedAccordions.has('devotees')}
-                      >
-                        <div className="qb-traveller-list">
-                          {DEVOTEE_CATEGORIES.map(cat => (
-                            <div key={cat.field} className="qb-traveller-row">
-                              <div className="qb-traveller-info">
-                                <div className="qb-traveller-label">
-                                  <span className="qb-traveller-icon">{cat.icon}</span>
-                                  {cat.label}
-                                </div>
-                                <div className="qb-traveller-age">Age: {cat.ageRange}</div>
-                              </div>
-                              <div className="qb-counter">
-                                <button
-                                  type="button"
-                                  className="qb-counter-btn"
-                                  onClick={() => handleCount(cat.field, -1)}
-                                  disabled={form[cat.field] <= cat.min}
-                                >
-                                  <Minus size={14} />
-                                </button>
-                                <span className="qb-counter-val">{form[cat.field]}</span>
-                                <button
-                                  type="button"
-                                  className="qb-counter-btn"
-                                  onClick={() => handleCount(cat.field, 1)}
-                                >
-                                  <Plus size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="qb-traveller-total">
-                          <span>Total Devotees</span>
-                          <span className="qb-traveller-total-val">{totalDevotees}</span>
-                        </div>
-                        <button
-                          className="qb-acc-confirm-btn"
-                          onClick={() => advanceAccordion('devotees')}
-                        >
-                          Confirm Devotees <Check size={14} />
-                        </button>
-                      </AccordionSection>
-
-                      <div className="qb-accordion-divider" />
-
-                      {/* ─── CUSTOMER DETAILS ─── */}
-                      <AccordionSection
-                        id="customer"
-                        title="Customer Details"
-                        icon={<Users size={13} />}
-                        isOpen={activeAccordion === 'customer'}
-                        onToggle={handleAccordionToggle}
-                        summary={summaries.customer}
-                        isCompleted={completedAccordions.has('customer') && form.customerName && form.mobile && form.email}
-                      >
-                        <div className="qb-form-grid">
-                          <div className="qb-field-group qb-field-full">
-                            <label className="qb-field-label">Full Name <span className="qb-required">*</span></label>
-                            <input
-                              type="text" name="customerName"
-                              className={`qb-input ${errors.customerName ? 'error' : ''}`}
-                              placeholder="e.g. Arjun Sharma"
-                              value={form.customerName} onChange={handleField}
-                            />
-                            {errors.customerName && <span className="qb-error"><AlertCircle size={12} /> {errors.customerName}</span>}
-                          </div>
-                          <div className="qb-field-group">
-                            <label className="qb-field-label">Mobile <span className="qb-required">*</span></label>
-                            <input
-                              type="tel" name="mobile"
-                              className={`qb-input ${errors.mobile ? 'error' : ''}`}
-                              placeholder="+91 98765 43210"
-                              value={form.mobile} onChange={handleField}
-                            />
-                            {errors.mobile && <span className="qb-error"><AlertCircle size={12} /> {errors.mobile}</span>}
-                          </div>
-                          <div className="qb-field-group">
-                            <label className="qb-field-label">Email <span className="qb-required">*</span></label>
-                            <input
-                              type="email" name="email"
-                              className={`qb-input ${errors.email ? 'error' : ''}`}
-                              placeholder="you@email.com"
-                              value={form.email} onChange={handleField}
-                            />
-                            {errors.email && <span className="qb-error"><AlertCircle size={12} /> {errors.email}</span>}
-                          </div>
-                          <div className="qb-field-group">
-                            <label className="qb-field-label">Emergency Contact <span className="qb-optional">(Optional)</span></label>
-                            <input
-                              type="tel" name="emergencyContact"
-                              className="qb-input"
-                              placeholder="Emergency contact number"
-                              value={form.emergencyContact} onChange={handleField}
-                            />
-                          </div>
-                          <div className="qb-field-group qb-field-full">
-                            <label className="qb-field-label">Address <span className="qb-optional">(Optional)</span></label>
-                            <input
-                              type="text" name="address"
-                              className="qb-input"
-                              placeholder="Street, City, Pincode"
-                              value={form.address} onChange={handleField}
-                            />
-                          </div>
-                        </div>
-                        <button
-                          className="qb-acc-confirm-btn"
-                          onClick={() => advanceAccordion('customer')}
-                          style={{ marginTop: '1rem' }}
-                        >
-                          Confirm Details <Check size={14} />
-                        </button>
-                      </AccordionSection>
-
-                      <div className="qb-accordion-divider" />
-
-                      {/* ─── ADDITIONAL REQUIREMENTS ─── */}
-                      <AccordionSection
-                        id="requirements"
-                        title="Additional Requirements"
-                        icon={<Heart size={13} />}
-                        isOpen={activeAccordion === 'requirements'}
-                        onToggle={handleAccordionToggle}
-                        summary={summaries.requirements}
-                        isCompleted={completedAccordions.has('requirements')}
-                      >
-                        <p className="qb-acc-section-hint">Optional assistance services (₹200 each)</p>
-                        <div className="qb-req-grid-new">
-                          {ADDITIONAL_REQ.map(req => (
-                            <label
-                              key={req.id}
-                              className={`qb-req-card ${form.requirements.includes(req.id) ? 'checked' : ''}`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="qb-req-checkbox"
-                                checked={form.requirements.includes(req.id)}
-                                onChange={() => handleReq(req.id)}
-                              />
-                              <span className="qb-req-card-icon">{req.icon}</span>
-                              <span className="qb-req-card-label">{req.label}</span>
-                              {form.requirements.includes(req.id) && (
-                                <span className="qb-req-card-check"><Check size={11} /></span>
-                              )}
-                            </label>
-                          ))}
-                        </div>
-                        <textarea
-                          name="specialRequests"
-                          className="qb-textarea"
-                          placeholder="Any specific requirements, dietary preferences, or special needs..."
-                          value={form.specialRequests}
-                          onChange={handleField}
-                          rows={2}
-                          style={{ marginTop: '0.75rem' }}
-                        />
-                      </AccordionSection>
-
-                    </div>
-
-                    {/* Navigation Row */}
-                    <div className="qb-step1-nav">
-                      <button type="button" className="qb-btn-secondary" onClick={prevStep}>
-                        <ChevronLeft size={16} /> Back
-                      </button>
-                      <button type="button" className="qb-btn-primary" onClick={nextStep}>
-                        Continue to Payment <ChevronRight size={18} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ── RIGHT: STICKY SUMMARY SIDEBAR ── */}
-                  <div className="qb-right-col">
-                    <StickySummary
-                      selectedTemple={selectedTemple}
-                      darshanType={darshanType}
-                      poojaService={poojaService}
-                      form={form}
-                      selectedTimeSlot={selectedTimeSlot}
-                      subtotal={subtotal}
-                      addons={addons}
-                      gst={gst}
-                      grandTotal={grandTotal}
-                      onContinue={nextStep}
-                      errors={errors}
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile Bottom Bar */}
-                <MobileBottomBar grandTotal={grandTotal} onContinue={nextStep} />
-              </motion.div>
-            )}
-
-            {/* ══════════════════════════════════════
-                STEP 2 — PAYMENT
-            ══════════════════════════════════════ */}
-            {step === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <div className="qb-payment-layout">
-                  {/* Payment Card */}
-                  <div className="qb-glass-card qb-payment-card">
-                    <div className="qb-payment-header">
-                      <div className="qb-section-icon"><QrCode size={18} /></div>
-                      <div>
-                        <h2 className="qb-section-title">Complete Payment</h2>
-                        <p className="qb-section-sub">Scan QR or use any supported payment method</p>
-                      </div>
-                    </div>
-
-                    {/* Booking Summary Banner */}
-                    <div className="qb-booking-id-banner">
-                      <div className="qb-bid-left">
-                        <span className="qb-bid-label">Booking Summary</span>
-                        <span className="qb-bid-value">{form.templeName || 'Temple Darshan'}</span>
-                      </div>
-                      <div className="qb-bid-meta">
-                        <span className="qb-bid-temple">{form.customerName}</span>
-                        <span className="qb-bid-amount">₹{grandTotal.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="qb-payment-body">
-                      {/* QR Section */}
-                      <div className="qb-qr-section">
-                        <div className="qb-qr-frame">
-                          <div className="qb-qr-inner">
-                            <QRCode value={qrValue} size={180} />
-                          </div>
-                          <div className="qb-qr-label">
-                            <Wifi size={12} /> Scan to pay via any UPI app
-                          </div>
-                        </div>
-                        <div className="qb-qr-amount-badge">
-                          <span className="qb-qa-label">Amount Payable</span>
-                          <span className="qb-qa-val">₹{grandTotal.toLocaleString()}</span>
-                        </div>
-                        <div className="qb-qr-upi-id">
-                          <span>UPI ID: darshan@journey</span>
-                          <button className="qb-copy-btn" onClick={() => navigator.clipboard.writeText('darshan@journey')}>
-                            <Copy size={12} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* OR Divider */}
-                      <div className="qb-or-divider">
-                        <div className="qb-or-line" />
-                        <span>OR PAY WITH</span>
-                        <div className="qb-or-line" />
-                      </div>
-
-                      {/* Payment Methods */}
-                      <div className="qb-payment-methods">
-                        {PAYMENT_METHODS.map(pm => (
-                          <button
-                            key={pm.id}
-                            type="button"
-                            className={`qb-pm-btn ${form.paymentMethod === pm.id ? 'selected' : ''}`}
-                            onClick={() => setForm(f => ({ ...f, paymentMethod: pm.id }))}
-                          >
-                            <span>{pm.icon}</span>
-                            <span>{pm.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Countdown Timer */}
-                    <CountdownTimer onExpire={() => setPaymentExpired(true)} />
-
-                    {/* Actions */}
-                    <div className="qb-form-actions">
-                      <button type="button" className="qb-btn-secondary" onClick={prevStep}>
-                        <ChevronLeft size={16} /> Back
-                      </button>
-                      <button
-                        type="button"
-                        className="qb-btn-success"
-                        onClick={confirmPayment}
-                        disabled={paymentExpired}
-                      >
-                        <Check size={18} /> I've Completed Payment
-                      </button>
-                    </div>
-
-                    {/* Security Footer */}
-                    <div className="qb-payment-secure-row">
-                      <Shield size={14} />
-                      <span>256-bit SSL Encrypted · RBI Compliant · Your data is safe</span>
-                    </div>
-                  </div>
-
-                  {/* Summary Sidebar */}
-                  <div className="qb-summary-sidebar">
-                    <div className="qb-summary-card">
-                      <h3 className="qb-summary-title"><Sparkles size={16} /> Order Summary</h3>
-                      <div className="qb-summary-rows">
-                        {[
-                          { label: 'Customer',  val: form.customerName || '—' },
-                          { label: 'Temple',    val: form.templeName   || '—' },
-                          { label: 'Service',   val: darshanType?.name || '—' },
-                          { label: 'Date',      val: form.date ? new Date(form.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' },
-                          { label: 'Time',      val: selectedTimeSlot ? selectedTimeSlot.label : '—' },
-                          { label: 'Devotees',  val: `${totalDevotees} person${totalDevotees !== 1 ? 's' : ''}` },
-                        ].map(({ label, val }) => (
-                          <div className="qb-summary-row" key={label}>
-                            <span className="qb-summary-label">{label}</span>
-                            <span className="qb-summary-val">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="qb-summary-divider" />
-                      <div className="qb-sum-row"><span>Service</span><span>₹{subtotal.toLocaleString()}</span></div>
-                      {addons > 0 && <div className="qb-sum-row"><span>Add-ons</span><span>₹{addons.toLocaleString()}</span></div>}
-                      <div className="qb-sum-row"><span>GST (5%)</span><span>₹{gst.toLocaleString()}</span></div>
-                      <div className="qb-summary-total">
-                        <span>Total</span>
-                        <span>₹{grandTotal.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
-        </div>
-      </section>
-
-      {/* ══════ PAYMENT SUCCESS OVERLAY ══════ */}
-      <AnimatePresence>
-        {showSuccess && (
-          <motion.div
-            className="qb-success-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="qb-success-modal"
-              initial={{ scale: 0.8, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <SuccessCheckmark />
-              <h2 className="qb-success-title">Booking Confirmed Successfully!</h2>
-              <p className="qb-success-sub">
-                Jai Sri Ram! Your divine journey to <strong>{form.templeName || 'the temple'}</strong> has been booked.
-              </p>
-
-              <div className="qb-success-details">
-                <div className="qb-sd-row">
-                  <span className="qb-sd-label">Booking ID</span>
-                  <div className="qb-sd-id-row">
-                    <span className="qb-sd-value qb-bid-highlight">{bookingId}</span>
-                    <button className="qb-copy-btn" onClick={handleCopyBookingId} title="Copy">
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                    </button>
-                  </div>
-                </div>
-                {[
-                  { label: 'Transaction ID',  val: transactionId },
-                  { label: 'Temple',          val: form.templeName },
-                  { label: 'Service',         val: darshanType?.name },
-                  { label: 'Date',            val: form.date ? new Date(form.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—' },
-                  { label: 'Time Slot',       val: selectedTimeSlot?.label },
-                  { label: 'Customer Name',   val: form.customerName },
-                  { label: 'Mobile',          val: form.mobile },
-                  { label: 'Amount Paid',     val: `₹${grandTotal.toLocaleString()}` },
-                ].map(({ label, val }) => (
-                  <div className="qb-sd-row" key={label}>
-                    <span className="qb-sd-label">{label}</span>
-                    <span className="qb-sd-value">{val || '—'}</span>
-                  </div>
-                ))}
-                <div className="qb-sd-row">
-                  <span className="qb-sd-label">Payment Status</span>
-                  <span className="qb-status-badge">✓ SUCCESS</span>
-                </div>
-              </div>
-
-              {/* QR Pass */}
-              <div className="qb-success-qr">
-                <QRCode value={bookingId} size={120} />
-                <p className="qb-success-qr-label">Your Digital Pass · Scan at temple entry</p>
-              </div>
-
-              <div className="qb-success-actions">
-                <button className="qb-success-btn qb-sbtn-primary" onClick={() => window.print()}>
-                  <Printer size={16} /> Download Receipt
-                </button>
-                <button className="qb-success-btn qb-sbtn-outline" onClick={() => window.print()}>
-                  <Download size={16} /> Download QR Pass
-                </button>
-                <button className="qb-success-btn qb-sbtn-outline" onClick={resetBooking}>
-                  <Eye size={16} /> New Booking
-                </button>
-                <button className="qb-success-btn qb-sbtn-ghost" onClick={onGoToHome}>
-                  <Home size={16} /> Go to Home
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ══════ PRINTABLE RECEIPT ══════ */}
-      <div className="qb-receipt" ref={receiptRef}>
-        <div className="qb-receipt-inner">
-          <div className="qb-receipt-header">
-            <div className="qb-receipt-logo">
-              <div className="qb-receipt-logo-icon">🕉️</div>
-              <div>
-                <div className="qb-receipt-brand">DARSHAN JOURNEY</div>
-                <div className="qb-receipt-tagline">Sacred Pilgrimage Services</div>
-              </div>
-            </div>
-            <div className="qb-receipt-title-block">
-              <h1 className="qb-receipt-title">BOOKING RECEIPT</h1>
-              <div className="qb-receipt-status-badge">✓ CONFIRMED</div>
-            </div>
-          </div>
-
-          <div className="qb-receipt-divider" />
-
-          <div className="qb-receipt-ids">
-            <div className="qb-rid"><span className="qb-rid-label">Booking ID</span><span className="qb-rid-val">{bookingId || 'N/A'}</span></div>
-            <div className="qb-rid"><span className="qb-rid-label">Transaction ID</span><span className="qb-rid-val">{transactionId || 'N/A'}</span></div>
-            <div className="qb-rid"><span className="qb-rid-label">Receipt Date</span><span className="qb-rid-val">{receiptDate}</span></div>
-          </div>
-
-          <div className="qb-receipt-divider" />
-
-          <div className="qb-receipt-cols">
-            <div className="qb-receipt-col">
-              <h3 className="qb-receipt-col-title">Temple Details</h3>
-              <div className="qb-receipt-row"><span>Temple Name</span><span>{form.templeName || '—'}</span></div>
-              <div className="qb-receipt-row"><span>Location</span><span>{form.templeLocation || '—'}</span></div>
-              <div className="qb-receipt-row"><span>Service Type</span><span>{darshanType?.name || '—'}</span></div>
-              <div className="qb-receipt-row"><span>Visit Date</span><span>{form.date ? new Date(form.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}</span></div>
-              <div className="qb-receipt-row"><span>Time Slot</span><span>{selectedTimeSlot?.label || '—'}</span></div>
-            </div>
-            <div className="qb-receipt-col">
-              <h3 className="qb-receipt-col-title">Customer Details</h3>
-              <div className="qb-receipt-row"><span>Full Name</span><span>{form.customerName || '—'}</span></div>
-              <div className="qb-receipt-row"><span>Mobile</span><span>{form.mobile || '—'}</span></div>
-              <div className="qb-receipt-row"><span>Email</span><span>{form.email || '—'}</span></div>
-              <div className="qb-receipt-row"><span>District</span><span>{form.district || '—'}</span></div>
-              <div className="qb-receipt-row"><span>Devotees</span><span>{form.adults}A + {form.children}C + {form.seniors}S</span></div>
-            </div>
-          </div>
-
-          <div className="qb-receipt-divider" />
-
-          <div className="qb-receipt-payment">
-            <h3 className="qb-receipt-col-title">Payment Breakdown</h3>
-            <div className="qb-receipt-row"><span>Service Fee</span><span>₹{subtotal.toLocaleString()}</span></div>
-            {addons > 0 && <div className="qb-receipt-row"><span>Additional Services</span><span>₹{addons.toLocaleString()}</span></div>}
-            <div className="qb-receipt-row"><span>GST @ 5%</span><span>₹{gst.toLocaleString()}</span></div>
-            <div className="qb-receipt-row qb-receipt-total"><span>Total Amount Paid</span><span>₹{grandTotal.toLocaleString()}</span></div>
-            <div className="qb-receipt-row"><span>Payment Method</span><span>{PAYMENT_METHODS.find(p => p.id === form.paymentMethod)?.label || 'UPI'}</span></div>
-            <div className="qb-receipt-row"><span>Payment Status</span><span style={{ color: '#16A34A', fontWeight: 700 }}>SUCCESS</span></div>
-          </div>
-
-          <div className="qb-receipt-divider" />
-
-          <div className="qb-receipt-bottom">
-            <div className="qb-receipt-qr-block">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <QRCode value={bookingId || 'DJ-RECEIPT'} size={100} />
-              </div>
-              <p className="qb-receipt-qr-label">Scan to verify booking</p>
-            </div>
-            <div className="qb-receipt-support">
-              <h4>Customer Support</h4>
-              <p>📞 +91 88001 23456</p>
-              <p>✉️ darshan@journey.in</p>
-              <p>🌐 www.darshanjourney.in</p>
-              <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#6E5351' }}>
-                Cancellation: Free up to 48 hrs before visit.<br />
-                After 48 hrs: 20% cancellation fee applies.
-              </p>
-            </div>
-          </div>
-
-          <div className="qb-receipt-footer">
-            <div className="qb-receipt-om">🕉️</div>
-            <p>Thank you for choosing Darshan Journey.</p>
-            <p>Have a peaceful and blessed pilgrimage.</p>
-          </div>
-        </div>
-      </div>
-
+      {/* ── Footer ── */}
       <Footer
         onGoToHome={onGoToHome}
-        onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
-        onGoToLogin={onGoToLogin}
         onGoToAbout={onGoToAbout}
+        onOpenBooking={onOpenBooking}
       />
+
+      {/* ── Modals ── */}
+      {renderStatePopoverModal()}
+      {renderDistrictPopoverModal()}
+      {renderLocationPopupModal()}
+      {renderTempleDetailsModal()}
     </div>
   );
 }
