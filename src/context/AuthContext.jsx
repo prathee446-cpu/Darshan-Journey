@@ -8,7 +8,7 @@ const AuthContext = createContext(null);
 
 /**
  * AuthProvider — Manages devotee user authentication state, session validation,
- * token persistence, and pending booking/service intents.
+ * token persistence, cross-tab synchronization, and pending booking/service intents.
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -68,21 +68,27 @@ export function AuthProvider({ children }) {
         });
 
         if (response.ok) {
-          const serverUser = await response.json();
+          const serverData = await response.json();
+          const serverUser = serverData.user || serverData;
           const normalized = {
             id: serverUser.id || serverUser._id,
             _id: serverUser.id || serverUser._id,
             name: serverUser.name || serverUser.fullName || 'Devotee',
             fullName: serverUser.fullName || serverUser.name || 'Devotee',
+            username: serverUser.username || '',
             email: serverUser.email || '',
             avatar: serverUser.avatar || (serverUser.fullName ? serverUser.fullName.charAt(0).toUpperCase() : 'D'),
-            provider: serverUser.provider || 'email',
-            authProvider: serverUser.provider || 'email',
+            provider: serverUser.provider || serverUser.authProvider || 'email',
+            authProvider: serverUser.authProvider || serverUser.provider || 'email',
             phone: serverUser.phone || serverUser.mobile || '',
             mobile: serverUser.mobile || serverUser.phone || '',
             address: serverUser.address || '',
             emergencyContact: serverUser.emergencyContact || '',
+            role: serverUser.role || 'Devotee',
             status: serverUser.status || 'active',
+            emailVerified: Boolean(serverUser.emailVerified),
+            bookingCount: serverUser.bookingCount || 0,
+            totalSpent: serverUser.totalSpent || '₹0',
             createdAt: serverUser.createdAt || new Date().toISOString(),
             lastLogin: serverUser.lastLogin || new Date().toISOString()
           };
@@ -103,6 +109,27 @@ export function AuthProvider({ children }) {
     };
 
     validateSession();
+  }, []);
+
+  // Listen for storage events from other tabs
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === STORAGE_KEY) {
+        try {
+          setUser(e.newValue ? JSON.parse(e.newValue) : null);
+        } catch {
+          setUser(null);
+        }
+      } else if (e.key === 'darshan_pending_booking') {
+        try {
+          setPendingBookingService(e.newValue ? JSON.parse(e.newValue) : null);
+        } catch {
+          setPendingBookingService(null);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   // Save pending booking service
@@ -156,38 +183,46 @@ export function AuthProvider({ children }) {
 
   // Login handler
   const login = useCallback((userData, token = null) => {
-    const normalizedUser = {
-      id: userData.id || userData._id || 'user_' + Date.now(),
-      _id: userData._id || userData.id || 'user_' + Date.now(),
-      name: userData.name || userData.fullName || 'Devotee',
-      fullName: userData.fullName || userData.name || 'Devotee',
-      email: userData.email || '',
-      avatar: userData.avatar || (userData.name || userData.fullName || 'D').charAt(0).toUpperCase(),
-      authProvider: userData.provider || userData.authProvider || 'email',
-      provider: userData.provider || userData.authProvider || 'email',
-      phone: userData.phone || userData.mobile || '',
-      mobile: userData.mobile || userData.phone || '',
-      address: userData.address || '',
-      emergencyContact: userData.emergencyContact || '',
-      status: userData.status || 'active',
-      createdAt: userData.createdAt || new Date().toISOString(),
-      lastLogin: new Date().toISOString()
+    const formattedUser = {
+      id: userData?.id || userData?._id || ('user_' + Date.now()),
+      _id: userData?._id || userData?.id || ('user_' + Date.now()),
+      name: userData?.fullName || userData?.name || 'Devotee',
+      fullName: userData?.fullName || userData?.name || 'Devotee',
+      username: userData?.username || '',
+      email: userData?.email || '',
+      phone: userData?.phone || userData?.mobile || '',
+      mobile: userData?.mobile || userData?.phone || '',
+      address: userData?.address || '',
+      emergencyContact: userData?.emergencyContact || '',
+      avatar: userData?.avatar || (userData?.fullName ? userData.fullName.charAt(0).toUpperCase() : 'D'),
+      authProvider: userData?.authProvider || userData?.provider || 'local',
+      provider: userData?.authProvider || userData?.provider || 'local',
+      role: userData?.role || 'Devotee',
+      status: userData?.status || 'active',
+      emailVerified: userData?.emailVerified !== undefined ? userData.emailVerified : true,
+      bookingCount: userData?.bookingCount || 0,
+      totalSpent: userData?.totalSpent || '₹0',
+      loggedInAt: new Date().toISOString()
     };
 
-    setUser(normalizedUser);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedUser));
-    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(normalizedUser));
+    setUser(formattedUser);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formattedUser));
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(formattedUser));
 
     if (token) {
       localStorage.setItem('darshan_token', token);
     }
-  }, []);
+    setIsLoading(false);
+    return pendingBookingService;
+  }, [pendingBookingService]);
 
   // Logout handler
   const logout = useCallback(async () => {
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LEGACY_STORAGE_KEY);
+    localStorage.removeItem('darshan_user');
+    localStorage.removeItem('currentUser');
     localStorage.removeItem('darshan_token');
     localStorage.removeItem('darshan_pending_booking');
     sessionStorage.removeItem('darshan_pending_intent');
@@ -204,14 +239,15 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Update user profile
-  const updateUser = useCallback(async (updatedFields) => {
-    if (!user) return;
-
-    const newUserData = { ...user, ...updatedFields };
-    setUser(newUserData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUserData));
-    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(newUserData));
+  // Update profile fields
+  const updateUser = useCallback(async (fields) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...fields };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
 
     try {
       const headers = {
@@ -227,8 +263,9 @@ export function AuthProvider({ children }) {
         headers,
         credentials: 'include',
         body: JSON.stringify({
-          userId: user.id || user._id,
-          ...updatedFields
+          userId: user?.id || user?._id,
+          email: user?.email,
+          ...fields
         })
       });
     } catch (err) {

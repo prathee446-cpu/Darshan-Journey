@@ -128,17 +128,29 @@ export default function ServicePaymentSummaryPage({
 
     // Save & Verify payment against backend API
     const verifiedBooking = await createBookingRecord({
+      bookingType: 'POOJA',
       serviceName: service.title || service.serviceName,
+      poojaName: service.title || service.serviceName,
+      templeName: service.templeName || service.temple || 'Brihadeeswarar Temple',
+      location: service.location || 'Thanjavur, Tamil Nadu',
       customerName: customer.fullName,
+      devoteeName: customer.fullName,
       customerMobile: customer.mobileNumber,
+      mobile: customer.mobileNumber,
       customerEmail: customer.email,
+      email: customer.email,
       gotraName: customer.gotraName,
       bookingDate,
       timeSlot,
+      bookingTime: timeSlot,
       devoteesCount,
+      numberOfPeople: devoteesCount,
       totalAmount,
+      amount: totalAmount,
       paymentMethod: 'UPI_GOOGLE_PAY',
-      status: 'PAID'
+      paymentStatus: 'PAID',
+      bookingStatus: 'CONFIRMED',
+      status: 'CONFIRMED'
     });
 
     const result = await verifyAndConfirmPayment(verifiedBooking.bookingId, transactionRef.trim());

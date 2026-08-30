@@ -249,9 +249,14 @@ export default function ServicesPage({
   onGoToHome, 
   onGoToLanding, 
   onExploreTemples, 
+  onGoToProducts,
+  onGoToServices,
   onGoToAbout, 
+  onGoToContact,
+  onGoToDashboard,
   onGoToLogin, 
   onOpenBooking,
+  onOpenDonate,
   onSelectCategory
 }) {
   const navigate = useNavigate();
@@ -402,14 +407,17 @@ export default function ServicesPage({
         onGoToHome={onGoToHome}
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
-        onGoToServices={() => {}}
+        onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
+        onGoToDashboard={onGoToDashboard}
         onGoToLogin={onGoToLogin}
         onOpenBooking={() => {
           if (onOpenBooking) onOpenBooking();
           else openBookingForCurrent();
         }}
-        onOpenDonate={() => alert('Thank you for supporting Temple Seva!')}
+        onOpenDonate={onOpenDonate || (() => alert('Thank you for supporting Temple Seva!'))}
       />
 
       {/* ---------------- HERO / SLIDER SECTION ---------------- */}

@@ -3,13 +3,21 @@
  * Provides integration with Google Identity Services (GIS) & OAuth 2.0
  */
 
-// Helper to get configured Google Client ID from environment or localStorage
+export const AUTHORIZED_ORIGIN = 'http://localhost:3000';
+export const DEFAULT_GOOGLE_CLIENT_ID = '78691079276-d4kt99gk2blffdvvamb219trnbmrt26h.apps.googleusercontent.com';
+
+// Helper to get configured Google Client ID from environment
 export function getGoogleClientId() {
   return (
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    localStorage.getItem('darshan_google_client_id') ||
-    ''
+    DEFAULT_GOOGLE_CLIENT_ID
   );
+}
+
+// Verify if the current browser origin matches the Authorized JavaScript Origin
+export function checkOriginMatches() {
+  if (typeof window === 'undefined') return true;
+  return window.location.origin === AUTHORIZED_ORIGIN;
 }
 
 // Save custom Client ID to localStorage for local testing

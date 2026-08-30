@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import logoImg from '../assets/exact_darshan_logo.png';
 
 export default function Footer({
@@ -10,6 +11,8 @@ export default function Footer({
   onGoToContact,
   onOpenBooking
 }) {
+  const navigate = useNavigate();
+
   const handleLinkClick = (e, action, fallbackUrl) => {
     e.preventDefault();
     if (action) {
@@ -17,8 +20,8 @@ export default function Footer({
       return;
     }
     if (fallbackUrl) {
-      window.history.pushState({}, '', fallbackUrl);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      navigate(fallbackUrl);
+      window.scrollTo(0, 0);
     }
   };
 
