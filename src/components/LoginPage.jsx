@@ -175,7 +175,7 @@ export default function LoginPage({
   }, [login]);
 
   // ─── Handle Explore Click from Splash Screen ───
-  const handleExploreClick = () => {
+  const handleExploreClick = useCallback(() => {
     if (pendingRedirectService) {
       const targetPath = pendingRedirectService.redirectUrl || 
         (pendingRedirectService.categorySlug ? `/services/category/${pendingRedirectService.categorySlug}` : '/services/details');
@@ -185,7 +185,17 @@ export default function LoginPage({
       const target = (from && from !== '/login') ? from : '/home';
       navigate(target, { replace: true });
     }
-  };
+  }, [pendingRedirectService, navigate, location.state]);
+
+  // ─── Auto-navigate to /home after ONLY 2 seconds on Splash Screen ───
+  useEffect(() => {
+    if (flow === FLOW.SPLASH) {
+      const timer = setTimeout(() => {
+        handleExploreClick();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [flow, handleExploreClick]);
 
   // ─── Pre-load Google Identity Services script on mount ───
   useEffect(() => {
@@ -1259,7 +1269,7 @@ export default function LoginPage({
     </motion.div>
   );
 
-  // ─── SCREEN 4: GOOGLE ACCOUNT OTP VERIFICATION (Mandatory on every Google Login) ───
+  // ─── SCREEN 4: GOOGLE ACCOUNT OTP VERIFICATION ───
   const renderGoogleOtpScreen = () => (
     <motion.div
       key="google-otp"
@@ -1278,7 +1288,7 @@ export default function LoginPage({
       </button>
 
       <div className="login-card-header" style={{ textAlign: 'left', marginBottom: '0.75rem' }}>
-        <h2 className="login-welcome-title">Verify Your Google Account</h2>
+        <h2 className="login-welcome-title">Enter Verification Code</h2>
         <p className="login-welcome-subtitle">
           A 6-digit verification code has been dispatched to your Google email:
         </p>
@@ -1353,7 +1363,7 @@ export default function LoginPage({
               Verifying Code...
             </span>
           ) : (
-            <><ShieldCheck size={18} /> Verify & Complete Sign In</>
+            <><ShieldCheck size={18} /> Verify</>
           )}
         </motion.button>
 
@@ -1388,7 +1398,7 @@ export default function LoginPage({
     </motion.div>
   );
 
-  // ─── SCREEN 5: POST-LOGIN SPLASH SCREEN ───
+  // ─── SCREEN 5: POST-LOGIN SPLASH SCREEN (2-Second Sacred Loading) ───
   const renderSplashScreen = () => {
     const devoteeName = authenticatedDevotee?.name || authenticatedDevotee?.fullName || user?.name || user?.fullName || 'Devotee';
     const devoteeAvatar = authenticatedDevotee?.avatar || user?.avatar || devoteeName.charAt(0).toUpperCase();
@@ -1515,7 +1525,7 @@ export default function LoginPage({
             width: '80px',
             height: '2px',
             background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)',
-            marginBottom: '1.5rem'
+            marginBottom: '1.25rem'
           }} />
 
           <p style={{
@@ -1523,12 +1533,34 @@ export default function LoginPage({
             fontSize: '1.05rem',
             lineHeight: '1.7',
             color: '#F7EFE6',
-            marginBottom: '2.2rem',
+            marginBottom: '1.5rem',
             fontWeight: 400
           }}>
             🙏 <strong style={{ color: '#E8D2A0' }}>Sacred Welcome, {devoteeName}!</strong><br />
-            Your divine connection to India's holiest temples is authenticated. Step inside to experience sacred virtual darshans, authentic Vedic pujas, and live temple blessings.
+            Your divine connection to India's holiest temples is authenticated. Entering sacred home...
           </p>
+
+          {/* 2-Second Golden Loading Bar */}
+          <div style={{
+            width: '100%',
+            maxWidth: '280px',
+            height: '4px',
+            background: 'rgba(212, 175, 55, 0.2)',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            margin: '0.5rem auto 1.75rem'
+          }}>
+            <motion.div
+              initial={{ width: '0%' }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 2, ease: 'linear' }}
+              style={{
+                height: '100%',
+                background: 'linear-gradient(90deg, #D4AF37, #FDF8F0, #D4AF37)',
+                borderRadius: '4px'
+              }}
+            />
+          </div>
 
           <motion.button
             whileHover={{ scale: 1.04, boxShadow: '0 0 28px rgba(212, 175, 55, 0.65)' }}
@@ -1539,8 +1571,8 @@ export default function LoginPage({
               color: '#1A0E0A',
               border: 'none',
               borderRadius: '50px',
-              padding: '1rem 3.5rem',
-              fontSize: '1.1rem',
+              padding: '0.85rem 3rem',
+              fontSize: '1.05rem',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'inline-flex',
@@ -1551,7 +1583,7 @@ export default function LoginPage({
               transition: 'all 0.25s ease'
             }}
           >
-            Explore <ArrowRight size={20} />
+            Explore Now <ArrowRight size={18} />
           </motion.button>
         </motion.div>
       </div>

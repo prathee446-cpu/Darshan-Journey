@@ -115,8 +115,8 @@ export async function triggerGoogleTokenPopup({ onSuccess, onError, onCancel }) 
   try {
     const tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      scope: 'openid email profile',
-      prompt: '', // No forced consent prompt if already authorized
+      scope: 'email profile openid',
+      prompt: 'select_account',
       callback: (tokenResponse) => {
         if (tokenResponse?.error) {
           console.warn('Google Token Client error:', tokenResponse.error);
@@ -140,7 +140,7 @@ export async function triggerGoogleTokenPopup({ onSuccess, onError, onCancel }) 
       }
     });
 
-    tokenClient.requestAccessToken();
+    tokenClient.requestAccessToken({ prompt: 'select_account' });
     return true;
   } catch (err) {
     console.error('Error invoking Google Token Client:', err);
