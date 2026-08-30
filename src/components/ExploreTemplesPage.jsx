@@ -80,9 +80,15 @@ function TempleImage({ src, alt, className, style, fallbackHeight }) {
 export default function ExploreTemplesPage({ 
   onGoToHome, 
   onGoToLanding, 
+  onExploreTemples,
   onGoToProducts,
+  onGoToServices,
   onGoToAbout,
-  onOpenBooking
+  onGoToContact,
+  onGoToDashboard,
+  onGoToLogin,
+  onOpenBooking,
+  onOpenDonate
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -257,9 +263,13 @@ export default function ExploreTemplesPage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={() => setSelectedTemple(null)}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
+        onGoToDashboard={onGoToDashboard}
+        onGoToLogin={onGoToLogin}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
-        onOpenDonate={() => setIsDonateOpen(true)}
+        onOpenDonate={onOpenDonate || (() => setIsDonateOpen(true))}
       />
 
       {/* ========================================================================= */}
@@ -855,7 +865,9 @@ export default function ExploreTemplesPage({
         onGoToHome={onGoToHome}
         onExploreTemples={() => setSelectedTemple(null)}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
 

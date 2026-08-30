@@ -8,8 +8,13 @@ export default function ContactPage({
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onGoToLogin, 
-  onGoToContact 
+  onGoToAbout,
+  onGoToContact,
+  onGoToDashboard,
+  onOpenBooking,
+  onOpenDonate
 }) {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -23,10 +28,13 @@ export default function ContactPage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToLogin={onGoToLogin}
+        onGoToAbout={onGoToAbout}
         onGoToContact={onGoToContact}
-        onOpenBooking={() => setIsBookingOpen(true)}
-        onOpenDonate={() => setIsDonateOpen(true)}
+        onGoToDashboard={onGoToDashboard}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
+        onOpenDonate={onOpenDonate || (() => setIsDonateOpen(true))}
       />
 
       {/* ---------------- CONTACT SECTION CONTENT ---------------- */}

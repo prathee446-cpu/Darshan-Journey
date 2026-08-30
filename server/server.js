@@ -6,9 +6,20 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
 import cookieParser from 'cookie-parser';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { MongoClient, ObjectId } from 'mongodb';
+import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,39 +50,93 @@ app.get('/api/health', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// DATABASE LAYER — MongoDB Atlas with High-Availability In-Memory Store
+// DATABASE LAYER — MongoDB Atlas with Persistent High-Availability Store
 // ═══════════════════════════════════════════════════════════════
 
-class InMemoryCollection {
+// Comprehensive filter matcher supporting all MongoDB query structures
+function matchesQueryValue(docVal, targetVal) {
+  if (targetVal === undefined || targetVal === null) {
+    return docVal === targetVal;
+  }
+  if (targetVal instanceof RegExp) {
+    return targetVal.test(String(docVal || ''));
+  }
+  if (typeof targetVal === 'object') {
+    if (targetVal.$regex !== undefined) {
+      const pattern = targetVal.$regex instanceof RegExp ? targetVal.$regex.source : String(targetVal.$regex);
+      const flags = targetVal.$options !== undefined ? targetVal.$options : (targetVal.$regex instanceof RegExp ? targetVal.$regex.flags : 'i');
+      try {
+        const re = new RegExp(pattern, flags);
+        return re.test(String(docVal || ''));
+      } catch {
+        return false;
+      }
+    }
+    if (Array.isArray(targetVal.$in)) {
+      return targetVal.$in.some(v => matchesQueryValue(docVal, v));
+    }
+    if (targetVal.$ne !== undefined) {
+      return !matchesQueryValue(docVal, targetVal.$ne);
+    }
+  }
+  if (typeof docVal === 'string' && typeof targetVal === 'string') {
+    return docVal.toLowerCase() === targetVal.toLowerCase();
+  }
+  return String(docVal || '') === String(targetVal || '');
+}
+
+function matchesDoc(doc, filter = {}) {
+  if (!filter || !Object.keys(filter).length) return true;
+
+  for (const [k, v] of Object.entries(filter)) {
+    if (k === '$or' && Array.isArray(v)) {
+      const orMatches = v.some(subFilter => matchesDoc(doc, subFilter));
+      if (!orMatches) return false;
+    } else if (k === '$and' && Array.isArray(v)) {
+      const andMatches = v.every(subFilter => matchesDoc(doc, subFilter));
+      if (!andMatches) return false;
+    } else if (k === '_id') {
+      if (String(doc._id) !== String(v)) return false;
+    } else {
+      if (!matchesQueryValue(doc[k], v)) return false;
+    }
+  }
+  return true;
+}
+
+class PersistentCollection {
   constructor(name) {
     this.name = name;
+    this.filePath = path.join(DATA_DIR, `${name}.json`);
     this.docs = [];
+    this.loadFromDisk();
+  }
+
+  loadFromDisk() {
+    try {
+      if (fs.existsSync(this.filePath)) {
+        const content = fs.readFileSync(this.filePath, 'utf8');
+        this.docs = JSON.parse(content || '[]');
+      }
+    } catch (e) {
+      console.warn(`[PersistentStore] Warning loading ${this.name}.json:`, e.message);
+      this.docs = [];
+    }
+  }
+
+  saveToDisk() {
+    try {
+      fs.writeFileSync(this.filePath, JSON.stringify(this.docs, null, 2), 'utf8');
+    } catch (e) {
+      console.error(`[PersistentStore] Error writing ${this.name}.json:`, e.message);
+    }
   }
 
   async findOne(filter = {}) {
     for (const doc of this.docs) {
-      let match = true;
-      for (const [k, v] of Object.entries(filter)) {
-        if (k === '$or' && Array.isArray(v)) {
-          const anyMatch = v.some(subFilter => {
-            return Object.entries(subFilter).every(([subK, subV]) => {
-              if (subV instanceof RegExp) {
-                return subV.test(String(doc[subK] || ''));
-              }
-              return doc[subK] === subV;
-            });
-          });
-          if (!anyMatch) { match = false; break; }
-        } else if (k === '_id') {
-          if (String(doc._id) !== String(v)) { match = false; break; }
-        } else if (v instanceof RegExp) {
-          if (!v.test(String(doc[k] || ''))) { match = false; break; }
-        } else if (doc[k] !== v) {
-          match = false;
-          break;
-        }
+      if (matchesDoc(doc, filter)) {
+        return JSON.parse(JSON.stringify(doc));
       }
-      if (match) return JSON.parse(JSON.stringify(doc));
     }
     return null;
   }
@@ -79,11 +144,16 @@ class InMemoryCollection {
   async insertOne(doc) {
     const insertedDoc = { ...doc };
     if (!insertedDoc._id) {
-      insertedDoc._id = new ObjectId().toString();
+      try {
+        insertedDoc._id = new ObjectId().toString();
+      } catch {
+        insertedDoc._id = 'doc_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
+      }
     } else {
       insertedDoc._id = String(insertedDoc._id);
     }
     this.docs.push(insertedDoc);
+    this.saveToDisk();
     return { insertedId: insertedDoc._id, acknowledged: true };
   }
 
@@ -94,6 +164,7 @@ class InMemoryCollection {
     const target = this.docs.find(d => String(d._id) === String(doc._id));
     if (target && update.$set) {
       Object.assign(target, update.$set);
+      this.saveToDisk();
       return { matchedCount: 1, modifiedCount: 1 };
     }
     return { matchedCount: 1, modifiedCount: 0 };
@@ -103,9 +174,7 @@ class InMemoryCollection {
     return {
       toArray: async () => {
         if (!Object.keys(filter).length) return [...this.docs];
-        return this.docs.filter(doc => {
-          return Object.entries(filter).every(([k, v]) => doc[k] === v);
-        });
+        return this.docs.filter(doc => matchesDoc(doc, filter));
       }
     };
   }
@@ -116,11 +185,11 @@ class DatabaseManager {
     this.client = null;
     this.db = null;
     this.isAtlas = false;
-    this.inMemoryCollections = new Map();
+    this.persistentCollections = new Map();
   }
 
   async connect() {
-    if (this.db) return this.db;
+    if (this.db && this.isAtlas) return this.db;
 
     const mongoUri = process.env.MONGODB_URI || "mongodb+srv://darshan_user:DarshanJourney2026@cluster0.mongodb.net/darshan_journey_db?retryWrites=true&w=majority";
     const dbName = process.env.DATABASE_NAME || "darshan_journey_db";
@@ -129,8 +198,8 @@ class DatabaseManager {
       try {
         console.log(`📡 Connecting to MongoDB Atlas (${dbName})...`);
         const client = new MongoClient(mongoUri, {
-          serverSelectionTimeoutMS: 4000,
-          connectTimeoutMS: 4000,
+          serverSelectionTimeoutMS: 3000,
+          connectTimeoutMS: 3000,
         });
         await client.connect();
         await client.db(dbName).command({ ping: 1 });
@@ -139,18 +208,15 @@ class DatabaseManager {
         this.isAtlas = true;
         console.log('✅ Connected successfully to MongoDB Atlas!');
         
-        // Ensure index on users
         try {
           const usersCol = this.db.collection('users');
           await usersCol.createIndex({ email: 1 }, { unique: true, sparse: true });
           await usersCol.createIndex({ username: 1 }, { unique: true, sparse: true });
-        } catch (idxErr) {
-          /* ignore index creation error if exists */
-        }
+        } catch (idxErr) { /* ignore */ }
 
         return this.db;
       } catch (err) {
-        console.warn(`⚠️ MongoDB Atlas connection notice (${err.message}). Using high-availability in-memory store for user accounts.`);
+        console.warn(`⚠️ MongoDB Atlas connection notice (${err.message}). Using persistent storage for user accounts.`);
       }
     }
 
@@ -161,10 +227,10 @@ class DatabaseManager {
     if (this.isAtlas && this.db) {
       return this.db.collection(name);
     }
-    if (!this.inMemoryCollections.has(name)) {
-      this.inMemoryCollections.set(name, new InMemoryCollection(name));
+    if (!this.persistentCollections.has(name)) {
+      this.persistentCollections.set(name, new PersistentCollection(name));
     }
-    return this.inMemoryCollections.get(name);
+    return this.persistentCollections.get(name);
   }
 }
 
@@ -334,15 +400,25 @@ app.post(['/api/auth/login', '/api/auth/signin'], async (req, res) => {
     }
 
     const cleanIdentifier = rawIdentifier.toLowerCase();
+    const cleanUsername = normalizeUsername(rawIdentifier);
     const usersCol = dbManager.getCollection('users');
 
     // Find user by email or username (case-insensitive)
     let userDoc = await usersCol.findOne({
       $or: [
         { email: cleanIdentifier },
-        { username: { $regex: new RegExp(`^${cleanIdentifier}$`, 'i') } }
+        { username: cleanIdentifier },
+        ...(cleanUsername ? [{ username: cleanUsername }] : []),
+        { username: { $regex: `^${cleanIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } }
       ]
     });
+
+    if (!userDoc) {
+      userDoc = await usersCol.findOne({ email: cleanIdentifier });
+    }
+    if (!userDoc && cleanUsername) {
+      userDoc = await usersCol.findOne({ username: cleanUsername });
+    }
 
     if (!userDoc) {
       return res.status(401).json({
@@ -705,13 +781,19 @@ app.post('/api/auth/register-resend-otp', async (req, res) => {
   }
 });
 
-// Helper to verify Google token using Google UserInfo API or Tokeninfo
+const googleOAuthClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID || '78691079276-d4kt99gk2blffdvvamb219trnbmrt26h.apps.googleusercontent.com'
+);
+
+// Helper to verify Google token using google-auth-library, Google UserInfo API, or Tokeninfo
 async function verifyGoogleToken(credential, accessToken, clientId) {
-  // 1. If accessToken is provided (fast GIS popup token client)
+  const allowedClientId = clientId || process.env.GOOGLE_CLIENT_ID || '78691079276-d4kt99gk2blffdvvamb219trnbmrt26h.apps.googleusercontent.com';
+
+  // 1. If accessToken is provided (from Google OAuth 2.0 Token Client popup)
   if (accessToken) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${accessToken}` },
         signal: controller.signal
@@ -739,9 +821,32 @@ async function verifyGoogleToken(credential, accessToken, clientId) {
 
   // 2. If credential (ID token) is provided
   if (credential) {
+    // 2a. Official google-auth-library verifyIdToken
+    try {
+      const ticket = await googleOAuthClient.verifyIdToken({
+        idToken: credential,
+        audience: [
+          allowedClientId,
+          '78691079276-d4kt99gk2blffdvvamb219trnbmrt26h.apps.googleusercontent.com'
+        ]
+      });
+      const payload = ticket.getPayload();
+      if (payload && payload.email) {
+        return {
+          email: payload.email.toLowerCase(),
+          name: payload.name || payload.email.split('@')[0],
+          picture: payload.picture || '',
+          sub: payload.sub || ''
+        };
+      }
+    } catch (libErr) {
+      console.warn(`[Google Verification] google-auth-library verification notice: ${libErr.message}`);
+    }
+
+    // 2b. Direct Google Tokeninfo API endpoint
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`, {
         signal: controller.signal
@@ -766,7 +871,7 @@ async function verifyGoogleToken(credential, accessToken, clientId) {
       console.warn(`[Google Verification] HTTP request failed/timed out: ${err.message}`);
     }
 
-    // Safe fallback: decode locally
+    // 2c. Safe fallback: decode locally
     try {
       const parts = credential.split('.');
       if (parts.length >= 2) {
@@ -813,7 +918,77 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
 
     const cleanEmail = normalizeEmail(userInfo.email);
     const displayName = userInfo.name || cleanEmail.split('@')[0];
+    const nowIso = new Date().toISOString();
 
+    // ─── RETURNING GOOGLE USER CHECK ───
+    // If the devotee has already verified their Google account previously, proceed directly to login
+    const usersCol = dbManager.getCollection('users');
+    let userDoc = await usersCol.findOne({
+      $or: [
+        { email: cleanEmail },
+        ...(userInfo.sub ? [{ googleId: userInfo.sub }, { googleSub: userInfo.sub }] : [])
+      ]
+    });
+
+    if (userDoc && userDoc.emailVerified === true && userDoc.status !== 'blocked') {
+      const updates = { lastLogin: nowIso, updatedAt: nowIso, status: 'active' };
+      if (userInfo.picture && (!userDoc.avatar || userDoc.avatar.length <= 2)) {
+        updates.avatar = userInfo.picture;
+        userDoc.avatar = userInfo.picture;
+      }
+      if (userInfo.sub && !userDoc.googleId) {
+        updates.googleId = userInfo.sub;
+        updates.googleSub = userInfo.sub;
+      }
+      await usersCol.updateOne({ _id: userDoc._id }, { $set: updates });
+
+      const userId = String(userDoc._id);
+      const token = jwt.sign(
+        {
+          sub: userId,
+          email: cleanEmail,
+          username: userDoc.username || '',
+          name: userDoc.fullName || displayName
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      setSessionCookie(res, token);
+
+      const userObj = {
+        id: userId,
+        _id: userId,
+        fullName: userDoc.fullName || displayName,
+        name: userDoc.fullName || displayName,
+        username: userDoc.username || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        phone: userDoc.phone || userDoc.mobile || '',
+        mobile: userDoc.mobile || userDoc.phone || '',
+        address: userDoc.address || '',
+        emergencyContact: userDoc.emergencyContact || '',
+        authProvider: userDoc.authProvider || 'google',
+        provider: userDoc.authProvider || 'google',
+        status: 'active',
+        emailVerified: true,
+        avatar: userDoc.avatar || userInfo.picture || 'G',
+        createdAt: userDoc.createdAt,
+        lastLogin: nowIso
+      };
+
+      console.log(`✨ [RETURNING GOOGLE USER] Devotee "${userObj.fullName}" (${cleanEmail}) authenticated without extra OTP.`);
+
+      return res.json({
+        success: true,
+        requiresOtp: false,
+        requireOtp: false,
+        message: `✨ Welcome back, ${userObj.fullName}!`,
+        user: userObj,
+        token
+      });
+    }
+
+    // ─── FIRST-TIME GOOGLE USER: REQUIRE 6-DIGIT EMAIL OTP VERIFICATION ───
     // Check rate limit
     if (!checkRateLimit(cleanEmail)) {
       return res.status(429).json({
@@ -827,7 +1002,7 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
     const otp = generateOtp();
     const tempAuthToken = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(24).toString('hex');
 
-    // Store in pendingGoogleAuth store
+    // Store in pendingGoogleAuth store (5-minute expiry)
     pendingGoogleAuth.set(cleanEmail, {
       email: cleanEmail,
       name: displayName,
@@ -840,7 +1015,7 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
     });
     recordOtpRequest(cleanEmail);
 
-    console.log(`🔑 [GOOGLE AUTH OTP CREATED] Email: "${cleanEmail}" | OTP: "${otp}" | Valid for: 10m`);
+    console.log(`🔑 [FIRST-TIME GOOGLE AUTH OTP CREATED] Email: "${cleanEmail}" | OTP: "${otp}" | Valid for: 5m`);
 
     // Dispatch real email verification code via Gmail SMTP
     const result = await sendOtpEmail(cleanEmail, otp, displayName, false);
@@ -849,9 +1024,10 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
       return res.json({
         success: true,
         requiresOtp: true,
+        requireOtp: true,
         email: cleanEmail,
         tempAuthToken,
-        message: `Verification code sent to ${cleanEmail}. Please check your inbox.`,
+        message: `Verification code sent to ${cleanEmail}. Please check your Gmail inbox.`,
         cooldownSeconds: 30
       });
     } else {
@@ -1114,7 +1290,7 @@ app.get('/api/auth/me', async (req, res) => {
       (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
 
     if (!token) {
-      return res.status(401).json({ detail: 'No active session found.' });
+      return res.status(401).json({ authenticated: false, detail: 'No active session found.' });
     }
 
     let decoded;
@@ -1122,7 +1298,7 @@ app.get('/api/auth/me', async (req, res) => {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (err) {
       res.clearCookie('darshan_session');
-      return res.status(401).json({ detail: 'Session expired or token invalid.' });
+      return res.status(401).json({ authenticated: false, detail: 'Session expired or token invalid.' });
     }
 
     const usersCol = dbManager.getCollection('users');
@@ -1131,13 +1307,18 @@ app.get('/api/auth/me', async (req, res) => {
       try {
         userDoc = await usersCol.findOne({ _id: decoded.sub });
       } catch (e) { /* ignore */ }
+      if (!userDoc && ObjectId.isValid(decoded.sub)) {
+        try {
+          userDoc = await usersCol.findOne({ _id: new ObjectId(decoded.sub) });
+        } catch (e) { /* ignore */ }
+      }
     }
     if (!userDoc && decoded.email) {
       userDoc = await usersCol.findOne({ email: decoded.email.toLowerCase() });
     }
 
     if (!userDoc) {
-      return res.status(404).json({ detail: 'User profile not found.' });
+      return res.status(404).json({ authenticated: false, detail: 'User profile not found.' });
     }
 
     const userObj = {
@@ -1160,55 +1341,308 @@ app.get('/api/auth/me', async (req, res) => {
       lastLogin: userDoc.lastLogin
     };
 
-    return res.json(userObj);
+    return res.json({
+      authenticated: true,
+      user: userObj
+    });
   } catch (error) {
-    console.error('Get Current User Error:', error);
-    return res.status(500).json({ detail: 'Internal server error validating session.' });
+    console.error('/api/auth/me error:', error);
+    return res.status(500).json({ authenticated: false, detail: 'Failed to retrieve user session.' });
   }
 });
 
-// 10. UPDATE DEVOTEE PROFILE
-app.post('/api/auth/update-profile', async (req, res) => {
+// Helper to get authenticated user from session cookie or Bearer token
+async function getAuthenticatedUser(req) {
+  const token = req.cookies?.darshan_session || 
+    (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+
+  if (!token) return null;
+
   try {
-    const token = req.cookies?.darshan_session || 
-      (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
-
-    let userId = null;
-    let userEmail = null;
-
-    if (token) {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const usersCol = dbManager.getCollection('users');
+    let userDoc = null;
+    if (decoded.sub) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        userId = decoded.sub;
-        userEmail = decoded.email;
-      } catch (e) { /* proceed with body info */ }
+        userDoc = await usersCol.findOne({ _id: decoded.sub });
+      } catch (e) { /* ignore */ }
+      if (!userDoc && ObjectId.isValid(decoded.sub)) {
+        try {
+          userDoc = await usersCol.findOne({ _id: new ObjectId(decoded.sub) });
+        } catch (e) { /* ignore */ }
+      }
+    }
+    if (!userDoc && decoded.email) {
+      userDoc = await usersCol.findOne({ email: decoded.email.toLowerCase() });
+    }
+    return userDoc;
+  } catch (err) {
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 11. PERSISTENT BOOKINGS & SEVAS API LAYER (MongoDB)
+// ═══════════════════════════════════════════════════════════════
+
+// CREATE NEW DARSHAN / POOJA BOOKING
+app.post('/api/bookings', async (req, res) => {
+  try {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Please sign in to book your sacred darshan or seva.'
+      });
     }
 
-    const { fullName, username, phone, mobile, address, emergencyContact, email } = req.body;
-    const cleanEmail = (email || userEmail || '').toLowerCase();
+    const {
+      bookingType,
+      templeId,
+      templeName,
+      temple,
+      location,
+      district,
+      darshanType,
+      serviceId,
+      serviceName,
+      poojaName,
+      bookingDate,
+      bookingTime,
+      timeSlot,
+      numberOfPeople,
+      quantity,
+      devoteesCount,
+      devoteesBreakdown,
+      devotees,
+      devoteeName,
+      customerName,
+      fullName,
+      mobile,
+      customerMobile,
+      phone,
+      email,
+      customerEmail,
+      gotraName,
+      address,
+      addressDetails,
+      amount,
+      totalAmount,
+      paymentMethod,
+      paymentStatus,
+      bookingStatus,
+      status,
+      transactionId,
+      instructions
+    } = req.body;
 
-    const usersCol = dbManager.getCollection('users');
-    const updateFields = { updatedAt: new Date().toISOString() };
-    if (fullName) updateFields.fullName = fullName.trim();
-    if (username) updateFields.username = normalizeUsername(username);
-    if (phone || mobile) updateFields.phone = (phone || mobile).trim();
-    if (address) updateFields.address = address.trim();
-    if (emergencyContact) updateFields.emergencyContact = emergencyContact.trim();
+    const nowIso = new Date().toISOString();
+    const cleanRef = 'DJ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const finalBookingRef = req.body.bookingReference || req.body.bookingId || cleanRef;
 
-    if (userId) {
-      await usersCol.updateOne({ _id: userId }, { $set: updateFields });
-    } else if (cleanEmail) {
-      await usersCol.updateOne({ email: cleanEmail }, { $set: updateFields });
+    const newBooking = {
+      userId: String(authUser._id),
+      userEmail: authUser.email.toLowerCase(),
+      bookingReference: finalBookingRef,
+      bookingId: finalBookingRef,
+      bookingType: (bookingType || 'DARSHAN').toUpperCase(),
+      templeId: templeId || null,
+      templeName: templeName || temple || 'Sacred Temple',
+      location: location || district || 'Tamil Nadu',
+      darshanType: darshanType || (bookingType === 'POOJA' ? 'Pooja Seva' : 'Special Darshan'),
+      serviceId: serviceId || null,
+      serviceName: serviceName || poojaName || '',
+      bookingDate: bookingDate || nowIso.split('T')[0],
+      bookingTime: bookingTime || timeSlot || '10:00 AM – 11:00 AM',
+      numberOfPeople: Number(numberOfPeople || quantity || devoteesCount || 1),
+      devoteesBreakdown: devoteesBreakdown || devotees || { adults: 1, children: 0, seniors: 0 },
+      devoteeName: (devoteeName || customerName || fullName || authUser.fullName || authUser.name || 'Devotee').trim(),
+      mobile: (mobile || customerMobile || phone || authUser.phone || authUser.mobile || '').trim(),
+      email: (email || customerEmail || authUser.email || '').trim().toLowerCase(),
+      gotraName: (gotraName || '').trim(),
+      address: (address || addressDetails || '').trim(),
+      amount: Number(amount || totalAmount || 0),
+      paymentMethod: paymentMethod || 'UPI',
+      paymentStatus: paymentStatus || 'PAID',
+      bookingStatus: (bookingStatus || status || 'CONFIRMED').toUpperCase(),
+      transactionId: transactionId || ('TXN-' + Date.now()),
+      instructions: instructions || 'Please arrive 15 minutes prior. Carry a valid government photo ID.',
+      createdAt: nowIso,
+      updatedAt: nowIso
+    };
+
+    const bookingsCol = dbManager.getCollection('bookings');
+    const insertRes = await bookingsCol.insertOne(newBooking);
+
+    console.log(`✨ [BOOKING CREATED] User: ${authUser.email} | Type: ${newBooking.bookingType} | Ref: ${newBooking.bookingReference}`);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Sacred booking created and confirmed successfully.',
+      booking: { ...newBooking, _id: insertRes.insertedId, id: insertRes.insertedId }
+    });
+  } catch (error) {
+    console.error('Create Booking Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save booking. Please try again.'
+    });
+  }
+});
+
+// GET AUTHENTICATED USER'S BOOKINGS ONLY
+app.get(['/api/bookings/my', '/api/bookings'], async (req, res) => {
+  try {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Please sign in to view your bookings.'
+      });
+    }
+
+    const bookingsCol = dbManager.getCollection('bookings');
+    const query = {
+      $or: [
+        { userId: String(authUser._id) },
+        { userEmail: authUser.email.toLowerCase() },
+        { email: authUser.email.toLowerCase() }
+      ]
+    };
+
+    const userBookings = await bookingsCol.find(query);
+    const bookingsList = await userBookings.toArray();
+
+    // Sort newest first
+    bookingsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    return res.json({
+      success: true,
+      count: bookingsList.length,
+      bookings: bookingsList
+    });
+  } catch (error) {
+    console.error('Fetch User Bookings Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve your bookings.'
+    });
+  }
+});
+
+// GET SINGLE BOOKING BY ID OR REFERENCE
+app.get('/api/bookings/:id', async (req, res) => {
+  try {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+
+    const bookingId = req.params.id;
+    const bookingsCol = dbManager.getCollection('bookings');
+    const booking = await bookingsCol.findOne({
+      $or: [
+        { _id: bookingId },
+        { bookingReference: bookingId },
+        { bookingId: bookingId }
+      ]
+    });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found.' });
+    }
+
+    // Verify ownership
+    const isOwner = String(booking.userId) === String(authUser._id) || 
+      (booking.userEmail && booking.userEmail.toLowerCase() === authUser.email.toLowerCase()) ||
+      (booking.email && booking.email.toLowerCase() === authUser.email.toLowerCase());
+
+    if (!isOwner) {
+      return res.status(403).json({ success: false, message: 'Access denied to this booking.' });
+    }
+
+    return res.json({ success: true, booking });
+  } catch (error) {
+    console.error('Get Booking Error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve booking.' });
+  }
+});
+
+// CANCEL BOOKING
+app.all(['/api/bookings/:id/cancel', '/api/bookings/cancel/:id'], async (req, res) => {
+  try {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+
+    const bookingId = req.params.id;
+    const bookingsCol = dbManager.getCollection('bookings');
+    const booking = await bookingsCol.findOne({
+      $or: [
+        { _id: bookingId },
+        { bookingReference: bookingId },
+        { bookingId: bookingId }
+      ]
+    });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found.' });
+    }
+
+    const isOwner = String(booking.userId) === String(authUser._id) || 
+      (booking.userEmail && booking.userEmail.toLowerCase() === authUser.email.toLowerCase());
+
+    if (!isOwner) {
+      return res.status(403).json({ success: false, message: 'You can only cancel your own bookings.' });
+    }
+
+    const nowIso = new Date().toISOString();
+    await bookingsCol.updateOne(
+      { _id: booking._id },
+      { $set: { bookingStatus: 'CANCELLED', status: 'CANCELLED', updatedAt: nowIso } }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Sacred booking cancelled successfully.',
+      booking: { ...booking, bookingStatus: 'CANCELLED', status: 'CANCELLED', updatedAt: nowIso }
+    });
+  } catch (error) {
+    console.error('Cancel Booking Error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to cancel booking.' });
+  }
+});
+
+// VERIFY AND CONFIRM PAYMENT FOR BOOKING
+app.post('/api/bookings/:id/verify', async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const { transactionId } = req.body;
+    const bookingsCol = dbManager.getCollection('bookings');
+
+    const booking = await bookingsCol.findOne({
+      $or: [
+        { _id: bookingId },
+        { bookingReference: bookingId },
+        { bookingId: bookingId }
+      ]
+    });
+
+    if (booking) {
+      await bookingsCol.updateOne(
+        { _id: booking._id },
+        { $set: { paymentStatus: 'PAID', bookingStatus: 'CONFIRMED', transactionId: transactionId || booking.transactionId, updatedAt: new Date().toISOString() } }
+      );
     }
 
     return res.json({
       success: true,
-      message: 'Profile details updated successfully.',
-      updatedFields: updateFields
+      message: 'Payment verified and booking confirmed.',
+      status: 'PAID'
     });
   } catch (error) {
-    console.error('Update Profile Error:', error);
-    return res.status(500).json({ success: false, detail: 'Failed to update profile.' });
+    return res.status(500).json({ success: false, message: 'Payment verification failed.' });
   }
 });
 

@@ -24,12 +24,18 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 
 export default function HomePage({ 
+  onGoToHome,
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onGoToBlog,
   onGoToAbout,
-  onOpenBooking 
+  onGoToContact,
+  onGoToDashboard,
+  onGoToLogin,
+  onOpenBooking,
+  onOpenDonate 
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState('home');
@@ -82,9 +88,13 @@ export default function HomePage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
+        onGoToDashboard={onGoToDashboard}
+        onGoToLogin={onGoToLogin}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
-        onOpenDonate={() => setIsDonateOpen(true)}
+        onOpenDonate={onOpenDonate || (() => setIsDonateOpen(true))}
       />
 
 
@@ -269,7 +279,9 @@ export default function HomePage({
         onGoToHome={() => handleNavClick('home', 'hero')}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
 

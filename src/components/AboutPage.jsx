@@ -84,9 +84,13 @@ export default function AboutPage({
   onGoToLanding,
   onExploreTemples,
   onGoToProducts,
+  onGoToServices,
   onGoToLogin,
   onGoToAbout,
-  onOpenBooking
+  onGoToContact,
+  onGoToDashboard,
+  onOpenBooking,
+  onOpenDonate
 }) {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -142,10 +146,13 @@ export default function AboutPage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToLogin={onGoToLogin}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
+        onGoToDashboard={onGoToDashboard}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
-        onOpenDonate={() => setIsDonateOpen(true)}
+        onOpenDonate={onOpenDonate || (() => setIsDonateOpen(true))}
       />
 
       {/* ========================================================================= */}
@@ -564,7 +571,10 @@ export default function AboutPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
-        onOpenBooking={() => setIsBookingOpen(true)}
+        onGoToServices={onGoToServices}
+        onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
+        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />
 
       {/* ---------------- DONATE MODAL ---------------- */}

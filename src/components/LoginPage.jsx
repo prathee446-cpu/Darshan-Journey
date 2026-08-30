@@ -12,7 +12,7 @@ import darshanLogo from '../assets/darshan-logo.jpeg';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useAuth } from '../context/AuthContext';
-import { getGoogleClientId, ensureGoogleGisLoaded, triggerGoogleOAuthRedirect } from '../utils/googleAuth';
+import { getGoogleClientId, ensureGoogleGisLoaded, triggerGoogleOAuthRedirect, checkOriginMatches, AUTHORIZED_ORIGIN } from '../utils/googleAuth';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -243,8 +243,16 @@ export default function LoginPage({
 
   const handleGoogleLogin = useCallback(async () => {
     clearAllErrors();
-    const clientId = getGoogleClientId();
 
+    // Check Authorized JavaScript Origin (http://localhost:3000)
+    if (!checkOriginMatches()) {
+      setGoogleError(
+        `Google Sign-In requires origin ${AUTHORIZED_ORIGIN}. You are currently browsing on ${typeof window !== 'undefined' ? window.location.origin : 'unknown'}. Please access the application at ${AUTHORIZED_ORIGIN} to sign in with Google.`
+      );
+      return;
+    }
+
+    const clientId = getGoogleClientId();
     if (!clientId) {
       setGoogleError('Google Client ID not configured. Please verify VITE_GOOGLE_CLIENT_ID in .env.');
       return;
@@ -265,9 +273,18 @@ export default function LoginPage({
           callback: async (tokenResponse) => {
             if (tokenResponse?.error) {
               setIsGoogleLoading(false);
-              if (tokenResponse.error !== 'access_denied' && tokenResponse.error !== 'popup_closed_by_user') {
-                setGoogleError(`Google sign-in error: ${tokenResponse.error}`);
+              if (tokenResponse.error === 'popup_closed_by_user') {
+                return;
               }
+              if (tokenResponse.error === 'origin_mismatch') {
+                setGoogleError('Google Login Origin Mismatch: Please ensure you are accessing http://localhost:3000 (Authorized JavaScript Origin).');
+                return;
+              }
+              if (tokenResponse.error === 'access_denied') {
+                setGoogleError('Google sign-in permission was denied. Please try again.');
+                return;
+              }
+              setGoogleError(`Google sign-in error: ${tokenResponse.error}`);
               return;
             }
 
@@ -280,25 +297,41 @@ export default function LoginPage({
                   body: JSON.stringify({ accessToken: tokenResponse.access_token })
                 });
 
+                if (res.status === 502 || res.status === 503 || res.status === 504) {
+                  setIsGoogleLoading(false);
+                  setGoogleError('Authentication server is unavailable. Please try again.');
+                  return;
+                }
+
                 const data = await res.json();
                 setIsGoogleLoading(false);
 
                 if (res.ok && data.success) {
-                  // Mandatory OTP verification required for every Google sign-in
-                  setGoogleEmail(data.email);
-                  setGoogleTempToken(data.tempAuthToken || '');
-                  setFlow(FLOW.GOOGLE_OTP);
-                  setOtpDigits(['', '', '', '', '', '']);
-                  setCooldownSeconds(data.cooldownSeconds || 30);
-                  showToast(data.message || `📩 Verification code sent to ${data.email}`);
-                  setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+                  if (data.requiresOtp || data.requireOtp) {
+                    // First-time or unverified Google login -> Show OTP Verification screen
+                    setGoogleEmail(data.email);
+                    setGoogleTempToken(data.tempAuthToken || '');
+                    setFlow(FLOW.GOOGLE_OTP);
+                    setOtpDigits(['', '', '', '', '', '']);
+                    setCooldownSeconds(data.cooldownSeconds || 30);
+                    showToast(data.message || `📩 Verification code sent to ${data.email}`);
+                    setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+                  } else if (data.user) {
+                    // Returning verified Google devotee -> Immediate application session
+                    showToast(data.message || `✨ Welcome back, ${data.user.fullName || data.user.name}!`);
+                    handleSuccessfulAuth(data.user);
+                  }
                 } else {
-                  setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
+                  if (res.status === 401) {
+                    setGoogleError('Invalid Google credential. Please try again.');
+                  } else {
+                    setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
+                  }
                 }
               } catch (err) {
                 console.error('Google auth server verification error:', err);
                 setIsGoogleLoading(false);
-                setGoogleError('Unable to connect to authentication server. Please check your connection.');
+                setGoogleError('Authentication server is unavailable. Please try again.');
               }
             } else {
               setIsGoogleLoading(false);
@@ -307,6 +340,9 @@ export default function LoginPage({
           error_callback: (err) => {
             console.warn('Google Token Client error:', err);
             setIsGoogleLoading(false);
+            if (err?.type === 'origin_mismatch' || String(err).includes('origin_mismatch')) {
+              setGoogleError('Google Login Origin Mismatch: Please ensure you are opening http://localhost:3000.');
+            }
           }
         });
 
@@ -324,7 +360,7 @@ export default function LoginPage({
       setIsGoogleLoading(false);
       setGoogleError('Unable to initiate Google Sign-In. You can sign in using Username/Email & Password.');
     }
-  }, []);
+  }, [handleSuccessfulAuth]);
 
   // Handle Google OAuth URL hash redirect fallback
   useEffect(() => {
@@ -349,13 +385,20 @@ export default function LoginPage({
             setIsGoogleLoading(false);
 
             if (res.ok && data.success) {
-              setGoogleEmail(data.email);
-              setGoogleTempToken(data.tempAuthToken || '');
-              setFlow(FLOW.GOOGLE_OTP);
-              setOtpDigits(['', '', '', '', '', '']);
-              setCooldownSeconds(data.cooldownSeconds || 30);
-              showToast(data.message || `📩 Verification code sent to ${data.email}`);
-              setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+              if (data.requiresOtp || data.requireOtp) {
+                // First-time Google login
+                setGoogleEmail(data.email);
+                setGoogleTempToken(data.tempAuthToken || '');
+                setFlow(FLOW.GOOGLE_OTP);
+                setOtpDigits(['', '', '', '', '', '']);
+                setCooldownSeconds(data.cooldownSeconds || 30);
+                showToast(data.message || `📩 Verification code sent to ${data.email}`);
+                setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+              } else if (data.user) {
+                // Returning verified Google devotee
+                showToast(data.message || `✨ Welcome back, ${data.user.fullName || data.user.name}!`);
+                handleSuccessfulAuth(data.user);
+              }
             } else {
               setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
             }
@@ -543,6 +586,11 @@ export default function LoginPage({
         })
       });
 
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        setOtpError('Authentication server is unavailable. Please try again.');
+        return;
+      }
+
       const data = await res.json();
 
       if (res.ok && data.success) {
@@ -555,7 +603,7 @@ export default function LoginPage({
       }
     } catch (err) {
       console.error('Google verify OTP error:', err);
-      setOtpError('Unable to reach server. Please try again.');
+      setOtpError('Authentication server is unavailable. Please try again.');
     } finally {
       isVerifyingRef.current = false;
       setIsVerifyingOtp(false);
@@ -573,6 +621,12 @@ export default function LoginPage({
         credentials: 'include',
         body: JSON.stringify({ email: googleEmail.trim().toLowerCase() })
       });
+
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        setOtpError('Authentication server is unavailable. Please try again.');
+        return;
+      }
+
       const data = await res.json();
       if (res.ok && data.success) {
         setCooldownSeconds(data.cooldownSeconds || 30);
@@ -585,7 +639,7 @@ export default function LoginPage({
       }
     } catch (err) {
       console.error('Google resend OTP error:', err);
-      setOtpError('Unable to reach server. Please check your connection.');
+      setOtpError('Authentication server is unavailable. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }

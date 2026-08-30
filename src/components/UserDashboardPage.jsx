@@ -1,178 +1,131 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Mail, Calendar, Sparkles, Heart, Shield, CheckCircle2, 
-  Clock, LogOut, Settings, MapPin, ExternalLink, Bell, Edit3, 
-  BookOpen, ChevronRight, Award, Compass, Ticket, Phone, ArrowLeft,
-  Flame, Sun, Star, Navigation, PlusCircle
+  Clock, LogOut, MapPin, Edit3, ChevronRight, Compass, 
+  Ticket, Phone, Flame, Sun, Star, ArrowRight, X, 
+  ShieldCheck, HelpCircle, ExternalLink, Printer, AlertCircle, 
+  Trash2, Filter, RefreshCw, Eye, Share2
 } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import GoldParticles from './GoldParticles';
-import darshanLogo from '../assets/darshan-logo.jpeg';
 import { useAuth } from '../context/AuthContext';
+import { getUserBookings, cancelUserBooking } from '../services/bookingService';
 
 export default function UserDashboardPage({ 
   onGoToHome, 
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onGoToLogin,
+  onGoToAbout,
   onGoToContact,
+  onGoToDashboard,
   onOpenBooking,
   onOpenDonate 
 }) {
-  const { user: authUser, updateUser, logout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
 
-  // Default fallback user state
-  const defaultUser = {
-    name: 'Devotee',
-    email: 'devotee@darshanjourney.com',
-    avatar: 'D',
-    membership: 'Devotee Member',
-    provider: 'email'
-  };
-
-  const [user, setUser] = useState(authUser || defaultUser);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'bookings' | 'wishlist' | 'profile'
+  const [bookingFilter, setBookingFilter] = useState('all'); // 'all' | 'darshan' | 'pooja' | 'upcoming' | 'completed' | 'cancelled'
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Editable Profile State
-  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [editName, setEditName] = useState(authUser?.name || authUser?.fullName || 'Devotee');
-  const [editPhone, setEditPhone] = useState(authUser?.phone || authUser?.mobile || '');
-  const [editAvatar, setEditAvatar] = useState(authUser?.avatar || '');
-  const [editPassword, setEditPassword] = useState('');
+  // Real User Bookings from MongoDB / Backend
+  const [userBookings, setUserBookings] = useState([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
 
-  // Sample User Bookings Data
-  const [userBookings, setUserBookings] = useState([
-    {
-      id: 'DJ-28491',
-      temple: 'Arulmigu Meenakshi Sundareswarar Temple',
-      location: 'Madurai, Tamil Nadu',
-      type: 'Special VIP Darshan',
-      date: '18 August 2026',
-      time: '10:30 AM – 11:00 AM',
-      devotees: 2,
-      status: 'Confirmed',
-      price: '₹500'
-    },
-    {
-      id: 'SEVA-2026-3109',
-      temple: 'Brihadeeswarar Temple (Big Temple)',
-      location: 'Thanjavur, Tamil Nadu',
-      type: 'Maha Rudrabhishekam Seva',
-      date: '24 August 2026',
-      time: '06:00 AM - 07:30 AM',
-      devotees: 1,
-      status: 'Upcoming',
-      price: '₹1,200'
-    },
-    {
-      id: 'PUJA-2026-1042',
-      temple: 'Ramanathaswamy Temple',
-      location: 'Rameswaram, Tamil Nadu',
-      type: 'Agni Theertham Holy Bath & Puja',
-      date: '12 July 2026',
-      time: '05:00 AM - 06:30 AM',
-      devotees: 4,
-      status: 'Completed',
-      price: '₹800'
+  // Profile Modal State
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState(user?.fullName || user?.name || '');
+  const [editPhone, setEditPhone] = useState(user?.phone || user?.mobile || '');
+
+  // Active Selected Ticket Details Modal
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [cancellingBookingId, setCancellingBookingId] = useState(null);
+
+  // Saved Wishlist Temples per logged-in user
+  const wishlistStorageKey = useMemo(() => {
+    const userIdentifier = user?.id || user?._id || user?.email || 'guest';
+    return `darshan_saved_temples_${userIdentifier}`;
+  }, [user]);
+
+  const [savedTemples, setSavedTemples] = useState(() => {
+    try {
+      const userIdentifier = user?.id || user?._id || user?.email || 'guest';
+      const saved = localStorage.getItem(`darshan_saved_temples_${userIdentifier}`) || localStorage.getItem('darshan_saved_temples');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  // Sample Saved Temples Data
-  const [savedTemples, setSavedTemples] = useState([
+  // Sync saved temples to user localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem(wishlistStorageKey, JSON.stringify(savedTemples));
+    } catch { /* ignore */ }
+  }, [savedTemples, wishlistStorageKey]);
+
+  // Recommended Journey Pilgrimages (Curated Tamil Nadu Temples)
+  const recommendedPilgrimages = [
     {
-      id: 'meenakshi',
-      name: 'Meenakshi Amman Temple',
+      id: 'rec-1',
+      title: 'Arulmigu Meenakshi Amman Temple',
       location: 'Madurai, Tamil Nadu',
       deity: 'Goddess Meenakshi & Lord Sundareswarar',
+      desc: 'Ancient spiritual epicenter featuring 14 towering gopurams and the sacred Golden Lotus Tank.',
       rating: '4.9',
-      reviews: '2,450',
-      image: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?q=80&w=800&auto=format&fit=crop'
+      image: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?q=80&w=800&auto=format&fit=crop',
+      category: 'Special VIP Darshan'
     },
     {
-      id: 'ranganathaswamy',
-      name: 'Ranganathaswamy Temple',
-      location: 'Srirangam, Tamil Nadu',
-      deity: 'Lord Ranganatha (Vishnu)',
-      rating: '4.8',
-      reviews: '1,890',
-      image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: 'brihadeeswarar',
-      name: 'Brihadeeswarar Temple',
+      id: 'rec-2',
+      title: 'Brihadeeswarar Temple (Big Temple)',
       location: 'Thanjavur, Tamil Nadu',
       deity: 'Lord Shiva (Peruvudaiyar)',
+      desc: 'UNESCO World Heritage landmark dedicated to Mahadeva with a 216-foot monolithic granite vimana.',
       rating: '4.9',
-      reviews: '3,120',
-      image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281358?q=80&w=800&auto=format&fit=crop'
-    }
-  ]);
-
-  // Sample Explore Temples
-  const exploreTemplesList = [
-    {
-      id: 'meenakshi-exp',
-      name: 'Meenakshi Amman Temple',
-      location: 'Madurai',
-      rating: '4.9',
-      reviews: '2.4k',
-      image: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?q=80&w=800&auto=format&fit=crop'
+      image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281358?q=80&w=800&auto=format&fit=crop',
+      category: 'Maha Abhishekam'
     },
     {
-      id: 'ranganathaswamy-exp',
-      name: 'Ranganathaswamy Temple',
-      location: 'Srirangam',
+      id: 'rec-3',
+      title: 'Sri Ranganathaswamy Temple',
+      location: 'Srirangam, Tamil Nadu',
+      deity: 'Lord Ranganatha (Maha Vishnu)',
+      desc: 'The largest functioning Hindu temple complex in the world on the sacred island of the Cauvery River.',
       rating: '4.8',
-      reviews: '1.8k',
-      image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      id: 'brihadeeswarar-exp',
-      name: 'Brihadeeswarar Temple',
-      location: 'Thanjavur',
-      rating: '4.9',
-      reviews: '3.1k',
-      image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281358?q=80&w=800&auto=format&fit=crop'
+      image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=800&auto=format&fit=crop',
+      category: 'Vishnu Darshan'
     }
   ];
 
-  // Recent Activity Items
-  const recentActivities = [
-    {
-      date: '18 Aug',
-      icon: '🛕',
-      title: 'Darshan booked',
-      details: 'Meenakshi Amman Temple',
-      type: 'booking'
-    },
-    {
-      date: '12 Aug',
-      icon: '🙏',
-      title: 'Seva completed',
-      details: 'Special Pooja',
-      type: 'seva'
-    },
-    {
-      date: '08 Aug',
-      icon: '❤️',
-      title: 'Temple saved',
-      details: 'Srirangam Temple',
-      type: 'saved'
+  // Fetch real user bookings from MongoDB on mount and user change
+  const fetchBookings = async () => {
+    setIsLoadingBookings(true);
+    try {
+      const bookings = await getUserBookings();
+      setUserBookings(Array.isArray(bookings) ? bookings : []);
+    } catch (err) {
+      console.warn('Failed to load bookings:', err);
+      setUserBookings([]);
+    } finally {
+      setIsLoadingBookings(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    if (authUser) {
-      setUser(authUser);
-      setEditName(authUser.name || authUser.fullName || 'Devotee');
-      setEditPhone(authUser.phone || authUser.mobile || '');
-      setEditAvatar(authUser.avatar || '');
+    fetchBookings();
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.fullName || user.name || '');
+      setEditPhone(user.phone || user.mobile || '');
     }
-  }, [authUser]);
+  }, [user]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -182,993 +135,1699 @@ export default function UserDashboardPage({
   const handleLogout = () => {
     if (logout) {
       logout();
-    } else {
-      localStorage.removeItem('darshan_user');
     }
     showToast('Signed out successfully.');
     setTimeout(() => {
       if (onGoToLogin) onGoToLogin();
       else if (onGoToHome) onGoToHome();
-    }, 600);
+    }, 300);
   };
 
   const handleSaveProfile = (e) => {
     if (e) e.preventDefault();
     if (!user) return;
 
-    const cleanName = editName.trim() || user.name || 'Devotee';
+    const cleanName = editName.trim() || user.fullName || user.name || 'Devotee';
     const cleanPhone = editPhone.trim();
-
-    const updatedUser = {
-      ...user,
-      name: cleanName,
-      fullName: cleanName,
-      phone: cleanPhone,
-      mobile: cleanPhone
-    };
 
     if (updateUser) {
       updateUser({
         fullName: cleanName,
+        name: cleanName,
         phone: cleanPhone,
         mobile: cleanPhone
       });
-    } else {
-      localStorage.setItem('darshan_user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
     }
 
-    setIsEditProfileModalOpen(false);
-    setEditPassword('');
-    showToast('✅ Profile updated successfully!');
+    setIsEditingProfile(false);
+    showToast('✅ Devotee profile updated successfully!');
+  };
+
+  const handleCancelBooking = async (booking) => {
+    const bookingId = booking.bookingReference || booking.bookingId || booking._id;
+    if (!bookingId) return;
+
+    if (!window.confirm(`Are you sure you want to cancel booking ${bookingId} for ${booking.templeName || booking.temple}?`)) {
+      return;
+    }
+
+    setCancellingBookingId(bookingId);
+    try {
+      const res = await cancelUserBooking(bookingId);
+      if (res && res.success) {
+        showToast('✅ Sacred booking cancelled successfully.');
+        await fetchBookings();
+        if (selectedTicket && (selectedTicket.bookingReference === bookingId || selectedTicket.bookingId === bookingId || selectedTicket._id === bookingId)) {
+          setSelectedTicket(prev => ({ ...prev, bookingStatus: 'CANCELLED', status: 'CANCELLED' }));
+        }
+      } else {
+        showToast(res.message || 'Failed to cancel booking.');
+      }
+    } catch (err) {
+      showToast('Error cancelling booking. Please try again.');
+    } finally {
+      setCancellingBookingId(null);
+    }
   };
 
   const removeSavedTemple = (templeId) => {
-    setSavedTemples(prev => prev.filter(t => t.id !== templeId));
-    showToast('Temple removed from saved wishlist.');
+    setSavedTemples(prev => prev.filter(t => t.id !== templeId && t._id !== templeId));
+    showToast('Temple removed from sacred wishlist.');
   };
 
   const handleGetDirections = (location) => {
-    const query = encodeURIComponent(location);
+    const query = encodeURIComponent(location || 'Tamil Nadu Temple');
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
   };
 
+  // Real Authenticated Devotee Info
+  const displayName = user?.fullName || user?.name || (user?.email ? user.email.split('@')[0] : 'Devotee');
+  const userAvatarInitial = (displayName || 'D').charAt(0).toUpperCase();
+  const userEmail = user?.email || 'devotee@darshanjourney.com';
+  const isGoogleVerified = user?.provider === 'google' || user?.authProvider === 'google';
+
+  // Dynamic Real Stats Calculated Strictly from Real Data
+  const upcomingDarshans = useMemo(() => {
+    return userBookings.filter(b => {
+      const isDarshan = (b.bookingType || 'DARSHAN').toUpperCase() === 'DARSHAN';
+      const status = (b.bookingStatus || b.status || 'CONFIRMED').toUpperCase();
+      return isDarshan && status !== 'CANCELLED';
+    });
+  }, [userBookings]);
+
+  const totalBookingsCount = userBookings.length;
+  const upcomingDarshansCount = upcomingDarshans.length;
+
+  const completedSevasCount = useMemo(() => {
+    return userBookings.filter(b => {
+      const isPooja = (b.bookingType || '').toUpperCase() === 'POOJA' || (b.bookingType || '').toUpperCase() === 'SEVA';
+      const status = (b.bookingStatus || b.status || '').toUpperCase();
+      return isPooja && status !== 'CANCELLED';
+    }).length;
+  }, [userBookings]);
+
+  const savedTemplesCount = savedTemples.length;
+
+  // Filtered Bookings for the Bookings Tab
+  const filteredBookings = useMemo(() => {
+    return userBookings.filter(b => {
+      const bType = (b.bookingType || 'DARSHAN').toUpperCase();
+      const bStatus = (b.bookingStatus || b.status || 'CONFIRMED').toUpperCase();
+
+      if (bookingFilter === 'darshan') return bType === 'DARSHAN';
+      if (bookingFilter === 'pooja') return bType === 'POOJA' || bType === 'SEVA';
+      if (bookingFilter === 'upcoming') return bStatus === 'CONFIRMED' || bStatus === 'SCHEDULED';
+      if (bookingFilter === 'completed') return bStatus === 'COMPLETED';
+      if (bookingFilter === 'cancelled') return bStatus === 'CANCELLED';
+      return true; // 'all'
+    });
+  }, [userBookings, bookingFilter]);
+
+  // Real Dynamic Recent Activity Stream derived from user bookings & auth
+  const recentActivities = useMemo(() => {
+    const activities = [];
+
+    // Add booking events
+    userBookings.forEach((b) => {
+      const isDarshan = (b.bookingType || 'DARSHAN').toUpperCase() === 'DARSHAN';
+      const isCancelled = (b.bookingStatus || b.status || '').toUpperCase() === 'CANCELLED';
+      const bRef = b.bookingReference || b.bookingId || b._id || 'DJ-BOOKING';
+
+      activities.push({
+        id: `act-${bRef}`,
+        icon: isCancelled ? '❌' : (isDarshan ? '🛕' : '🙏'),
+        title: isCancelled 
+          ? `Booking Cancelled (${bRef})` 
+          : (isDarshan ? `Darshan Pass Confirmed` : `Sacred Seva Scheduled`),
+        desc: `${b.templeName || b.temple || 'Sacred Temple'} • ${b.darshanType || b.serviceName || 'Special Darshan'}`,
+        timestamp: b.bookingDate || b.createdAt || 'Recent',
+        tag: b.bookingStatus || b.status || 'CONFIRMED',
+        status: b.bookingStatus || b.status || 'CONFIRMED'
+      });
+    });
+
+    // Add user account verified / sign in event
+    if (user) {
+      activities.push({
+        id: 'act-account-session',
+        icon: '🛡️',
+        title: isGoogleVerified ? 'Google Account Verified' : 'Devotee Account Active',
+        desc: `Authenticated session active for ${userEmail}`,
+        timestamp: user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Active',
+        tag: 'VERIFIED',
+        status: 'VERIFIED'
+      });
+    }
+
+    return activities.slice(0, 5);
+  }, [userBookings, user, isGoogleVerified, userEmail]);
+
   return (
-    <div className="home-website-wrapper" style={{ background: 'linear-gradient(135deg, #FAF4EC 0%, #F5EBE0 50%, #EFE1D1 100%)', minHeight: '100vh', color: '#341F1D', fontFamily: 'Plus Jakarta Sans, sans-serif', position: 'relative' }}>
+    <div className="home-website-wrapper" style={{ background: '#FAF6F0', minHeight: '100vh', color: '#341F1D', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       
-      {/* Navigation Bar */}
+      {/* 1. TOP NAVBAR */}
       <Navbar 
         activePage="dashboard"
         onGoToHome={onGoToHome}
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToLogin={onGoToLogin}
+        onGoToAbout={onGoToAbout}
         onGoToContact={onGoToContact}
+        onGoToDashboard={onGoToDashboard}
         onOpenBooking={onOpenBooking}
         onOpenDonate={onOpenDonate}
       />
 
-      {/* Main Dashboard Container */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '110px 1.5rem 60px 1.5rem', position: 'relative', zIndex: 2 }}>
+      {/* 2. MAIN DASHBOARD CONTAINER */}
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '100px 1.5rem 60px 1.5rem' }}>
         
-        {/* 1. User Profile Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-            borderRadius: '24px',
-            border: '1.5px solid #D8C3A5',
-            padding: '2rem 2.2rem',
-            marginBottom: '2rem',
-            boxShadow: '0 16px 45px rgba(138, 98, 48, 0.08)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          <div style={{
-            position: 'absolute',
-            top: '-50px',
-            right: '-50px',
-            width: '250px',
-            height: '250px',
-            background: 'radial-gradient(circle, rgba(200, 169, 106, 0.18) 0%, rgba(0, 0, 0, 0) 70%)',
-            pointerEvents: 'none'
-          }} />
+        {/* ─── 2. PROFESSIONAL DEVOTEE DASHBOARD HEADER ─── */}
+        <div style={{
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFDF9 100%)',
+          border: '1.5px solid #EADBCA',
+          borderRadius: '20px',
+          padding: '1.5rem 1.8rem',
+          marginBottom: '1.75rem',
+          boxShadow: '0 6px 24px rgba(52, 31, 29, 0.04)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.4rem'
+        }}>
+          {/* Left: User Profile Avatar & Welcome Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap' }}>
+            <div style={{
+              width: '62px',
+              height: '62px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #D4AF37 0%, #9B7536 100%)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.6rem',
+              fontWeight: 800,
+              boxShadow: '0 4px 16px rgba(155, 117, 54, 0.28)',
+              overflow: 'hidden',
+              flexShrink: 0,
+              border: '2.5px solid #FFFFFF'
+            }}>
+              {user?.avatar && user.avatar.length > 2 && (user.avatar.startsWith('http') || user.avatar.startsWith('data:')) ? (
+                <img src={user.avatar} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                userAvatarInitial
+              )}
+            </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-              {/* User Avatar Circle */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <h1 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 800,
+                  color: '#2A1715',
+                  margin: 0,
+                  fontFamily: 'Plus Jakarta Sans, sans-serif',
+                  letterSpacing: '-0.02em'
+                }}>
+                  Welcome back, <strong>{displayName}</strong> 🙏
+                </h1>
+                
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  color: '#2E7D32',
+                  background: 'rgba(46, 125, 50, 0.1)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(46, 125, 50, 0.2)'
+                }}>
+                  <ShieldCheck size={13} />
+                  <span>{isGoogleVerified ? 'Google Verified' : 'Email Verified'}</span>
+                </span>
+              </div>
+
               <div style={{
-                width: '82px',
-                height: '82px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)',
-                color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '2.2rem',
-                fontWeight: '800',
-                border: '3px solid #FFFFFF',
-                boxShadow: '0 8px 25px rgba(150, 116, 50, 0.3)',
-                overflow: 'hidden',
-                flexShrink: 0
+                gap: '1.2rem',
+                flexWrap: 'wrap',
+                marginTop: '0.35rem',
+                fontSize: '0.86rem',
+                color: '#7A6258'
               }}>
-                {user?.avatar && user.avatar.length > 2 ? (
-                  <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  user?.avatar || (user?.name ? user.name.charAt(0).toUpperCase() : 'D')
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Mail size={14} color="#8C6036" />
+                  <span>{userEmail}</span>
+                </span>
+                {user?.phone && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Phone size={14} color="#8C6036" />
+                    <span>{user.phone}</span>
+                  </span>
                 )}
               </div>
-
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
-                  <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.85rem', fontWeight: 700, color: '#5C3D1E', margin: 0 }}>
-                    {user?.name || user?.fullName || 'Devotee'}
-                  </h1>
-                  <span style={{
-                    background: 'rgba(200, 169, 106, 0.18)',
-                    border: '1px solid rgba(200, 169, 106, 0.4)',
-                    color: '#8C6036',
-                    padding: '0.2rem 0.65rem',
-                    borderRadius: '20px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}>
-                    <Shield size={12} color="#8C6036" /> {user?.provider === 'google' ? 'Google Verified' : 'Email Verified'}
-                  </span>
-                </div>
-
-                <div style={{ color: '#5E4939', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mail size={15} color="#8C6036" /> {user?.email || 'devotee@darshanjourney.com'}
-                </div>
-
-                <div style={{ marginTop: '0.45rem', color: '#8C6036', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
-                  <Award size={15} color="#C8A96A" /> Devotee Member
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Action Buttons */}
-            <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-              <button 
-                onClick={() => setIsEditProfileModalOpen(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #FFFFFF, #FAF4EC)',
-                  border: '1.5px solid #C8A96A',
-                  color: '#6E4D2C',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '14px',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 12px rgba(166, 134, 66, 0.08)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <Edit3 size={16} color="#8C6036" /> Edit Profile
-              </button>
-
-              <button 
-                onClick={handleLogout}
-                style={{
-                  background: 'rgba(234, 67, 53, 0.08)',
-                  border: '1.5px solid rgba(234, 67, 53, 0.25)',
-                  color: '#D93025',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '14px',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <LogOut size={16} /> Sign Out
-              </button>
             </div>
           </div>
-        </motion.div>
 
-        {/* 2. Statistics Cards (4 Columns) */}
-        <div style={{
+          {/* Right: Quick Profile Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setIsProfileModalOpen(true)}
+              style={{
+                background: 'rgba(200, 169, 106, 0.12)',
+                border: '1.2px solid #C8A96A',
+                color: '#6E4D2C',
+                padding: '0.55rem 1.15rem',
+                borderRadius: '10px',
+                fontSize: '0.86rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 169, 106, 0.22)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200, 169, 106, 0.12)'}
+            >
+              <Edit3 size={15} color="#8C6036" />
+              <span>Edit Profile</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                background: '#FFFFFF',
+                border: '1.2px solid rgba(217, 48, 37, 0.25)',
+                color: '#D93025',
+                padding: '0.55rem 1rem',
+                borderRadius: '10px',
+                fontSize: '0.86rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(217, 48, 37, 0.08)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ─── 3. DYNAMIC REAL STATS OVERVIEW (4 Interactive Cards) ─── */}
+        <section style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1.2rem',
-          marginBottom: '1.8rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: '1.1rem',
+          marginBottom: '1.75rem'
         }}>
-          {/* Card 1 */}
-          <motion.div 
-            whileHover={{ y: -4 }}
+          {/* Stat 1: Upcoming Darshans */}
+          <div 
+            onClick={() => { setActiveTab('bookings'); setBookingFilter('upcoming'); }}
             style={{
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-              border: '1.5px solid #E6D4BE',
-              borderRadius: '20px',
-              padding: '1.35rem 1.2rem',
+              background: '#FFFFFF',
+              border: '1.5px solid #EADBCA',
+              borderRadius: '16px',
+              padding: '1.25rem 1.2rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '1.1rem',
-              boxShadow: '0 10px 30px rgba(110, 77, 44, 0.06)'
+              gap: '1rem',
+              boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
           >
-            <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(200, 169, 106, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8C6036', flexShrink: 0 }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'rgba(200, 169, 106, 0.16)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#8C6036',
+              flexShrink: 0
+            }}>
               <Ticket size={24} />
             </div>
-            <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#5C3D1E', fontFamily: 'Playfair Display, serif', lineHeight: 1.1 }}>
-                2
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#2A1715', lineHeight: 1.1 }}>
+                {upcomingDarshansCount}
               </div>
-              <div style={{ fontSize: '0.88rem', color: '#5C3D1E', fontWeight: 700, marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A2C28', marginTop: '0.15rem' }}>
                 Upcoming Darshans
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#8C6036', fontWeight: 500, marginTop: '0.15rem' }}>
-                1 Confirmed • 1 Scheduled
+              <div style={{ fontSize: '0.74rem', color: '#7A6258', fontWeight: 500 }}>
+                {upcomingDarshansCount > 0 ? `${upcomingDarshansCount} Active Pass(es)` : 'No pending passes'}
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Card 2 */}
-          <motion.div 
-            whileHover={{ y: -4 }}
+          {/* Stat 2: Total Bookings */}
+          <div 
+            onClick={() => { setActiveTab('bookings'); setBookingFilter('all'); }}
             style={{
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-              border: '1.5px solid #E6D4BE',
-              borderRadius: '20px',
-              padding: '1.35rem 1.2rem',
+              background: '#FFFFFF',
+              border: '1.5px solid #EADBCA',
+              borderRadius: '16px',
+              padding: '1.25rem 1.2rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '1.1rem',
-              boxShadow: '0 10px 30px rgba(110, 77, 44, 0.06)'
+              gap: '1rem',
+              boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
           >
-            <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(200, 140, 50, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B87333', flexShrink: 0 }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'rgba(212, 175, 55, 0.16)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#9B7536',
+              flexShrink: 0
+            }}>
+              <Calendar size={24} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#2A1715', lineHeight: 1.1 }}>
+                {totalBookingsCount}
+              </div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A2C28', marginTop: '0.15rem' }}>
+                Total Bookings
+              </div>
+              <div style={{ fontSize: '0.74rem', color: '#7A6258', fontWeight: 500 }}>
+                All Darshans & Sevas
+              </div>
+            </div>
+          </div>
+
+          {/* Stat 3: Completed Sevas */}
+          <div 
+            onClick={() => { setActiveTab('bookings'); setBookingFilter('pooja'); }}
+            style={{
+              background: '#FFFFFF',
+              border: '1.5px solid #EADBCA',
+              borderRadius: '16px',
+              padding: '1.25rem 1.2rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'rgba(217, 130, 43, 0.14)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#C05621',
+              flexShrink: 0
+            }}>
               <Flame size={24} />
             </div>
-            <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#5C3D1E', fontFamily: 'Playfair Display, serif', lineHeight: 1.1 }}>
-                5
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#2A1715', lineHeight: 1.1 }}>
+                {completedSevasCount}
               </div>
-              <div style={{ fontSize: '0.88rem', color: '#5C3D1E', fontWeight: 700, marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A2C28', marginTop: '0.15rem' }}>
                 Completed Sevas
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#8C6036', fontWeight: 500, marginTop: '0.15rem' }}>
+              <div style={{ fontSize: '0.74rem', color: '#7A6258', fontWeight: 500 }}>
                 Pujas & Abhishekams
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Card 3 */}
-          <motion.div 
-            whileHover={{ y: -4 }}
+          {/* Stat 4: Saved Temples */}
+          <div 
+            onClick={() => setActiveTab('wishlist')}
             style={{
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-              border: '1.5px solid #E6D4BE',
-              borderRadius: '20px',
-              padding: '1.35rem 1.2rem',
+              background: '#FFFFFF',
+              border: '1.5px solid #EADBCA',
+              borderRadius: '16px',
+              padding: '1.25rem 1.2rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '1.1rem',
-              boxShadow: '0 10px 30px rgba(110, 77, 44, 0.06)'
+              gap: '1rem',
+              boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
           >
-            <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(212, 175, 55, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#967432', flexShrink: 0 }}>
-              <Sun size={24} />
-            </div>
-            <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#5C3D1E', fontFamily: 'Playfair Display, serif', lineHeight: 1.1 }}>
-                14 Days
-              </div>
-              <div style={{ fontSize: '0.88rem', color: '#5C3D1E', fontWeight: 700, marginTop: '0.2rem' }}>
-                Darshan Streak
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#8C6036', fontWeight: 500, marginTop: '0.15rem' }}>
-                Active Devotion
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Card 4 */}
-          <motion.div 
-            whileHover={{ y: -4 }}
-            style={{
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-              border: '1.5px solid #E6D4BE',
-              borderRadius: '20px',
-              padding: '1.35rem 1.2rem',
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'rgba(217, 48, 37, 0.12)',
               display: 'flex',
               alignItems: 'center',
-              gap: '1.1rem',
-              boxShadow: '0 10px 30px rgba(110, 77, 44, 0.06)'
-            }}
-          >
-            <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(217, 48, 37, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C84B31', flexShrink: 0 }}>
+              justifyContent: 'center',
+              color: '#C53030',
+              flexShrink: 0
+            }}>
               <Heart size={24} />
             </div>
-            <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#5C3D1E', fontFamily: 'Playfair Display, serif', lineHeight: 1.1 }}>
-                3
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#2A1715', lineHeight: 1.1 }}>
+                {savedTemplesCount}
               </div>
-              <div style={{ fontSize: '0.88rem', color: '#5C3D1E', fontWeight: 700, marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A2C28', marginTop: '0.15rem' }}>
                 Saved Temples
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#8C6036', fontWeight: 500, marginTop: '0.15rem' }}>
-                In Wishlist
+              <div style={{ fontSize: '0.74rem', color: '#7A6258', fontWeight: 500 }}>
+                In Sacred Wishlist
               </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </section>
 
-        {/* 3. Quick Actions Section */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#8C6036', marginBottom: '0.75rem' }}>
+        {/* ─── 4. QUICK ACTIONS SECTION (5 Prominent Actions) ─── */}
+        <section style={{ marginBottom: '2rem' }}>
+          <div style={{
+            fontSize: '0.78rem',
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            color: '#8C6036',
+            textTransform: 'uppercase',
+            marginBottom: '0.65rem'
+          }}>
             Quick Actions
           </div>
+
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.9rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: '0.85rem'
           }}>
+            {/* 1. Book Darshan */}
             <button
               onClick={() => {
                 if (onOpenBooking) onOpenBooking();
-                else showToast('🛕 Booking portal opening...');
+                else window.location.href = '/quick-booking';
               }}
               style={{
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                border: '1.5px solid #D8C3A5',
-                borderRadius: '16px',
-                padding: '0.95rem 1.2rem',
-                color: '#5C3D1E',
-                fontSize: '0.95rem',
+                background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFDF9 100%)',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '14px',
+                padding: '0.9rem 1.1rem',
+                color: '#2A1715',
+                fontSize: '0.92rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 15px rgba(110, 77, 44, 0.05)',
-                transition: 'all 0.25s ease'
+                gap: '0.65rem',
+                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
             >
-              <span style={{ fontSize: '1.25rem' }}>🛕</span> Book Darshan
+              <span style={{ fontSize: '1.25rem' }}>🛕</span>
+              <span>Book Darshan</span>
             </button>
 
+            {/* 2. Book Pooja/Seva */}
             <button
-              onClick={() => setActiveTab('bookings')}
+              onClick={() => {
+                if (onGoToServices) onGoToServices();
+                else window.location.href = '/services';
+              }}
               style={{
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                border: '1.5px solid #D8C3A5',
-                borderRadius: '16px',
-                padding: '0.95rem 1.2rem',
-                color: '#5C3D1E',
-                fontSize: '0.95rem',
+                background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFDF9 100%)',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '14px',
+                padding: '0.9rem 1.1rem',
+                color: '#2A1715',
+                fontSize: '0.92rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 15px rgba(110, 77, 44, 0.05)',
-                transition: 'all 0.25s ease'
+                gap: '0.65rem',
+                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
             >
-              <span style={{ fontSize: '1.25rem' }}>🙏</span> My Sevas
+              <span style={{ fontSize: '1.25rem' }}>🙏</span>
+              <span>Book Pooja / Seva</span>
             </button>
 
+            {/* 3. My Bookings */}
+            <button
+              onClick={() => {
+                setActiveTab('bookings');
+                setBookingFilter('all');
+              }}
+              style={{
+                background: activeTab === 'bookings' ? 'rgba(200, 169, 106, 0.16)' : '#FFFFFF',
+                border: `1.5px solid ${activeTab === 'bookings' ? '#C8A96A' : '#EADBCA'}`,
+                borderRadius: '14px',
+                padding: '0.9rem 1.1rem',
+                color: '#2A1715',
+                fontSize: '0.92rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { if (activeTab !== 'bookings') e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
+            >
+              <span style={{ fontSize: '1.25rem' }}>🎫</span>
+              <span>My Bookings ({totalBookingsCount})</span>
+            </button>
+
+            {/* 4. Saved Temples */}
             <button
               onClick={() => setActiveTab('wishlist')}
               style={{
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                border: '1.5px solid #D8C3A5',
-                borderRadius: '16px',
-                padding: '0.95rem 1.2rem',
-                color: '#5C3D1E',
-                fontSize: '0.95rem',
+                background: activeTab === 'wishlist' ? 'rgba(200, 169, 106, 0.16)' : '#FFFFFF',
+                border: `1.5px solid ${activeTab === 'wishlist' ? '#C8A96A' : '#EADBCA'}`,
+                borderRadius: '14px',
+                padding: '0.9rem 1.1rem',
+                color: '#2A1715',
+                fontSize: '0.92rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 15px rgba(110, 77, 44, 0.05)',
-                transition: 'all 0.25s ease'
+                gap: '0.65rem',
+                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { if (activeTab !== 'wishlist') e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
             >
-              <span style={{ fontSize: '1.25rem' }}>❤️</span> Saved Temples
+              <span style={{ fontSize: '1.25rem' }}>❤️</span>
+              <span>Saved Temples ({savedTemplesCount})</span>
             </button>
 
+            {/* 5. Explore Temples */}
             <button
               onClick={() => {
                 if (onExploreTemples) onExploreTemples();
-                else showToast('🧭 Opening Temple Explorer...');
+                else window.location.href = '/explore';
               }}
               style={{
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                border: '1.5px solid #D8C3A5',
-                borderRadius: '16px',
-                padding: '0.95rem 1.2rem',
-                color: '#5C3D1E',
-                fontSize: '0.95rem',
+                background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFDF9 100%)',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '14px',
+                padding: '0.9rem 1.1rem',
+                color: '#2A1715',
+                fontSize: '0.92rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 15px rgba(110, 77, 44, 0.05)',
-                transition: 'all 0.25s ease'
+                gap: '0.65rem',
+                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
             >
-              <span style={{ fontSize: '1.25rem' }}>🧭</span> Explore Temples
+              <span style={{ fontSize: '1.25rem' }}>🧭</span>
+              <span>Explore Temples</span>
             </button>
           </div>
-        </div>
+        </section>
 
-        {/* 9. Cohesive Navigation Tabs */}
+        {/* ─── TAB NAVIGATION BAR ─── */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '0.6rem',
-          background: 'rgba(255, 255, 255, 0.85)',
-          border: '1.5px solid #D8C3A5',
-          borderRadius: '16px',
-          padding: '6px',
-          marginBottom: '2rem',
-          boxShadow: '0 8px 24px rgba(110, 77, 44, 0.05)',
-          backdropFilter: 'blur(10px)'
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '1.75rem',
+          borderBottom: '1.5px solid #EADBCA',
+          paddingBottom: '0.75rem'
         }}>
-          {[
-            { id: 'overview', label: 'Overview', icon: Compass },
-            { id: 'bookings', label: 'My Bookings & Sevas', icon: Ticket },
-            { id: 'wishlist', label: 'Saved Temples', icon: Heart }
-          ].map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+            {[
+              { id: 'overview', label: 'Dashboard Overview', icon: <Compass size={16} /> },
+              { id: 'bookings', label: `My Bookings & Passes (${totalBookingsCount})`, icon: <Ticket size={16} /> },
+              { id: 'wishlist', label: `Saved Temples (${savedTemplesCount})`, icon: <Heart size={16} /> }
+            ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  background: isActive ? 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)' : 'transparent',
-                  border: 'none',
+                  background: activeTab === tab.id ? '#2A1715' : '#FFFFFF',
+                  color: activeTab === tab.id ? '#FFF8EA' : '#6E4D2C',
+                  border: `1.5px solid ${activeTab === tab.id ? '#2A1715' : '#EADBCA'}`,
                   borderRadius: '12px',
-                  color: isActive ? '#FFFFFF' : '#6E4D2C',
-                  padding: '0.8rem 1rem',
-                  fontSize: '0.92rem',
-                  fontWeight: isActive ? 700 : 600,
+                  padding: '0.55rem 1.15rem',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.55rem',
-                  whiteSpace: 'nowrap',
-                  boxShadow: isActive ? '0 4px 14px rgba(150, 116, 50, 0.3)' : 'none',
-                  transition: 'all 0.25s ease'
+                  gap: '0.45rem',
+                  transition: 'all 0.2s ease',
+                  boxShadow: activeTab === tab.id ? '0 4px 12px rgba(42, 23, 21, 0.15)' : 'none'
                 }}
               >
-                <Icon size={18} color={isActive ? '#FFFFFF' : '#8C6036'} />
-                {tab.label}
+                {tab.icon}
+                <span>{tab.label}</span>
               </button>
-            );
-          })}
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={fetchBookings}
+              style={{
+                background: '#FFFFFF',
+                border: '1.2px solid #EADBCA',
+                borderRadius: '10px',
+                padding: '0.5rem 0.9rem',
+                fontSize: '0.82rem',
+                color: '#8C6036',
+                cursor: 'pointer',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
+              title="Sync latest bookings from MongoDB"
+            >
+              <RefreshCw size={14} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
-        {/* TAB 1: OVERVIEW */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* VIEW 0: MAIN DASHBOARD OVERVIEW TAB (Default Two-Column Layout) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
         {activeTab === 'overview' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.85fr) minmax(0, 1.15fr)',
+            gap: '1.75rem',
+            alignItems: 'start'
+          }}>
             
-            {/* Top Grid: Main Spotlight + Daily Blessing */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: '1.8rem', marginBottom: '2.5rem' }}>
+            {/* ─── LEFT COLUMN: Upcoming Bookings & Temple Pilgrimages ─── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
               
-              {/* 4. Upcoming Darshan — Main Focus */}
+              {/* 4. UPCOMING BOOKINGS SECTION */}
               <div style={{
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                border: '2px solid #C8A96A',
-                borderRadius: '22px',
-                padding: '1.8rem',
-                boxShadow: '0 12px 35px rgba(138, 98, 48, 0.1)',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '18px',
+                padding: '1.5rem 1.75rem',
+                boxShadow: '0 4px 20px rgba(52, 31, 29, 0.04)'
               }}>
-                <div>
-                  {/* Card Header & Status */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Calendar size={22} color="#8C6036" />
-                      <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.3rem', color: '#5C3D1E', margin: 0, fontWeight: 700 }}>
-                        Next Upcoming Darshan
-                      </h3>
-                    </div>
-                    {/* Confirmed Badge with subtle green treatment */}
-                    <span style={{
-                      background: 'rgba(46, 125, 50, 0.12)',
-                      color: '#2E7D32',
-                      border: '1px solid rgba(46, 125, 50, 0.3)',
-                      fontSize: '0.78rem',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '14px',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem'
-                    }}>
-                      <CheckCircle2 size={13} color="#2E7D32" /> Confirmed
-                    </span>
-                  </div>
-
-                  {/* Temple Details Box */}
-                  <div style={{
-                    background: 'rgba(200, 169, 106, 0.08)',
-                    padding: '1.25rem',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(200, 169, 106, 0.25)',
-                    marginBottom: '1.4rem'
-                  }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#5C3D1E', fontFamily: 'Playfair Display, serif', marginBottom: '0.5rem' }}>
-                      Arulmigu Meenakshi Sundareswarar Temple
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', fontSize: '0.88rem', color: '#4A332C' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Clock size={15} color="#8C6036" />
-                        <span><strong>Date & Time:</strong> 18 August 2026 • 10:30 AM – 11:00 AM</span>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Ticket size={15} color="#8C6036" />
-                        <span><strong>Booking ID:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#8C6036' }}>DJ-28491</span></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Two Action Buttons */}
-                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-                  <button 
-                    onClick={() => {
-                      showToast('🎫 E-Ticket DJ-28491 ready for download.');
-                      setActiveTab('bookings');
-                    }}
-                    style={{
-                      flex: 1,
-                      minWidth: '130px',
-                      padding: '0.75rem 1rem',
-                      background: 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      boxShadow: '0 4px 14px rgba(150, 116, 50, 0.25)'
-                    }}
-                  >
-                    View Booking <ChevronRight size={16} />
-                  </button>
-
-                  <button 
-                    onClick={() => handleGetDirections('Arulmigu Meenakshi Sundareswarar Temple, Madurai')}
-                    style={{
-                      flex: 1,
-                      minWidth: '130px',
-                      padding: '0.75rem 1rem',
-                      background: 'rgba(200, 169, 106, 0.12)',
-                      color: '#6E4D2C',
-                      border: '1.5px solid #C8A96A',
-                      borderRadius: '12px',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem'
-                    }}
-                  >
-                    <Navigation size={15} color="#8C6036" /> Get Directions
-                  </button>
-                </div>
-              </div>
-
-              {/* 5. Daily Vedic Blessing */}
-              <div style={{
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                border: '1.5px solid #E6D4BE',
-                borderRadius: '22px',
-                padding: '1.8rem',
-                boxShadow: '0 10px 30px rgba(110, 77, 44, 0.06)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.2rem' }}>
-                    <Sparkles size={22} color="#8C6036" />
-                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.3rem', color: '#5C3D1E', margin: 0, fontWeight: 700 }}>
-                      Daily Vedic Blessing
-                    </h3>
-                  </div>
-
-                  <blockquote style={{
-                    fontStyle: 'italic',
-                    color: '#5E4939',
-                    borderLeft: '3px solid #C8A96A',
-                    paddingLeft: '1.2rem',
-                    margin: '0 0 1.5rem 0',
-                    lineHeight: 1.65,
-                    fontSize: '1.02rem',
-                    fontFamily: 'Playfair Display, Georgia, serif'
-                  }}>
-                    "May divine peace, health, and spiritual abundance light up your home and journey today. Om Namah Shivaya."
-                  </blockquote>
-                </div>
-
-                <div style={{ background: 'rgba(200, 169, 106, 0.08)', padding: '1rem 1.2rem', borderRadius: '14px', border: '1px solid rgba(200, 169, 106, 0.2)' }}>
-                  <div style={{ fontWeight: 700, color: '#5C3D1E', fontSize: '0.88rem', marginBottom: '0.2rem' }}>
-                    Auspicious Tithi & Time
-                  </div>
-                  <div style={{ color: '#6E5351', fontSize: '0.82rem' }}>
-                    Abhijit Muhurat: 11:48 AM – 12:36 PM • Favorable for Temple Sevas & Prayer
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* 6. Recent Activity Section */}
-            <div style={{
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-              border: '1.5px solid #E6D4BE',
-              borderRadius: '22px',
-              padding: '1.8rem',
-              marginBottom: '2.5rem',
-              boxShadow: '0 10px 30px rgba(110, 77, 44, 0.06)'
-            }}>
-              <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.3rem', color: '#5C3D1E', margin: '0 0 1.2rem 0', fontWeight: 700 }}>
-                Recent Activity
-              </h3>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {recentActivities.map((act, index) => (
-                  <div 
-                    key={index}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      padding: '0.75rem 1rem',
-                      background: 'rgba(255, 255, 255, 0.7)',
-                      border: '1px solid #EFE1D1',
-                      borderRadius: '14px'
-                    }}
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.3rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <div style={{
-                      minWidth: '55px',
-                      fontSize: '0.82rem',
-                      fontWeight: 800,
-                      color: '#8C6036',
-                      background: 'rgba(200, 169, 106, 0.12)',
-                      padding: '0.3rem 0.5rem',
-                      borderRadius: '8px',
-                      textAlign: 'center'
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'rgba(200, 169, 106, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#8C6036'
                     }}>
-                      {act.date}
+                      <Calendar size={20} />
                     </div>
-
-                    <div style={{ fontSize: '1.3rem', flexShrink: 0 }}>
-                      {act.icon}
-                    </div>
-
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#5C3D1E' }}>
-                        {act.title}
-                      </div>
-                      <div style={{ fontSize: '0.82rem', color: '#6E5351' }}>
-                        {act.details}
+                    <div>
+                      <h2 style={{ fontSize: '1.22rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
+                        Upcoming Bookings & Passes
+                      </h2>
+                      <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>
+                        Live confirmed bookings from database
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* 7. Explore Temples Section */}
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.4rem', color: '#5C3D1E', margin: 0, fontWeight: 700 }}>
-                  Explore Temples
-                </h3>
-                <button 
-                  onClick={onExploreTemples}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#8C6036',
-                    fontWeight: 700,
-                    fontSize: '0.88rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem'
-                  }}
-                >
-                  View All Temples <ChevronRight size={16} />
-                </button>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '1.5rem'
-              }}>
-                {exploreTemplesList.map(temple => (
-                  <div 
-                    key={temple.id}
+                  <button
+                    onClick={() => {
+                      setActiveTab('bookings');
+                      setBookingFilter('upcoming');
+                    }}
                     style={{
-                      background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                      border: '1.5px solid #E6D4BE',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
-                      boxShadow: '0 8px 24px rgba(110, 77, 44, 0.05)',
+                      background: 'rgba(200, 169, 106, 0.1)',
+                      border: '1px solid #C8A96A',
+                      color: '#8C6036',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      borderRadius: '8px',
+                      padding: '0.4rem 0.85rem',
+                      cursor: 'pointer',
                       display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between'
+                      alignItems: 'center',
+                      gap: '0.3rem'
                     }}
                   >
-                    <div>
-                      <div style={{ height: '170px', overflow: 'hidden', position: 'relative' }}>
-                        <img 
-                          src={temple.image} 
-                          alt={temple.name} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        />
-                        <div style={{
-                          position: 'absolute',
-                          top: '10px',
-                          right: '10px',
-                          background: 'rgba(255, 255, 255, 0.9)',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '12px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          color: '#5C3D1E',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}>
-                          <Star size={13} fill="#C8A96A" color="#C8A96A" /> {temple.rating} ({temple.reviews})
-                        </div>
-                      </div>
+                    <span>View All ({totalBookingsCount})</span>
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
 
-                      <div style={{ padding: '1.25rem 1.25rem 0.75rem 1.25rem' }}>
-                        <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#5C3D1E', margin: '0 0 0.35rem 0', fontFamily: 'Playfair Display, serif' }}>
-                          {temple.name}
-                        </h4>
-                        <div style={{ fontSize: '0.85rem', color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <MapPin size={14} color="#8C6036" /> {temple.location}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ padding: '0.75rem 1.25rem 1.25rem 1.25rem' }}>
-                      <button 
-                        onClick={onExploreTemples}
+                {isLoadingBookings ? (
+                  <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#8C6036' }}>
+                    <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>⏳</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Loading your sacred bookings...</div>
+                  </div>
+                ) : upcomingDarshans.length === 0 ? (
+                  <div style={{
+                    background: '#FAF6F0',
+                    border: '1.2px dashed #E6D8C5',
+                    borderRadius: '14px',
+                    padding: '2.2rem 1.5rem',
+                    textAlign: 'center',
+                    color: '#7A6258'
+                  }}>
+                    <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>🛕</div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.35rem 0' }}>
+                      No Upcoming Bookings Found
+                    </h3>
+                    <p style={{ fontSize: '0.86rem', maxWidth: '400px', margin: '0 auto 1.25rem auto', lineHeight: 1.45 }}>
+                      You have no active Darshan passes scheduled. Book a priority slot or order a sacred pooja to begin your journey.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => onOpenBooking ? onOpenBooking() : (window.location.href = '/quick-booking')}
                         style={{
-                          width: '100%',
-                          padding: '0.65rem',
-                          background: 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)',
-                          color: '#FFFFFF',
+                          background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                          color: '#1A0F0E',
                           border: 'none',
-                          borderRadius: '12px',
+                          borderRadius: '10px',
+                          padding: '0.6rem 1.3rem',
+                          fontSize: '0.86rem',
                           fontWeight: 700,
-                          fontSize: '0.88rem',
                           cursor: 'pointer',
-                          boxShadow: '0 4px 12px rgba(150, 116, 50, 0.2)'
+                          boxShadow: '0 2px 8px rgba(184, 142, 76, 0.3)'
                         }}
                       >
-                        View Temple
+                        Book Darshan Slot
+                      </button>
+                      <button
+                        onClick={() => onGoToServices ? onGoToServices() : (window.location.href = '/services')}
+                        style={{
+                          background: '#FFFFFF',
+                          border: '1.2px solid #C8A96A',
+                          color: '#6E4D2C',
+                          borderRadius: '10px',
+                          padding: '0.6rem 1.3rem',
+                          fontSize: '0.86rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Book Pooja / Seva
                       </button>
                     </div>
                   </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {upcomingDarshans.slice(0, 3).map((booking) => {
+                      const bRef = booking.bookingReference || booking.bookingId || booking._id;
+                      const isDarshan = (booking.bookingType || 'DARSHAN').toUpperCase() === 'DARSHAN';
+                      const bStatus = booking.bookingStatus || booking.status || 'CONFIRMED';
+
+                      return (
+                        <div
+                          key={bRef}
+                          style={{
+                            background: '#FAF6F0',
+                            border: '1.2px solid #E6D8C5',
+                            borderRadius: '14px',
+                            padding: '1.2rem 1.35rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.75rem',
+                            boxShadow: '0 2px 10px rgba(52, 31, 29, 0.02)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.78rem', fontFamily: 'monospace', fontWeight: 800, color: '#8C6036' }}>
+                                {bRef}
+                              </span>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '8px',
+                                background: isDarshan ? 'rgba(200, 169, 106, 0.2)' : 'rgba(217, 130, 43, 0.18)',
+                                color: isDarshan ? '#8C6036' : '#C05621'
+                              }}>
+                                {isDarshan ? '🛕 DARSHAN PASS' : '🙏 POOJA / SEVA'}
+                              </span>
+                            </div>
+
+                            <span style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              padding: '0.2rem 0.65rem',
+                              borderRadius: '12px',
+                              background: 'rgba(46, 125, 50, 0.12)',
+                              color: '#2E7D32'
+                            }}>
+                              {bStatus}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.2rem 0' }}>
+                              {booking.templeName || booking.temple || 'Sacred Temple'}
+                            </h3>
+                            <div style={{ fontSize: '0.82rem', color: '#7A6258', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <MapPin size={13} color="#8C6036" />
+                              <span>{booking.location || 'Tamil Nadu, India'}</span>
+                            </div>
+                          </div>
+
+                          <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '0.85rem',
+                            paddingTop: '0.75rem',
+                            borderTop: '1px dashed #DCC8B3'
+                          }}>
+                            <div style={{ fontSize: '0.84rem', color: '#4A2C28', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                              <Clock size={15} color="#8C6036" />
+                              <span><strong>{booking.bookingDate}</strong> • {booking.bookingTime || booking.timeSlot || 'Slot Confirmed'}</span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button
+                                onClick={() => setSelectedTicket(booking)}
+                                style={{
+                                  background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                                  color: '#1A0F0E',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  padding: '0.45rem 0.95rem',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
+                              >
+                                <Eye size={14} />
+                                <span>View Pass</span>
+                              </button>
+                              
+                              <button
+                                onClick={() => handleGetDirections(booking.location || booking.templeName)}
+                                style={{
+                                  background: '#FFFFFF',
+                                  border: '1.2px solid #EADBCA',
+                                  color: '#6E4D2C',
+                                  borderRadius: '8px',
+                                  padding: '0.45rem 0.85rem',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Directions
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 7. EXPLORE SACRED PILGRIMAGES & TEMPLES */}
+              <div style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '18px',
+                padding: '1.5rem 1.75rem',
+                boxShadow: '0 4px 20px rgba(52, 31, 29, 0.04)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'rgba(212, 175, 55, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#9B7536'
+                    }}>
+                      <Compass size={20} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
+                        Continue Your Pilgrimage
+                      </h2>
+                      <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>
+                        Curated historic temple destinations
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#8C6036',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}
+                  >
+                    <span>Explore All</span>
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {recommendedPilgrimages.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        background: '#FAF6F0',
+                        border: '1.2px solid #E6D8C5',
+                        borderRadius: '14px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '1rem',
+                        padding: '0.95rem'
+                      }}
+                    >
+                      <div style={{ width: '105px', height: '90px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0 }}>
+                        <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                            <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
+                              {item.title}
+                            </h3>
+                            <span style={{ fontSize: '0.75rem', color: '#8C6036', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                              <Star size={12} fill="#C8A96A" color="#C8A96A" /> {item.rating}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '0.8rem', color: '#7A6258', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
+                            <MapPin size={12} color="#8C6036" /> {item.location}
+                          </div>
+
+                          <p style={{ fontSize: '0.78rem', color: '#5C443C', margin: '0.35rem 0 0 0', lineHeight: 1.4 }}>
+                            {item.desc}
+                          </p>
+                        </div>
+
+                        <div style={{ marginTop: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#8C6036', background: 'rgba(200, 169, 106, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                            {item.category}
+                          </span>
+
+                          <button
+                            onClick={() => onOpenBooking ? onOpenBooking() : (window.location.href = '/quick-booking')}
+                            style={{
+                              background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                              color: '#1A0F0E',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '0.38rem 0.85rem',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            <span>Book Darshan</span>
+                            <ArrowRight size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* ─── RIGHT COLUMN: Real Recent Activity, Devotee Profile & Support ─── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+              
+              {/* 5. RECENT ACTIVITY SECTION (Dynamic from Real Data) */}
+              <div style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '18px',
+                padding: '1.5rem',
+                boxShadow: '0 4px 20px rgba(52, 31, 29, 0.04)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '1.15rem' }}>
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '10px',
+                    background: 'rgba(200, 169, 106, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#8C6036'
+                  }}>
+                    <Clock size={18} />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
+                      Recent Activity
+                    </h2>
+                    <div style={{ fontSize: '0.75rem', color: '#7A6258' }}>
+                      Real-time devotee activity logs
+                    </div>
+                  </div>
+                </div>
+
+                {recentActivities.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: '#7A6258', fontSize: '0.84rem' }}>
+                    No recent activity recorded yet.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {recentActivities.map((act) => (
+                      <div
+                        key={act.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '0.75rem 0.85rem',
+                          background: '#FAF6F0',
+                          borderRadius: '12px',
+                          border: '1px solid #EDE1D2'
+                        }}
+                      >
+                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{act.icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.3rem' }}>
+                            <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#2A1715' }}>
+                              {act.title}
+                            </div>
+                            <span style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              color: act.status === 'CANCELLED' ? '#D93025' : '#2E7D32',
+                              background: act.status === 'CANCELLED' ? 'rgba(217, 48, 37, 0.1)' : 'rgba(46, 125, 50, 0.1)',
+                              padding: '0.1rem 0.45rem',
+                              borderRadius: '6px'
+                            }}>
+                              {act.tag}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: '#7A6258', marginTop: '0.15rem' }}>
+                            {act.desc}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#9B7536', marginTop: '0.25rem', fontWeight: 600 }}>
+                            {act.timestamp}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* DEVOTEE PROFILE CARD */}
+              <div style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '18px',
+                padding: '1.4rem 1.5rem',
+                boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <User size={18} color="#8C6036" />
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#2A1715', margin: 0 }}>
+                      Devotee Profile Details
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsProfileModalOpen(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#8C6036',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <Edit3 size={13} /> Edit
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.84rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F0E6D8', paddingBottom: '0.4rem' }}>
+                    <span style={{ color: '#7A6258' }}>Full Name</span>
+                    <span style={{ fontWeight: 700, color: '#2A1715' }}>{displayName}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F0E6D8', paddingBottom: '0.4rem' }}>
+                    <span style={{ color: '#7A6258' }}>Email Address</span>
+                    <span style={{ fontWeight: 600, color: '#2A1715' }}>{userEmail}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F0E6D8', paddingBottom: '0.4rem' }}>
+                    <span style={{ color: '#7A6258' }}>Mobile Phone</span>
+                    <span style={{ fontWeight: 600, color: '#2A1715' }}>{user?.phone || user?.mobile || 'Not set'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#7A6258' }}>Auth Provider</span>
+                    <span style={{ fontWeight: 700, color: '#8C6036' }}>{isGoogleVerified ? 'Google OAuth' : 'Local / OTP'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* DAILY VEDIC BLESSING & AUSPICIOUS MUHURAT */}
+              <div style={{
+                background: 'linear-gradient(135deg, #2A1715 0%, #1A0F0E 100%)',
+                color: '#FFF8EA',
+                border: '1.5px solid #C8A96A',
+                borderRadius: '18px',
+                padding: '1.5rem',
+                boxShadow: '0 6px 22px rgba(42, 23, 21, 0.15)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                  <Sparkles size={18} color="#D4AF37" />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, letterSpacing: '0.08em', color: '#D4AF37', textTransform: 'uppercase' }}>
+                    Daily Vedic Blessing
+                  </span>
+                </div>
+
+                <blockquote style={{
+                  margin: '0 0 1rem 0',
+                  fontSize: '0.92rem',
+                  lineHeight: 1.6,
+                  fontStyle: 'italic',
+                  color: 'rgba(255, 248, 234, 0.9)'
+                }}>
+                  "May divine peace, health, and spiritual abundance guide your sacred pilgrimage and blessed family. Om Namah Shivaya."
+                </blockquote>
+
+                <div style={{
+                  background: 'rgba(212, 175, 55, 0.12)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  borderRadius: '10px',
+                  padding: '0.75rem 0.9rem'
+                }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#D4AF37', textTransform: 'uppercase' }}>
+                    Abhijit Muhurat Today
+                  </div>
+                  <div style={{ fontSize: '0.84rem', color: '#FFF8EA', fontWeight: 600, marginTop: '0.15rem' }}>
+                    11:48 AM – 12:36 PM
+                  </div>
+                </div>
+              </div>
+
+              {/* DEVOTEE PILGRIMAGE ASSISTANCE */}
+              <div style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '18px',
+                padding: '1.35rem 1.5rem',
+                boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                  <HelpCircle size={18} color="#8C6036" />
+                  <h3 style={{ fontSize: '1.02rem', fontWeight: 700, color: '#2A1715', margin: 0 }}>
+                    Devotee Support & Priest Desk
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#7A6258', margin: '0 0 0.85rem 0', lineHeight: 1.45 }}>
+                  Need custom VIP seva arrangement or special priest assistance? Our devotee desk is here 24/7.
+                </p>
+                <button
+                  onClick={() => onGoToContact ? onGoToContact() : (window.location.href = '/contact')}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(200, 169, 106, 0.12)',
+                    border: '1.2px solid #C8A96A',
+                    color: '#6E4D2C',
+                    padding: '0.55rem',
+                    borderRadius: '8px',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Contact Support Desk
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* VIEW 1: MY BOOKINGS & SEVAS TAB (Filterable & Actionable View) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {activeTab === 'bookings' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '2.5rem' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.3rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
+                  My Sacred Bookings & Passes
+                </h2>
+                <p style={{ fontSize: '0.86rem', color: '#7A6258', margin: 0 }}>
+                  Real-time persistent bookings belonging to <strong>{userEmail}</strong>
+                </p>
+              </div>
+
+              {/* Filter Pills */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                {[
+                  { id: 'all', label: `All (${userBookings.length})` },
+                  { id: 'darshan', label: 'Darshan Passes' },
+                  { id: 'pooja', label: 'Pooja & Sevas' },
+                  { id: 'upcoming', label: 'Upcoming' },
+                  { id: 'completed', label: 'Completed' },
+                  { id: 'cancelled', label: 'Cancelled' }
+                ].map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setBookingFilter(filter.id)}
+                    style={{
+                      background: bookingFilter === filter.id ? 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)' : '#FFFFFF',
+                      color: bookingFilter === filter.id ? '#FFFFFF' : '#6E4D2C',
+                      border: `1.2px solid ${bookingFilter === filter.id ? '#967432' : '#EADBCA'}`,
+                      borderRadius: '20px',
+                      padding: '0.4rem 0.95rem',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {filter.label}
+                  </button>
                 ))}
               </div>
             </div>
 
-          </motion.div>
-        )}
-
-        {/* TAB 2: MY BOOKINGS & SEVAS */}
-        {activeTab === 'bookings' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.45rem', color: '#5C3D1E', marginBottom: '1.5rem' }}>
-              Your Sacred Temple Bookings
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-              {userBookings.map((b) => (
-                <div 
-                  key={b.id}
-                  style={{
-                    background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                    border: '1.5px solid #E6D4BE',
-                    borderRadius: '18px',
-                    padding: '1.5rem',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1rem',
-                    boxShadow: '0 8px 24px rgba(110, 77, 44, 0.05)'
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: '280px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#8C6036', fontWeight: 700, fontFamily: 'monospace' }}>{b.id}</span>
-                      <span style={{
-                        background: b.status === 'Confirmed' ? 'rgba(46, 125, 50, 0.12)' : b.status === 'Upcoming' ? 'rgba(251, 188, 5, 0.18)' : 'rgba(0, 0, 0, 0.05)',
-                        color: b.status === 'Confirmed' ? '#2E7D32' : b.status === 'Upcoming' ? '#B8860B' : '#6E5351',
-                        border: '1px solid currentColor',
-                        fontSize: '0.75rem',
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '10px',
-                        fontWeight: 700
-                      }}>
-                        {b.status}
-                      </span>
-                    </div>
-
-                    <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#5C3D1E', margin: '0 0 0.3rem 0', fontFamily: 'Playfair Display, serif' }}>
-                      {b.temple}
-                    </h4>
-
-                    <div style={{ fontSize: '0.88rem', color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <MapPin size={14} color="#8C6036" /> {b.location}
-                    </div>
-
-                    <div style={{ marginTop: '0.6rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.85rem', color: '#5C3D1E' }}>
-                      <span><strong>Pass Type:</strong> {b.type}</span>
-                      <span><strong>Date:</strong> {b.date}</span>
-                      <span><strong>Devotees:</strong> {b.devotees}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.6rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#5C3D1E', fontFamily: 'Playfair Display, serif' }}>
-                      {b.price}
-                    </div>
-                    <button 
-                      onClick={() => showToast(`🎫 E-Ticket ${b.id} ready for download.`)}
-                      style={{
-                        background: 'rgba(200, 169, 106, 0.15)',
-                        border: '1.5px solid #C8A96A',
-                        color: '#6E4D2C',
-                        padding: '0.55rem 1rem',
-                        borderRadius: '10px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem'
-                      }}
-                    >
-                      <Ticket size={15} color="#8C6036" /> Pass Ticket
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* TAB 3: SAVED TEMPLES */}
-        {activeTab === 'wishlist' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.45rem', color: '#5C3D1E', marginBottom: '1.5rem' }}>
-              Your Saved Sacred Temples
-            </h2>
-
-            {savedTemples.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem', color: '#6E5351', background: '#FFFFFF', borderRadius: '18px', border: '1.5px solid #E6D4BE' }}>
-                No saved temples yet. Explore temples and add them to your sacred wishlist!
+            {/* Bookings List / Empty State */}
+            {isLoadingBookings ? (
+              <div style={{ textAlign: 'center', padding: '3rem 2rem', background: '#FFFFFF', borderRadius: '16px', border: '1.5px solid #EADBCA' }}>
+                <div style={{ fontSize: '1.6rem', marginBottom: '0.5rem' }}>⏳</div>
+                <div style={{ color: '#8C6036', fontWeight: 700 }}>Retrieving your bookings from database...</div>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {savedTemples.map((temple) => (
-                  <div 
-                    key={temple.id}
+            ) : filteredBookings.length === 0 ? (
+              <div style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '16px',
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                color: '#7A6258'
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🛕</div>
+                <h3 style={{ fontSize: '1.2rem', color: '#2A1715', margin: '0 0 0.5rem 0' }}>
+                  {bookingFilter === 'all' ? 'No Bookings Found' : `No ${bookingFilter} bookings found`}
+                </h3>
+                <p style={{ fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+                  Start your sacred pilgrimage by booking a priority Darshan slot or ordering a sacred Pooja / Seva.
+                </p>
+                <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => onOpenBooking ? onOpenBooking() : (window.location.href = '/quick-booking')}
                     style={{
-                      background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF4EC 100%)',
-                      border: '1.5px solid #E6D4BE',
-                      borderRadius: '18px',
-                      overflow: 'hidden',
-                      boxShadow: '0 8px 24px rgba(110, 77, 44, 0.05)'
+                      background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                      color: '#1A0F0E',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.65rem 1.4rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
                     }}
                   >
-                    <div style={{ height: '160px', overflow: 'hidden', position: 'relative' }}>
-                      <img src={temple.image} alt={temple.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button 
-                        onClick={() => removeSavedTemple(temple.id)}
+                    Book Darshan
+                  </button>
+                  <button
+                    onClick={() => onGoToServices ? onGoToServices() : (window.location.href = '/services')}
+                    style={{
+                      background: 'rgba(200, 169, 106, 0.15)',
+                      border: '1.2px solid #C8A96A',
+                      color: '#6E4D2C',
+                      borderRadius: '10px',
+                      padding: '0.65rem 1.4rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Book Pooja / Seva
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+                {filteredBookings.map((booking) => {
+                  const bRef = booking.bookingReference || booking.bookingId || booking._id;
+                  const isDarshan = (booking.bookingType || 'DARSHAN').toUpperCase() === 'DARSHAN';
+                  const isCancelled = (booking.bookingStatus || booking.status || '').toUpperCase() === 'CANCELLED';
+
+                  return (
+                    <div
+                      key={bRef}
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1.5px solid #EADBCA',
+                        borderRadius: '16px',
+                        padding: '1.35rem 1.6rem',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '1.2rem',
+                        boxShadow: '0 4px 18px rgba(52, 31, 29, 0.03)',
+                        opacity: isCancelled ? 0.75 : 1
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '280px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.82rem', fontFamily: 'monospace', fontWeight: 800, color: '#8C6036' }}>
+                            {bRef}
+                          </span>
+                          
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '0.15rem 0.55rem',
+                            borderRadius: '10px',
+                            background: isDarshan ? 'rgba(200, 169, 106, 0.18)' : 'rgba(217, 130, 43, 0.18)',
+                            color: isDarshan ? '#8C6036' : '#C05621'
+                          }}>
+                            {isDarshan ? '🛕 DARSHAN' : '🙏 POOJA / SEVA'}
+                          </span>
+
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '0.15rem 0.6rem',
+                            borderRadius: '12px',
+                            background: isCancelled ? 'rgba(217, 48, 37, 0.12)' : (booking.bookingStatus === 'COMPLETED' ? 'rgba(0,0,0,0.06)' : 'rgba(46, 125, 50, 0.12)'),
+                            color: isCancelled ? '#D93025' : (booking.bookingStatus === 'COMPLETED' ? '#666' : '#2E7D32')
+                          }}>
+                            {booking.bookingStatus || booking.status || 'CONFIRMED'}
+                          </span>
+                        </div>
+
+                        <h3 style={{ fontSize: '1.18rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
+                          {booking.templeName || booking.temple || 'Sacred Temple'}
+                        </h3>
+                        
+                        <div style={{ fontSize: '0.85rem', color: '#7A6258', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.6rem' }}>
+                          <MapPin size={14} color="#8C6036" />
+                          <span>{booking.location || 'Tamil Nadu, India'}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.82rem', color: '#4A2C28' }}>
+                          <span><strong>Pass / Seva:</strong> {booking.darshanType || booking.serviceName || 'Special Darshan'}</span>
+                          <span><strong>Date:</strong> {booking.bookingDate}</span>
+                          <span><strong>Time:</strong> {booking.bookingTime || booking.timeSlot || 'Slot Confirmed'}</span>
+                          <span><strong>Devotee:</strong> {booking.devoteeName || booking.customerName || displayName}</span>
+                          <span><strong>Devotees:</strong> {booking.numberOfPeople || booking.devoteesCount || 1} Person(s)</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.6rem' }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2A1715' }}>
+                          ₹{(booking.amount || booking.totalAmount || 0).toLocaleString()}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => setSelectedTicket(booking)}
+                            style={{
+                              background: 'rgba(200, 169, 106, 0.15)',
+                              border: '1.2px solid #C8A96A',
+                              color: '#6E4D2C',
+                              padding: '0.5rem 0.95rem',
+                              borderRadius: '8px',
+                              fontSize: '0.82rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem'
+                            }}
+                          >
+                            <Eye size={14} />
+                            <span>View Pass</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => handleGetDirections(booking.location || booking.templeName)}
+                            style={{
+                              background: '#FFFFFF',
+                              border: '1.2px solid #EADBCA',
+                              color: '#7A6258',
+                              padding: '0.5rem 0.85rem',
+                              borderRadius: '8px',
+                              fontSize: '0.82rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Directions
+                          </button>
+
+                          {!isCancelled && (
+                            <button
+                              disabled={cancellingBookingId === bRef}
+                              onClick={() => handleCancelBooking(booking)}
+                              style={{
+                                background: '#FFFFFF',
+                                border: '1px solid rgba(217, 48, 37, 0.3)',
+                                color: '#D93025',
+                                padding: '0.5rem 0.75rem',
+                                borderRadius: '8px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                              title="Cancel this booking"
+                            >
+                              {cancellingBookingId === bRef ? 'Cancelling...' : 'Cancel'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* VIEW 2: SAVED TEMPLES WISHLIST TAB                             */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {activeTab === 'wishlist' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.3rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
+                  Your Saved Temples & Sacred Wishlist
+                </h2>
+                <p style={{ fontSize: '0.86rem', color: '#7A6258', margin: 0 }}>
+                  Sacred shrines bookmarked for future pilgrimages
+                </p>
+              </div>
+
+              <button
+                onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
+                style={{
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                  color: '#1A0F0E',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.55rem 1.2rem',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                + Explore More Temples
+              </button>
+            </div>
+
+            {savedTemples.length === 0 ? (
+              <div style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #EADBCA',
+                borderRadius: '16px',
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                color: '#7A6258'
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>❤️</div>
+                <h3 style={{ fontSize: '1.2rem', color: '#2A1715', margin: '0 0 0.5rem 0' }}>
+                  No Saved Temples Yet
+                </h3>
+                <p style={{ fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+                  Explore Tamil Nadu's sacred temples and tap the heart icon to save them to your pilgrimage wishlist.
+                </p>
+                <button
+                  onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
+                  style={{
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                    color: '#1A0F0E',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.65rem 1.4rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Explore Temples Catalog
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.3rem' }}>
+                {savedTemples.map((temple) => (
+                  <div
+                    key={temple.id || temple._id || temple.name}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1.5px solid #EADBCA',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 18px rgba(52, 31, 29, 0.03)'
+                    }}
+                  >
+                    <div style={{ height: '170px', position: 'relative', background: '#F0E6D8' }}>
+                      {temple.image ? (
+                        <img src={temple.image} alt={temple.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>
+                          🛕
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={() => removeSavedTemple(temple.id || temple._id)}
                         style={{
                           position: 'absolute',
                           top: '10px',
                           right: '10px',
-                          background: 'rgba(255, 255, 255, 0.85)',
-                          border: 'none',
-                          color: '#EA4335',
-                          borderRadius: '50%',
                           width: '32px',
                           height: '32px',
+                          borderRadius: '50%',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: 'none',
+                          color: '#E53E3E',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           cursor: 'pointer',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                         }}
-                        title="Remove from saved"
+                        title="Remove from saved wishlist"
                       >
-                        <Heart size={16} fill="#EA4335" />
+                        <Heart size={16} fill="#E53E3E" />
                       </button>
                     </div>
 
                     <div style={{ padding: '1.2rem' }}>
-                      <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#5C3D1E', margin: '0 0 0.3rem 0', fontFamily: 'Playfair Display, serif' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
                         {temple.name}
-                      </h4>
-                      <div style={{ fontSize: '0.85rem', color: '#6E5351', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem' }}>
-                        <MapPin size={14} color="#8C6036" /> {temple.location}
+                      </h3>
+                      <div style={{ fontSize: '0.82rem', color: '#7A6258', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.85rem' }}>
+                        <MapPin size={13} color="#8C6036" />
+                        <span>{temple.location || 'Tamil Nadu, India'}</span>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem' }}>
-                        <button 
-                          onClick={onExploreTemples}
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => onOpenBooking ? onOpenBooking() : (window.location.href = '/quick-booking')}
                           style={{
-                            flex: 1,
-                            padding: '0.55rem',
-                            background: 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)',
-                            color: '#FFFFFF',
+                            flex: 1.2,
+                            background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                            color: '#1A0F0E',
                             border: 'none',
-                            borderRadius: '10px',
-                            fontWeight: 700,
-                            fontSize: '0.85rem',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(150, 116, 50, 0.2)'
-                          }}
-                        >
-                          Virtual Darshan
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (onOpenBooking) onOpenBooking();
-                            else showToast('Book Seva modal active');
-                          }}
-                          style={{
-                            flex: 1,
+                            borderRadius: '8px',
                             padding: '0.55rem',
-                            background: 'rgba(200, 169, 106, 0.15)',
-                            color: '#6E4D2C',
-                            border: '1.5px solid #C8A96A',
-                            borderRadius: '10px',
-                            fontWeight: 600,
-                            fontSize: '0.85rem',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
                             cursor: 'pointer'
                           }}
                         >
-                          Book Seva
+                          Book Darshan
+                        </button>
+                        <button
+                          onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
+                          style={{
+                            flex: 1,
+                            background: 'rgba(200, 169, 106, 0.12)',
+                            border: '1px solid #C8A96A',
+                            color: '#6E4D2C',
+                            borderRadius: '8px',
+                            padding: '0.55rem',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Details
                         </button>
                       </div>
                     </div>
@@ -1179,171 +1838,518 @@ export default function UserDashboardPage({
           </motion.div>
         )}
 
-      </div>
+      </main>
 
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          background: 'rgba(28, 18, 13, 0.95)',
-          border: '1px solid #D4AF37',
-          color: '#FFF8EA',
-          padding: '0.85rem 1.4rem',
-          borderRadius: '14px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.6rem',
-          fontSize: '0.9rem',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <Sparkles size={18} color="#D4AF37" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      {/* ─── PROFILE & DEVOTEE SETTINGS MODAL ─── */}
+      <AnimatePresence>
+        {isProfileModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem'
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setIsProfileModalOpen(false); setIsEditingProfile(false); }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(18, 9, 8, 0.75)',
+                backdropFilter: 'blur(6px)'
+              }}
+            />
 
-      {/* Edit Profile Modal */}
-      {isEditProfileModalOpen && (
-        <div className="modal-overlay active" onClick={() => setIsEditProfileModalOpen(false)} style={{ zIndex: 99999 }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px', padding: '2rem', borderRadius: '20px', background: '#FFFFFF', border: '1.5px solid #D8C3A5', boxShadow: '0 20px 60px rgba(110, 77, 44, 0.15)' }}>
-            <div style={{ textAlign: 'center', marginBottom: '1.4rem' }}>
-              <div 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '470px',
+                background: '#FFFFFF',
+                borderRadius: '20px',
+                border: '1.5px solid #EADBCA',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
+                padding: '2rem',
+                zIndex: 10000,
+                maxHeight: '90vh',
+                overflowY: 'auto'
+              }}
+            >
+              <button
+                onClick={() => { setIsProfileModalOpen(false); setIsEditingProfile(false); }}
                 style={{
-                  width: '56px',
-                  height: '56px',
+                  position: 'absolute',
+                  top: '18px',
+                  right: '18px',
+                  background: 'rgba(0,0,0,0.05)',
+                  border: 'none',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(200, 169, 106, 0.18)',
-                  color: '#8C6036',
+                  width: '32px',
+                  height: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 0.75rem auto',
-                  border: '1.5px solid #C8A96A'
+                  cursor: 'pointer',
+                  color: '#666'
                 }}
               >
-                <User size={26} />
-              </div>
-              <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.5rem', color: '#5C3D1E', marginBottom: '0.35rem' }}>
-                Edit Your Profile
-              </h3>
-              <p style={{ color: '#6E5351', fontSize: '0.88rem', margin: 0 }}>
-                Update your personal information and spiritual preferences.
-              </p>
-            </div>
+                <X size={18} />
+              </button>
 
-            <form onSubmit={handleSaveProfile}>
-              <div style={{ marginBottom: '1.1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.4rem' }}>
-                  Full Name
-                </label>
-                <input 
-                  type="text" 
-                  required 
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '1px solid #D8C3A5',
-                    outline: 'none',
-                    fontFamily: 'Plus Jakarta Sans, sans-serif',
-                    fontSize: '0.95rem',
-                    background: '#FFFFFF',
-                    color: '#341F1D'
-                  }}
-                />
-              </div>
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{
+                  width: '66px',
+                  height: '66px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #9B7536 100%)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.65rem',
+                  fontWeight: 800,
+                  margin: '0 auto 0.75rem auto',
+                  border: '2px solid #FFFFFF',
+                  boxShadow: '0 4px 15px rgba(155, 117, 54, 0.3)',
+                  overflow: 'hidden'
+                }}>
+                  {user?.avatar && user.avatar.length > 2 && (user.avatar.startsWith('http') || user.avatar.startsWith('data:')) ? (
+                    <img src={user.avatar} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    userAvatarInitial
+                  )}
+                </div>
 
-              <div style={{ marginBottom: '1.1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.4rem' }}>
-                  Email Address (Verified)
-                </label>
-                <input 
-                  type="email" 
-                  disabled 
-                  value={user?.email || 'ashok@darshanjourney.com'}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '1px solid #E0D0BE',
-                    outline: 'none',
-                    fontSize: '0.95rem',
-                    background: 'rgba(0, 0, 0, 0.04)',
-                    color: '#6E5351',
-                    cursor: 'not-allowed'
-                  }}
-                />
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
+                  {displayName}
+                </h2>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: '#2E7D32',
+                  background: 'rgba(46, 125, 50, 0.1)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '12px'
+                }}>
+                  <ShieldCheck size={13} />
+                  <span>{isGoogleVerified ? 'Google Account Verified' : 'Email Verified Account'}</span>
+                </div>
               </div>
 
-              <div style={{ marginBottom: '1.1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.4rem' }}>
-                  Phone Number
-                </label>
-                <input 
-                  type="tel" 
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '1px solid #D8C3A5',
-                    outline: 'none',
-                    fontSize: '0.95rem',
-                    background: '#FFFFFF',
-                    color: '#341F1D'
-                  }}
-                />
-              </div>
+              <form onSubmit={handleSaveProfile}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                  
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.35rem' }}>
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      disabled={!isEditingProfile}
+                      value={isEditingProfile ? editName : displayName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        border: '1.2px solid #EADBCA',
+                        fontSize: '0.92rem',
+                        background: isEditingProfile ? '#FFFFFF' : '#FAF6F0',
+                        color: '#2A1715',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <button 
-                  type="button" 
-                  onClick={() => setIsEditProfileModalOpen(false)}
-                  style={{ 
-                    flex: 1, 
-                    padding: '0.75rem', 
-                    borderRadius: '30px', 
-                    border: '1.5px solid #D8C3A5', 
-                    background: '#FFFFFF', 
-                    color: '#6E5351', 
-                    fontWeight: 600, 
-                    fontSize: '0.9rem', 
-                    cursor: 'pointer' 
-                  }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  style={{ 
-                    flex: 1.6, 
-                    padding: '0.75rem', 
-                    borderRadius: '30px', 
-                    border: 'none', 
-                    background: 'linear-gradient(135deg, #C8A96A 0%, #967432 100%)', 
-                    color: '#FFFFFF', 
-                    fontWeight: 700, 
-                    fontSize: '0.9rem', 
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(150, 116, 50, 0.25)'
-                  }}
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.35rem' }}>
+                      Email Address (Verified)
+                    </label>
+                    <input
+                      type="email"
+                      disabled
+                      value={userEmail}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        border: '1.2px solid #EDE1D2',
+                        fontSize: '0.92rem',
+                        background: '#FAF6F0',
+                        color: '#7A6258',
+                        cursor: 'not-allowed',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.35rem' }}>
+                      Phone / Mobile
+                    </label>
+                    <input
+                      type="tel"
+                      disabled={!isEditingProfile}
+                      placeholder="+91 98765 43210"
+                      value={isEditingProfile ? editPhone : (user?.phone || user?.mobile || 'Not provided')}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        border: '1.2px solid #EADBCA',
+                        fontSize: '0.92rem',
+                        background: isEditingProfile ? '#FFFFFF' : '#FAF6F0',
+                        color: '#2A1715',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.35rem' }}>
+                        Username
+                      </label>
+                      <div style={{ padding: '0.65rem 0.85rem', borderRadius: '10px', background: '#FAF6F0', border: '1.2px solid #EDE1D2', fontSize: '0.88rem', color: '#4A2C28', fontWeight: 600 }}>
+                        @{user?.username || displayName.toLowerCase().replace(/\s+/g, '')}
+                      </div>
+                    </div>
+
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#8C6036', marginBottom: '0.35rem' }}>
+                        Auth Provider
+                      </label>
+                      <div style={{ padding: '0.65rem 0.85rem', borderRadius: '10px', background: '#FAF6F0', border: '1.2px solid #EDE1D2', fontSize: '0.88rem', color: '#4A2C28', fontWeight: 600 }}>
+                        {isGoogleVerified ? 'Google OAuth' : 'Local / OTP'}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
+                  {isEditingProfile ? (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(false)}
+                        style={{
+                          flex: 1,
+                          padding: '0.65rem',
+                          borderRadius: '10px',
+                          border: '1.2px solid #EADBCA',
+                          background: '#FFFFFF',
+                          color: '#7A6258',
+                          fontWeight: 600,
+                          fontSize: '0.88rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        style={{
+                          flex: 1.5,
+                          padding: '0.65rem',
+                          borderRadius: '10px',
+                          border: 'none',
+                          background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                          color: '#1A0F0E',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingProfile(true)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        borderRadius: '10px',
+                        border: '1.2px solid #C8A96A',
+                        background: 'rgba(200, 169, 106, 0.12)',
+                        color: '#6E4D2C',
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <Edit3 size={15} /> Edit Personal Information
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(234, 67, 53, 0.25)',
+                      background: 'rgba(234, 67, 53, 0.08)',
+                      color: '#D93025',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <LogOut size={15} /> Sign Out of Darshan Journey
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* Footer */}
+      {/* ─── DIGITAL PILGRIMAGE BOOKING TICKET MODAL ─── */}
+      <AnimatePresence>
+        {selectedTicket && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem'
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTicket(null)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(18, 9, 8, 0.75)',
+                backdropFilter: 'blur(6px)'
+              }}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '500px',
+                background: '#FFFFFF',
+                borderRadius: '22px',
+                border: '1.5px solid #C8A96A',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
+                padding: '2rem',
+                zIndex: 10000,
+                maxHeight: '90vh',
+                overflowY: 'auto'
+              }}
+            >
+              <button
+                onClick={() => setSelectedTicket(null)}
+                style={{
+                  position: 'absolute',
+                  top: '18px',
+                  right: '18px',
+                  background: 'rgba(0,0,0,0.05)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                <X size={18} />
+              </button>
+
+              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>🕉️</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.15rem 0' }}>
+                  {((selectedTicket.bookingType || 'DARSHAN').toUpperCase() === 'DARSHAN') ? 'Sacred Darshan Entry Pass' : 'Temple Pooja & Seva Confirmation'}
+                </h3>
+                <div style={{ fontSize: '0.82rem', fontFamily: 'monospace', fontWeight: 800, color: '#8C6036' }}>
+                  REF: {selectedTicket.bookingReference || selectedTicket.bookingId || selectedTicket._id}
+                </div>
+              </div>
+
+              <div style={{
+                background: '#FAF6F0',
+                borderRadius: '14px',
+                border: '1px solid #E6D8C5',
+                padding: '1.2rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                fontSize: '0.88rem'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.72rem', color: '#8C6036', fontWeight: 700, textTransform: 'uppercase' }}>Temple & Shrine</div>
+                  <div style={{ fontWeight: 800, color: '#2A1715', fontSize: '1rem' }}>{selectedTicket.templeName || selectedTicket.temple || 'Sacred Temple'}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#7A6258' }}>{selectedTicket.location || 'Tamil Nadu, India'}</div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', paddingTop: '0.5rem', borderTop: '1px dashed #DCC8B3' }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: '#8C6036', fontWeight: 700, textTransform: 'uppercase' }}>Date & Slot</div>
+                    <div style={{ fontWeight: 700, color: '#2A1715' }}>{selectedTicket.bookingDate}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#7A6258' }}>{selectedTicket.bookingTime || selectedTicket.timeSlot || 'Slot Confirmed'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: '#8C6036', fontWeight: 700, textTransform: 'uppercase' }}>Booking Type</div>
+                    <div style={{ fontWeight: 700, color: '#2A1715' }}>{selectedTicket.darshanType || selectedTicket.serviceName || 'Special Darshan'}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#7A6258' }}>{selectedTicket.numberOfPeople || selectedTicket.devoteesCount || 1} Devotee(s)</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', paddingTop: '0.5rem', borderTop: '1px dashed #DCC8B3' }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: '#8C6036', fontWeight: 700, textTransform: 'uppercase' }}>Devotee Name</div>
+                    <div style={{ fontWeight: 700, color: '#2A1715' }}>{selectedTicket.devoteeName || selectedTicket.customerName || displayName}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>{selectedTicket.mobile || selectedTicket.customerMobile || ''}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: '#8C6036', fontWeight: 700, textTransform: 'uppercase' }}>Payment & Status</div>
+                    <div style={{ fontWeight: 800, color: '#2E7D32' }}>₹{(selectedTicket.amount || selectedTicket.totalAmount || 0).toLocaleString()} • {selectedTicket.paymentStatus || 'PAID'}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#8C6036', fontWeight: 700 }}>{selectedTicket.bookingStatus || selectedTicket.status || 'CONFIRMED'}</div>
+                  </div>
+                </div>
+
+                <div style={{ paddingTop: '0.5rem', borderTop: '1px dashed #DCC8B3', fontSize: '0.78rem', color: '#5C443C', lineHeight: 1.4 }}>
+                  <strong>Pilgrimage Guidelines:</strong> {selectedTicket.instructions || 'Please arrive 15 minutes prior to your scheduled slot. Carry a government photo ID.'}
+                </div>
+              </div>
+
+              {/* Scannable Verification QR */}
+              <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+                <div style={{ display: 'inline-block', padding: '0.4rem', background: '#FFFFFF', borderRadius: '10px', border: '1px solid #E6D8C5' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`DARSHAN-JOURNEY|REF:${selectedTicket.bookingReference || selectedTicket.bookingId || selectedTicket._id}|TEMPLE:${selectedTicket.templeName || selectedTicket.temple}|DATE:${selectedTicket.bookingDate}|DEVOTEES:${selectedTicket.numberOfPeople || selectedTicket.devoteesCount || 1}`)}&color=341F1D&bgcolor=FFFFFF&margin=4&format=png`}
+                    alt="Ticket QR Code"
+                    width={130}
+                    height={130}
+                    style={{ display: 'block' }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#8C6036', marginTop: '0.3rem', fontWeight: 600 }}>
+                  Scan at Sacred Sanctum Gate
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button
+                  onClick={() => {
+                    showToast(`🎫 Pass ${selectedTicket.bookingReference || selectedTicket.bookingId || selectedTicket._id} printed.`);
+                    window.print();
+                  }}
+                  style={{
+                    flex: 1.5,
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
+                    color: '#1A0F0E',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.65rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <Printer size={15} /> Print / Save E-Pass
+                </button>
+                <button
+                  onClick={() => handleGetDirections(selectedTicket.location || selectedTicket.templeName)}
+                  style={{
+                    flex: 1,
+                    background: '#FFFFFF',
+                    border: '1.2px solid #C8A96A',
+                    color: '#6E4D2C',
+                    borderRadius: '10px',
+                    padding: '0.65rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Open Maps
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── TOAST NOTIFICATION ─── */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              right: '24px',
+              background: 'rgba(28, 18, 13, 0.95)',
+              border: '1px solid #D4AF37',
+              color: '#FFF8EA',
+              padding: '0.85rem 1.4rem',
+              borderRadius: '14px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              fontSize: '0.9rem',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <Sparkles size={18} color="#D4AF37" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── FOOTER ─── */}
       <Footer 
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}

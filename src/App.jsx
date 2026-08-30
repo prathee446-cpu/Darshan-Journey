@@ -45,7 +45,7 @@ function AppRoutes() {
   const navigate = useNavigate();
 
   const navProps = {
-    onGoToHome: () => { navigate('/'); window.scrollTo(0, 0); },
+    onGoToHome: () => { navigate('/home'); window.scrollTo(0, 0); },
     onGoToLanding: () => { navigate('/'); window.scrollTo(0, 0); },
     onExploreTemples: () => { navigate('/explore'); window.scrollTo(0, 0); },
     onGoToProducts: () => { navigate('/services'); window.scrollTo(0, 0); },
@@ -142,6 +142,10 @@ function AppRoutes() {
       />
       <Route 
         path="/dashboard" 
+        element={<ProtectedRoute><UserDashboardPage {...navProps} /></ProtectedRoute>} 
+      />
+      <Route 
+        path="/profile" 
         element={<ProtectedRoute><UserDashboardPage {...navProps} /></ProtectedRoute>} 
       />
       <Route 

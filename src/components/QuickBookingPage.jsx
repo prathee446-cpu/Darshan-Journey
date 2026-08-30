@@ -9,6 +9,7 @@ import {
   Check, Globe, Copy, User, Settings, CreditCard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { createBookingRecord } from '../services/bookingService';
 
 /* ═══════════════════════════════════════════════════════════════
    CONSTANTS & DATA
@@ -219,8 +220,8 @@ const S = {
    ═══════════════════════════════════════════════════════════════ */
 
 export default function QuickBookingPage({
-  onGoToHome, onGoToLanding, onExploreTemples, onGoToProducts,
-  onGoToLogin, onGoToAbout, onOpenBooking
+  onGoToHome, onGoToLanding, onExploreTemples, onGoToProducts, onGoToServices,
+  onGoToLogin, onGoToAbout, onGoToContact, onGoToDashboard, onOpenBooking, onOpenDonate
 }) {
   const temples = REAL_TAMIL_NADU_TEMPLES;
 
@@ -258,7 +259,6 @@ export default function QuickBookingPage({
 
   const { user: authUser, updateUser } = useAuth();
   const [customer, setCustomer] = useState(() => {
-    // Auto-populate from authenticated user session
     if (authUser) {
       return {
         fullName: authUser.fullName || authUser.name || '',
@@ -416,9 +416,41 @@ export default function QuickBookingPage({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCompletePayment = () => {
+  const handleCompletePayment = async () => {
     setPaymentStep(2);
-    setTimeout(() => setPaymentStep(3), 1800);
+    try {
+      const savedBooking = await createBookingRecord({
+        bookingType: 'DARSHAN',
+        templeId: selectedTemple?.id,
+        templeName: selectedTemple?.name || 'Sacred Temple',
+        location: selectedTemple?.district || 'Tamil Nadu',
+        darshanType: selectedDarshanObj?.name || 'General Darshan',
+        serviceName: selectedPoojaObj?.name || '',
+        bookingDate: selectedDateIso,
+        bookingTime: selectedTimeSlot || '10:00 AM – 11:00 AM',
+        numberOfPeople: totalDevotees,
+        devoteesBreakdown: devotees,
+        devoteeName: customer.fullName || authUser?.fullName || authUser?.name || 'Devotee',
+        mobile: customer.mobile || authUser?.phone || authUser?.mobile || '',
+        email: customer.email || authUser?.email || '',
+        address: customer.address || authUser?.address || '',
+        emergencyContact: customer.emergencyContact || authUser?.emergencyContact || '',
+        amount: grandTotal,
+        paymentMethod: selectedPaymentMethod.toUpperCase(),
+        paymentStatus: 'PAID',
+        bookingStatus: 'CONFIRMED',
+        bookingReference: bookingRef || generateRef(),
+        instructions: 'Please arrive 15 minutes prior. Carry a valid government photo ID.'
+      });
+
+      if (savedBooking && (savedBooking.bookingReference || savedBooking.bookingId)) {
+        setBookingRef(savedBooking.bookingReference || savedBooking.bookingId);
+      }
+    } catch (err) {
+      console.warn('Booking record save error:', err);
+    } finally {
+      setTimeout(() => setPaymentStep(3), 1200);
+    }
   };
 
   const handleBookAnother = () => {
@@ -449,7 +481,6 @@ export default function QuickBookingPage({
     if (!customerForm.emergencyContact.trim() || customerForm.emergencyContact.length < 10) errs.emergencyContact = 'Emergency contact is required';
     if (Object.keys(errs).length) { setCustomerErrors(errs); return; }
     setCustomer(customerForm);
-    localStorage.setItem('darshan_user', JSON.stringify(customerForm));
     if (updateUser) {
       updateUser({
         fullName: customerForm.fullName,
@@ -1860,9 +1891,13 @@ export default function QuickBookingPage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToLogin={onGoToLogin}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
+        onGoToDashboard={onGoToDashboard}
         onOpenBooking={onOpenBooking}
+        onOpenDonate={onOpenDonate}
       />
 
       {/* ── Compact Top Header ── */}
@@ -1899,7 +1934,9 @@ export default function QuickBookingPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
+        onGoToContact={onGoToContact}
         onOpenBooking={onOpenBooking}
       />
 

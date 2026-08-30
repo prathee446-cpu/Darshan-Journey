@@ -66,7 +66,8 @@ export function AuthProvider({ children }) {
         });
 
         if (response.ok) {
-          const serverUser = await response.json();
+          const serverData = await response.json();
+          const serverUser = serverData.user || serverData;
           const updatedUser = {
             id: serverUser.id || serverUser._id,
             _id: serverUser._id || serverUser.id,
@@ -146,6 +147,9 @@ export function AuthProvider({ children }) {
   // Logout — clears cookie and profile state
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('darshan_user');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('darshan_pending_booking');
     setUser(null);
     fetch(`${API_BASE}/api/auth/logout`, {
       method: 'POST',
