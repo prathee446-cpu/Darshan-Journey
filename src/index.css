@@ -3258,6 +3258,9 @@ body {
 }
 
 .login-glass-card {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
   width: 100%;
   max-width: 420px;
   background: rgba(34, 24, 18, 0.75);
@@ -14403,6 +14406,9 @@ body {
 }
 
 .login-glass-card {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
   width: 100%;
   max-width: 420px;
   background: rgba(34, 24, 18, 0.75);
@@ -14512,6 +14518,10 @@ body {
 }
 
 .login-styled-input {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: text;
   width: 100%;
   padding: 0.85rem 1rem 0.85rem 2.85rem;
   background: rgba(20, 14, 10, 0.65);
