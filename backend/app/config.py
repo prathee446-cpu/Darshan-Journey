@@ -11,6 +11,13 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str = ""
     WEB_SEARCH_API_KEY: str = ""
 
+    # Google OAuth — server-side token verification
+    GOOGLE_CLIENT_ID: str = ""
+
+    # Gmail SMTP for OTP email delivery
+    SMTP_EMAIL: str = ""
+    SMTP_PASSWORD: str = ""
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

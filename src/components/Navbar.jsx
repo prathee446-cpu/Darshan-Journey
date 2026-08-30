@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Heart, User, LogOut } from 'lucide-react';
-import logoImg from '../assets/darshan-logo.jpeg';
+import logoImg from '../assets/exact_darshan_logo.png';
+import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ 
+export default function Navbar({
   activePage = 'home',
-  onGoToHome, 
-  onGoToLanding, 
-  onExploreTemples, 
-  onGoToServices, 
+  onGoToHome,
+  onGoToLanding,
+  onExploreTemples,
+  onGoToServices,
   onGoToProducts,
   onGoToLogin,
   onGoToAbout,
   onGoToContact,
-  onOpenBooking, 
-  onOpenDonate 
+  onGoToDashboard,
+  onOpenBooking,
+  onOpenDonate
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState(null);
+  const authContext = useAuth();
+  const user = authContext?.user;
+  const logout = authContext?.logout;
+  const navTo = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,174 +32,231 @@ export default function Navbar({
         setIsScrolled(false);
       }
     };
-
-    const checkUser = () => {
-      const savedUser = localStorage.getItem('darshan_user');
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch (e) {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-    };
-
-    checkUser();
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('storage', checkUser);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('storage', checkUser);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('darshan_user');
-    setUser(null);
-  };
-
-  const handleLinkClick = (e, targetNav, sectionId, customAction) => {
-    if (customAction) {
+  const handleLinkClick = (e, page, sectionId, action) => {
+    if (action) {
       e.preventDefault();
-      customAction();
+      action();
       return;
     }
 
-    if (activePage === 'home' && sectionId) {
-      e.preventDefault();
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    } else if (activePage !== 'home') {
+    if (page === 'home') {
       if (onGoToHome) {
         e.preventDefault();
         onGoToHome();
+        if (sectionId) {
+          setTimeout(() => {
+            document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+      }
+      return;
+    }
+
+    if (page === 'services' || page === 'products') {
+      if (onGoToServices) {
+        e.preventDefault();
+        onGoToServices();
+      } else if (onGoToProducts) {
+        e.preventDefault();
+        onGoToProducts();
+      }
+      return;
+    }
+
+    if (page === 'explore' && onExploreTemples) {
+      e.preventDefault();
+      onExploreTemples();
+      return;
+    }
+
+    if (page === 'login' && onGoToLogin) {
+      e.preventDefault();
+      onGoToLogin();
+      return;
+    }
+
+    if (page === 'about' && onGoToAbout) {
+      e.preventDefault();
+      onGoToAbout();
+      return;
+    }
+
+    if (page === 'contact' && onGoToContact) {
+      e.preventDefault();
+      onGoToContact();
+      return;
+    }
+
+    if (page === 'dashboard' && onGoToDashboard) {
+      e.preventDefault();
+      onGoToDashboard();
+      return;
+    }
+
+    if (page === 'booking') {
+      if (onOpenBooking) {
+        e.preventDefault();
+        onOpenBooking();
+      }
+      return;
+    }
+
+    if (sectionId) {
+      e.preventDefault();
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else if (onGoToHome) {
+        onGoToHome();
         setTimeout(() => {
-          if (sectionId) {
-            const element = document.getElementById(sectionId);
-            if (element) element.scrollIntoView({ behavior: 'smooth' });
-          }
+          document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
     }
   };
 
+  const handleLogout = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (logout) {
+      logout();
+    } else {
+      localStorage.removeItem('darshan_user');
+    }
+    navTo('/login');
+  };
+
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
-      <div className="container nav-container">
-        {/* Left: Uploaded Darshan Journey Golden Logo */}
-        <a 
-          href="/home" 
-          className="nav-logo" 
-          onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
-        >
-          <img src={logoImg} alt="Darshan Journey Logo" className="nav-logo-img" />
-          <div className="nav-logo-text">
-            <span className="logo-title">DARSHAN JOURNEY</span>
-            <span className="logo-sub">SPIRITUAL TEMPLE EXPERIENCE</span>
-          </div>
-        </a>
+      <div className="container">
+        <div className="navbar-inner">
+          {/* Left: Temple Logo */}
+          <a
+            href="/"
+            className="nav-logo"
+            onClick={(e) => handleLinkClick(e, 'home', null, onGoToHome)}
+          >
+            <img src={logoImg} alt="Darshan Journey Temple" className="nav-logo-img" />
+            <span className="nav-logo-text">DARSHAN JOURNEY</span>
+          </a>
 
-        {/* Center: Navigation Links */}
-        <ul className="nav-links">
-          <li>
-            <a 
-              href="/home" 
-              className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
-            >
-              Home
-            </a>
-          </li>
-          <li>
-            <Link 
-              to="/about" 
-              className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
-            >
-              About
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/explore" 
-              className={`nav-link ${activePage === 'explore' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'explore', null, onExploreTemples)}
-            >
-              Explore Temples
-            </Link>
-          </li>
-          <li>
-            <a 
-              href="/services" 
-              className={`nav-link ${activePage === 'products' || activePage === 'services' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices || onGoToProducts)}
-            >
-              Services
-            </a>
-          </li>
-          <li>
-            <a
-              href="/quick-booking"
-              className={`nav-link ${activePage === 'booking' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'booking', null, onOpenBooking)}
-            >
-              Quick Booking
-            </a>
-          </li>
-          <li>
-            <Link 
-              to="/contact" 
-              className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
-              onClick={(e) => handleLinkClick(e, 'contact', null, onGoToContact)}
-            >
-              Contact Us
-            </Link>
-          </li>
-          {user ? (
-            <li className="nav-user-item">
-              <div className="nav-user-badge">
-                <div className="nav-user-avatar">
-                  {user.avatar || (user.name ? user.name.charAt(0).toUpperCase() : 'U')}
-                </div>
-                <span className="nav-user-name">{user.name || user.fullName || 'Devotee'}</span>
-                <button 
-                  type="button" 
-                  className="nav-logout-btn" 
+          {/* Center: Navigation Links */}
+          <ul className="nav-menu">
+            <li>
+              <a
+                href="/"
+                className={`nav-link ${activePage === 'home' ? 'active' : ''}`}
+                onClick={(e) => handleLinkClick(e, 'home', 'hero', onGoToHome)}
+              >
+                Home
+              </a>
+            </li>
+            <li>
+              <a
+                href="/about"
+                className={`nav-link ${activePage === 'about' ? 'active' : ''}`}
+                onClick={(e) => handleLinkClick(e, 'about', null, onGoToAbout)}
+              >
+                About Us
+              </a>
+            </li>
+            <li>
+              <a
+                href="/services"
+                className={`nav-link ${activePage === 'products' || activePage === 'services' ? 'active' : ''}`}
+                onClick={(e) => handleLinkClick(e, 'services', null, onGoToServices || onGoToProducts)}
+              >
+                Services
+              </a>
+            </li>
+            <li>
+              <a
+                href="/quick-booking"
+                className={`nav-link ${activePage === 'booking' ? 'active' : ''}`}
+                onClick={(e) => handleLinkClick(e, 'booking', null, onOpenBooking)}
+              >
+                Quick Booking
+              </a>
+            </li>
+            <li>
+              <a
+                href="/contact"
+                className={`nav-link ${activePage === 'contact' ? 'active' : ''}`}
+                onClick={(e) => handleLinkClick(e, 'contact', null, onGoToContact)}
+              >
+                Contact Us
+              </a>
+            </li>
+            {user ? (
+              <li style={{ display: 'flex', alignItems: 'center' }}>
+                <a
+                  href="/dashboard"
+                  className={`nav-link ${activePage === 'dashboard' ? 'active' : ''}`}
+                  onClick={(e) => handleLinkClick(e, 'dashboard', null, onGoToDashboard)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                >
+                  <span
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #C8A96A, #A37F3D)',
+                      color: '#2A1715',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {user.avatar || (user.name ? user.name.charAt(0).toUpperCase() : 'D')}
+                  </span>
+                  <span>{user.name || 'Profile'}</span>
+                </a>
+                <button
+                  type="button"
                   onClick={handleLogout}
                   title="Logout"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(247, 239, 230, 0.7)',
+                    cursor: 'pointer',
+                    padding: '0.2rem 0.4rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    transition: 'color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#e06c75'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(247, 239, 230, 0.7)'}
                 >
-                  <LogOut size={14} />
+                  <LogOut size={15} />
                 </button>
-              </div>
-            </li>
-          ) : (
-            <li>
-              <Link 
-                to="/login" 
-                className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
-                onClick={(e) => {
-                  if (onGoToLogin) {
-                    e.preventDefault();
-                    onGoToLogin();
-                  }
-                }}
-              >
-                Login
-              </Link>
-            </li>
-          )}
-        </ul>
+              </li>
+            ) : (
+              <li>
+                <a
+                  href="/login"
+                  className={`nav-link ${activePage === 'login' ? 'active' : ''}`}
+                  onClick={(e) => handleLinkClick(e, 'login', null, onGoToLogin)}
+                >
+                  Login
+                </a>
+              </li>
+            )}
+          </ul>
 
-        {/* Right: Donate Button */}
-        <button className="btn-donate" onClick={() => onOpenDonate && onOpenDonate()}>
-          <Heart size={16} fill="#C8A96A" /> Donate
-        </button>
+          {/* Right: Donate Button */}
+          <button className="btn-donate" onClick={() => onOpenDonate && onOpenDonate()}>
+            <Heart size={16} fill="#C8A96A" /> Donate
+          </button>
+        </div>
       </div>
     </nav>
   );
 }
+

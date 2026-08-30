@@ -41,64 +41,102 @@ export function parseJwt(token) {
 
 // Check if GIS script is loaded
 export function isGoogleGisAvailable() {
-  return typeof window !== 'undefined' && Boolean(window.google?.accounts?.id);
+  return typeof window !== 'undefined' && Boolean(window.google?.accounts);
 }
 
-// Initialize Google One-Tap or Google Prompt
-export function initGoogleGisPrompt(onSuccessCallback, onErrorCallback, loginHint = '') {
+// Dynamically ensure Google Identity Services script is loaded
+export function ensureGoogleGisLoaded(timeoutMs = 3500) {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') {
+      return resolve(false);
+    }
+    if (window.google?.accounts) {
+      return resolve(true);
+    }
+
+    let script = document.getElementById('google-gis-client');
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'google-gis-client';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    const checkInterval = 100;
+    let elapsed = 0;
+    const intervalId = setInterval(() => {
+      elapsed += checkInterval;
+      if (window.google?.accounts) {
+        clearInterval(intervalId);
+        resolve(true);
+      } else if (elapsed >= timeoutMs) {
+        clearInterval(intervalId);
+        resolve(Boolean(window.google?.accounts));
+      }
+    }, checkInterval);
+
+    script.addEventListener('load', () => {
+      clearInterval(intervalId);
+      resolve(Boolean(window.google?.accounts));
+    }, { once: true });
+
+    script.addEventListener('error', () => {
+      clearInterval(intervalId);
+      resolve(false);
+    }, { once: true });
+  });
+}
+
+// Initialize and trigger Google OAuth 2.0 Popup Token Client (Fast, sub-second popup)
+export async function triggerGoogleTokenPopup({ onSuccess, onError, onCancel }) {
   const clientId = getGoogleClientId();
-  
-  if (!isGoogleGisAvailable()) {
-    console.warn('Google Identity Services script not yet loaded.');
-    if (onErrorCallback) onErrorCallback('GIS script loading...');
+
+  if (!clientId) {
+    if (onError) onError('Google Client ID not configured. Please set VITE_GOOGLE_CLIENT_ID in .env.');
     return false;
   }
 
-  if (!clientId) {
-    if (onErrorCallback) onErrorCallback('No Google Client ID configured.');
+  const isLoaded = await ensureGoogleGisLoaded(3500);
+  if (!isLoaded || !window.google?.accounts?.oauth2) {
+    if (onError) onError('Google Identity Services library is initializing. Please try again.');
     return false;
   }
 
   try {
-    const config = {
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      callback: (response) => {
-        if (response?.credential) {
-          const payload = parseJwt(response.credential);
-          if (payload) {
-            const userSession = {
-              name: payload.name || payload.email.split('@')[0],
-              email: payload.email,
-              avatar: payload.picture || '',
-              sub: payload.sub,
-              provider: 'google',
-              loggedInAt: new Date().toISOString()
-            };
-            onSuccessCallback(userSession);
+      scope: 'openid email profile',
+      prompt: '', // No forced consent prompt if already authorized
+      callback: (tokenResponse) => {
+        if (tokenResponse?.error) {
+          console.warn('Google Token Client error:', tokenResponse.error);
+          if (tokenResponse.error === 'access_denied' || tokenResponse.error === 'popup_closed_by_user') {
+            if (onCancel) onCancel();
           } else {
-            if (onErrorCallback) onErrorCallback('Failed to parse Google credential payload');
+            if (onError) onError(`Google Sign-In error: ${tokenResponse.error}`);
           }
+          return;
+        }
+
+        if (tokenResponse?.access_token) {
+          if (onSuccess) onSuccess({ accessToken: tokenResponse.access_token });
+        } else {
+          if (onError) onError('No access token received from Google.');
         }
       },
-      auto_select: false,
-      cancel_on_tap_outside: true
-    };
-
-    if (loginHint) {
-      config.login_hint = loginHint;
-    }
-
-    window.google.accounts.id.initialize(config);
-
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed()) {
-        console.warn('Google prompt not displayed:', notification.getNotDisplayedReason());
+      error_callback: (nonOAuthErr) => {
+        console.warn('Google Token Client non-oauth error:', nonOAuthErr);
+        if (onCancel) onCancel();
       }
     });
+
+    tokenClient.requestAccessToken();
     return true;
   } catch (err) {
-    console.error('Error initializing Google GIS:', err);
-    if (onErrorCallback) onErrorCallback(err.message);
+    console.error('Error invoking Google Token Client:', err);
+    if (onError) onError(err.message || 'Failed to open Google Sign-In popup.');
     return false;
   }
 }

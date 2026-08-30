@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { REAL_TAMIL_NADU_TEMPLES } from '../services/templeDataService';
 import { createBookingRecord } from '../services/bookingService';
+import { useAuth } from '../context/AuthContext';
 import {
   CalendarDays, MapPin, Users, Clock, Sparkles,
   ChevronRight, Plus, Minus, Shield, Heart, Phone, Mail,
@@ -735,6 +737,10 @@ export default function QuickBookingPage({
   onGoToAbout,
   onOpenBooking,
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { requireAuth } = useAuth();
+
   /* ── Step state ── */
   const [step,           setStep]           = useState(0);
   const [errors,         setErrors]         = useState({});
@@ -757,6 +763,18 @@ export default function QuickBookingPage({
   /* ── Selected booking options ── */
   const [darshanType,  setDarshanType]  = useState(null);
   const [poojaService, setPoojaService] = useState(null);
+
+  /* ── Restore booking state post-login ── */
+  useEffect(() => {
+    if (location.state?.restoreBooking) {
+      const { savedStep, savedForm, savedTemple, savedDarshanType, savedPoojaService } = location.state.restoreBooking;
+      if (savedStep !== undefined) setStep(savedStep);
+      if (savedForm) setForm(prev => ({ ...prev, ...savedForm }));
+      if (savedTemple) setSelectedTemple(savedTemple);
+      if (savedDarshanType) setDarshanType(savedDarshanType);
+      if (savedPoojaService) setPoojaService(savedPoojaService);
+    }
+  }, [location.state]);
 
   /* ── Derive States & Districts from data ── */
   const allStates = useMemo(() =>
@@ -974,8 +992,30 @@ export default function QuickBookingPage({
       else if (errs.customerName || errs.mobile || errs.email) setActiveAccordion('customer');
       return;
     }
-    setErrors({});
-    setStep(s => s + 1);
+
+    const targetNextStep = step + 1;
+
+    requireAuth(
+      {
+        type: 'QUICK_BOOKING',
+        message: 'Please sign in to proceed with your booking details & payment',
+        payload: {
+          savedStep: targetNextStep,
+          savedForm: form,
+          savedTemple: selectedTemple,
+          savedDarshanType: darshanType,
+          savedPoojaService: poojaService
+        }
+      },
+      () => {
+        setErrors({});
+        setStep(targetNextStep);
+      },
+      () => {
+        if (onGoToLogin) onGoToLogin();
+        else navigate('/login');
+      }
+    );
   };
 
   const prevStep = () => setStep(s => Math.max(0, s - 1));
@@ -983,32 +1023,52 @@ export default function QuickBookingPage({
   /* ── Payment confirm ── */
   const confirmPayment = async () => {
     if (paymentExpired) return;
-    const bookingPayload = {
-      templeName: selectedTemple?.name || form.templeName || 'Meenakshi Amman Temple',
-      serviceType: darshanType?.name || poojaService?.name || 'VIP Special Priority Darshan',
-      bookingDate: form.date || '2026-08-20',
-      timeSlot: form.timeSlot || 'Morning (07:00 AM)',
-      devoteesCount: (form.adults || 1) + (form.children || 0) + (form.seniors || 0),
-      devoteeName: form.customerName || 'Devotee',
-      devoteeEmail: form.email || 'devotee@example.com',
-      devoteePhone: form.mobile || '+91 98765 43210',
-      requirements: form.requirements || [],
-      specialNotes: form.specialRequests || '',
-      totalAmount: grandTotal || 501
-    };
 
-    try {
-      const apiResult = await createBookingRecord(bookingPayload);
-      if (apiResult && apiResult.booking && apiResult.booking.refNumber) {
-        setBookingId(apiResult.booking.refNumber);
-      } else {
-        setBookingId(generateBookingId());
+    requireAuth(
+      {
+        type: 'QUICK_BOOKING',
+        message: 'Please sign in to complete your payment',
+        payload: {
+          savedStep: 2,
+          savedForm: form,
+          savedTemple: selectedTemple,
+          savedDarshanType: darshanType,
+          savedPoojaService: poojaService
+        }
+      },
+      async () => {
+        const bookingPayload = {
+          templeName: selectedTemple?.name || form.templeName || 'Meenakshi Amman Temple',
+          serviceType: darshanType?.name || poojaService?.name || 'VIP Special Priority Darshan',
+          bookingDate: form.date || '2026-08-20',
+          timeSlot: form.timeSlot || 'Morning (07:00 AM)',
+          devoteesCount: (form.adults || 1) + (form.children || 0) + (form.seniors || 0),
+          devoteeName: form.customerName || 'Devotee',
+          devoteeEmail: form.email || 'devotee@example.com',
+          devoteePhone: form.mobile || '+91 98765 43210',
+          requirements: form.requirements || [],
+          specialNotes: form.specialRequests || '',
+          totalAmount: grandTotal || 501
+        };
+
+        try {
+          const apiResult = await createBookingRecord(bookingPayload);
+          if (apiResult && apiResult.booking && apiResult.booking.refNumber) {
+            setBookingId(apiResult.booking.refNumber);
+          } else {
+            setBookingId(generateBookingId());
+          }
+        } catch (err) {
+          setBookingId(generateBookingId());
+        }
+        setTransactionId(generateTransactionId());
+        setShowSuccess(true);
+      },
+      () => {
+        if (onGoToLogin) onGoToLogin();
+        else navigate('/login');
       }
-    } catch (err) {
-      setBookingId(generateBookingId());
-    }
-    setTransactionId(generateTransactionId());
-    setShowSuccess(true);
+    );
   };
 
   /* ── Reset ── */

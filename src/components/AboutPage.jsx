@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ShieldCheck, 
-  Sparkles, 
-  Map, 
-  Ticket, 
-  Languages, 
-  Compass, 
-  ArrowRight, 
-  X, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  Sparkles,
+  Map,
+  Ticket,
+  Languages,
+  Compass,
+  ArrowRight,
+  X,
+  CheckCircle2,
   Heart,
   Star
 } from 'lucide-react';
@@ -22,7 +22,7 @@ const DEVOTEE_REVIEWS = [
     id: 1,
     stars: 5,
     review: "Everything was simple and well organized. I could find the temple details and plan my visit without any confusion.",
-    name: "Priya R",
+    name: "Kaviya R",
     location: "Chennai, Tamil Nadu"
   },
   {
@@ -68,7 +68,7 @@ const TEMPLE_REVIEWS = [
     review: "Very peaceful experience. The temple architecture and surroundings were amazing.",
     templeName: "Meenakshi Amman Temple",
     location: "Madurai, Tamil Nadu",
-    reviewerName: "Karthik R",
+    reviewerName: "Sharaa R",
     visitDate: "May 2026",
     image: "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=400&q=80"
   }
@@ -79,11 +79,11 @@ import logoImg from '../assets/darshan-logo.jpeg';
 import templeSculpture from '../assets/temple_sculpture_about.jpg';
 import pilgrimageImg from '../assets/kedarnath.png';
 
-export default function AboutPage({ 
-  onGoToHome, 
-  onGoToLanding, 
-  onExploreTemples, 
-  onGoToProducts, 
+export default function AboutPage({
+  onGoToHome,
+  onGoToLanding,
+  onExploreTemples,
+  onGoToProducts,
   onGoToLogin,
   onGoToAbout,
   onOpenBooking
@@ -100,7 +100,7 @@ export default function AboutPage({
   // Framer Motion Animation Variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
       transition: { staggerChildren: 0.15 }
     }
@@ -108,8 +108,8 @@ export default function AboutPage({
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.7, ease: "easeOut" }
     }
@@ -117,8 +117,8 @@ export default function AboutPage({
 
   const leftImageVariants = {
     hidden: { opacity: 0, x: -50 },
-    visible: { 
-      opacity: 0.82, 
+    visible: {
+      opacity: 0.82,
       x: 0,
       transition: { duration: 1, ease: "easeOut" }
     }
@@ -126,8 +126,8 @@ export default function AboutPage({
 
   const rightContentVariants = {
     hidden: { opacity: 0, x: 50 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
       transition: { duration: 0.8, ease: "easeOut" }
     }
@@ -136,7 +136,7 @@ export default function AboutPage({
   return (
     <div className="home-website-wrapper">
       {/* ---------------- NAVBAR ---------------- */}
-      <Navbar 
+      <Navbar
         activePage="about"
         onGoToHome={onGoToHome}
         onGoToLanding={onGoToLanding}
@@ -154,9 +154,9 @@ export default function AboutPage({
       <section className="about-hero">
         <div className="about-hero-left">
           <div className="about-hero-img-container">
-            <motion.img 
-              src={templeSculpture} 
-              alt="Temple Sculpture Carving" 
+            <motion.img
+              src={templeSculpture}
+              alt="Temple Sculpture Carving"
               className="about-hero-img"
               initial="hidden"
               animate="visible"
@@ -169,7 +169,7 @@ export default function AboutPage({
 
         <div className="container">
           <div className="about-hero-grid">
-            <motion.div 
+            <motion.div
               className="about-hero-right"
               initial="hidden"
               animate="visible"
@@ -193,7 +193,7 @@ export default function AboutPage({
       <section className="section">
         <div className="container">
           <div className="about-story-grid">
-            <motion.div 
+            <motion.div
               className="about-story-img-box"
               initial="hidden"
               whileInView="visible"
@@ -204,7 +204,7 @@ export default function AboutPage({
               <div className="about-story-img-overlay" />
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="about-story-right"
               initial="hidden"
               whileInView="visible"
@@ -214,7 +214,7 @@ export default function AboutPage({
               <span className="section-tag">Our Genesis</span>
               <h2 className="about-story-title">Our Journey Began With a Simple Question</h2>
               <div className="temple-accent" style={{ margin: '0.2rem 0 1.2rem 0' }} />
-              
+
               <p className="about-story-p">
                 Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find.
               </p>
@@ -240,7 +240,7 @@ export default function AboutPage({
             <p className="section-desc">The guiding principles steering our efforts to digitize Vedic pilgrimage.</p>
           </div>
 
-          <motion.div 
+          <motion.div
             className="mission-vision-grid"
             initial="hidden"
             whileInView="visible"
@@ -281,7 +281,7 @@ export default function AboutPage({
             <p className="section-desc">We combine technological innovation with direct spiritual authenticity.</p>
           </div>
 
-          <motion.div 
+          <motion.div
             className="features-grid"
             initial="hidden"
             whileInView="visible"
@@ -362,7 +362,7 @@ export default function AboutPage({
             <p className="section-desc">The pillars that define our operations and interactions with devotees and temples.</p>
           </div>
 
-          <motion.div 
+          <motion.div
             className="values-grid"
             initial="hidden"
             whileInView="visible"
@@ -410,7 +410,7 @@ export default function AboutPage({
       <section className="section commitment-section">
         <div className="commitment-glow" />
         <div className="container">
-          <motion.div 
+          <motion.div
             className="commitment-content"
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -434,7 +434,7 @@ export default function AboutPage({
       {/* ========================================================================= */}
       <section className="section about-future-section">
         <div className="container">
-          <motion.div 
+          <motion.div
             className="about-future-box"
             initial="hidden"
             whileInView="visible"
@@ -467,7 +467,7 @@ export default function AboutPage({
             </p>
           </div>
 
-          <motion.div 
+          <motion.div
             className="about-devotees-grid"
             initial="hidden"
             whileInView="visible"
@@ -475,9 +475,9 @@ export default function AboutPage({
             variants={containerVariants}
           >
             {DEVOTEE_REVIEWS.map((review) => (
-              <motion.div 
-                key={review.id} 
-                className="compact-review-card" 
+              <motion.div
+                key={review.id}
+                className="compact-review-card"
                 variants={itemVariants}
               >
                 <div>
@@ -513,7 +513,7 @@ export default function AboutPage({
             </p>
           </div>
 
-          <motion.div 
+          <motion.div
             className="about-temple-reviews-grid"
             initial="hidden"
             whileInView="visible"
@@ -521,15 +521,15 @@ export default function AboutPage({
             variants={containerVariants}
           >
             {TEMPLE_REVIEWS.map((review) => (
-              <motion.div 
-                key={review.id} 
-                className="compact-temple-card" 
+              <motion.div
+                key={review.id}
+                className="compact-temple-card"
                 variants={itemVariants}
               >
                 <div className="temple-review-thumbnail-wrap">
-                  <img 
-                    src={review.image} 
-                    alt={review.templeName} 
+                  <img
+                    src={review.image}
+                    alt={review.templeName}
                     className="temple-review-thumbnail"
                   />
                 </div>
@@ -560,7 +560,7 @@ export default function AboutPage({
       </section>
 
       {/* ---------------- FOOTER ---------------- */}
-      <Footer 
+      <Footer
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}

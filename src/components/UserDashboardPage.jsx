@@ -10,6 +10,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import GoldParticles from './GoldParticles';
 import darshanLogo from '../assets/darshan-logo.jpeg';
+import { useAuth } from '../context/AuthContext';
 
 export default function UserDashboardPage({ 
   onGoToHome, 
@@ -21,24 +22,26 @@ export default function UserDashboardPage({
   onOpenBooking,
   onOpenDonate 
 }) {
-  // Default user state for Ashok
+  const { user: authUser, updateUser, logout } = useAuth();
+
+  // Default fallback user state
   const defaultUser = {
-    name: 'Ashok',
-    email: 'ashok@darshanjourney.com',
-    avatar: 'A',
+    name: 'Devotee',
+    email: 'devotee@darshanjourney.com',
+    avatar: 'D',
     membership: 'Devotee Member',
     provider: 'email'
   };
 
-  const [user, setUser] = useState(defaultUser);
+  const [user, setUser] = useState(authUser || defaultUser);
   const [activeTab, setActiveTab] = useState('overview');
   const [toastMessage, setToastMessage] = useState(null);
 
   // Editable Profile State
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [editName, setEditName] = useState('Ashok');
-  const [editPhone, setEditPhone] = useState('+91 98765 43210');
-  const [editAvatar, setEditAvatar] = useState('');
+  const [editName, setEditName] = useState(authUser?.name || authUser?.fullName || 'Devotee');
+  const [editPhone, setEditPhone] = useState(authUser?.phone || authUser?.mobile || '');
+  const [editAvatar, setEditAvatar] = useState(authUser?.avatar || '');
   const [editPassword, setEditPassword] = useState('');
 
   // Sample User Bookings Data
@@ -163,23 +166,13 @@ export default function UserDashboardPage({
   ];
 
   useEffect(() => {
-    const stored = localStorage.getItem('darshan_user');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (!parsed.name) parsed.name = 'Ashok';
-        if (!parsed.email) parsed.email = 'ashok@darshanjourney.com';
-        setUser(parsed);
-        setEditName(parsed.name || 'Ashok');
-      } catch (err) {
-        setUser(defaultUser);
-        setEditName('Ashok');
-      }
-    } else {
-      setUser(defaultUser);
-      setEditName('Ashok');
+    if (authUser) {
+      setUser(authUser);
+      setEditName(authUser.name || authUser.fullName || 'Devotee');
+      setEditPhone(authUser.phone || authUser.mobile || '');
+      setEditAvatar(authUser.avatar || '');
     }
-  }, []);
+  }, [authUser]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -187,11 +180,15 @@ export default function UserDashboardPage({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('darshan_user');
+    if (logout) {
+      logout();
+    } else {
+      localStorage.removeItem('darshan_user');
+    }
     showToast('Signed out successfully.');
     setTimeout(() => {
-      if (onGoToHome) onGoToHome();
-      else if (onGoToLogin) onGoToLogin();
+      if (onGoToLogin) onGoToLogin();
+      else if (onGoToHome) onGoToHome();
     }, 600);
   };
 
@@ -199,17 +196,27 @@ export default function UserDashboardPage({
     if (e) e.preventDefault();
     if (!user) return;
 
-    const cleanName = editName.trim() || user.name || 'Ashok';
+    const cleanName = editName.trim() || user.name || 'Devotee';
     const cleanPhone = editPhone.trim();
 
     const updatedUser = {
       ...user,
       name: cleanName,
-      phone: cleanPhone
+      fullName: cleanName,
+      phone: cleanPhone,
+      mobile: cleanPhone
     };
 
-    localStorage.setItem('darshan_user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    if (updateUser) {
+      updateUser({
+        fullName: cleanName,
+        phone: cleanPhone,
+        mobile: cleanPhone
+      });
+    } else {
+      localStorage.setItem('darshan_user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
 
     setIsEditProfileModalOpen(false);
     setEditPassword('');
@@ -293,14 +300,14 @@ export default function UserDashboardPage({
                 {user?.avatar && user.avatar.length > 2 ? (
                   <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  user?.avatar || (user?.name ? user.name.charAt(0).toUpperCase() : 'A')
+                  user?.avatar || (user?.name ? user.name.charAt(0).toUpperCase() : 'D')
                 )}
               </div>
 
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                   <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.85rem', fontWeight: 700, color: '#5C3D1E', margin: 0 }}>
-                    {user?.name || 'Ashok'}
+                    {user?.name || user?.fullName || 'Devotee'}
                   </h1>
                   <span style={{
                     background: 'rgba(200, 169, 106, 0.18)',
@@ -314,12 +321,12 @@ export default function UserDashboardPage({
                     alignItems: 'center',
                     gap: '0.35rem'
                   }}>
-                    <Shield size={12} color="#8C6036" /> Email Verified
+                    <Shield size={12} color="#8C6036" /> {user?.provider === 'google' ? 'Google Verified' : 'Email Verified'}
                   </span>
                 </div>
 
                 <div style={{ color: '#5E4939', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mail size={15} color="#8C6036" /> {user?.email || 'ashok@darshanjourney.com'}
+                  <Mail size={15} color="#8C6036" /> {user?.email || 'devotee@darshanjourney.com'}
                 </div>
 
                 <div style={{ marginTop: '0.45rem', color: '#8C6036', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
