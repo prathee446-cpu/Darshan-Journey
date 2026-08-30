@@ -284,14 +284,19 @@ export default function LoginPage({
                 setIsGoogleLoading(false);
 
                 if (res.ok && data.success) {
-                  // Mandatory OTP verification required for every Google sign-in
-                  setGoogleEmail(data.email);
-                  setGoogleTempToken(data.tempAuthToken || '');
-                  setFlow(FLOW.GOOGLE_OTP);
-                  setOtpDigits(['', '', '', '', '', '']);
-                  setCooldownSeconds(data.cooldownSeconds || 30);
-                  showToast(data.message || `📩 Verification code sent to ${data.email}`);
-                  setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+                  if (data.user) {
+                    showToast(data.message || `✨ Welcome, ${data.user.name || data.user.fullName || 'Devotee'}!`);
+                    handleSuccessfulAuth(data.user);
+                  } else if (data.requiresOtp) {
+                    // Fallback OTP verification if specifically required
+                    setGoogleEmail(data.email);
+                    setGoogleTempToken(data.tempAuthToken || '');
+                    setFlow(FLOW.GOOGLE_OTP);
+                    setOtpDigits(['', '', '', '', '', '']);
+                    setCooldownSeconds(data.cooldownSeconds || 30);
+                    showToast(data.message || `📩 Verification code sent to ${data.email}`);
+                    setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+                  }
                 } else {
                   setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
                 }
@@ -324,7 +329,7 @@ export default function LoginPage({
       setIsGoogleLoading(false);
       setGoogleError('Unable to initiate Google Sign-In. You can sign in using Username/Email & Password.');
     }
-  }, []);
+  }, [handleSuccessfulAuth]);
 
   // Handle Google OAuth URL hash redirect fallback
   useEffect(() => {
@@ -349,13 +354,18 @@ export default function LoginPage({
             setIsGoogleLoading(false);
 
             if (res.ok && data.success) {
-              setGoogleEmail(data.email);
-              setGoogleTempToken(data.tempAuthToken || '');
-              setFlow(FLOW.GOOGLE_OTP);
-              setOtpDigits(['', '', '', '', '', '']);
-              setCooldownSeconds(data.cooldownSeconds || 30);
-              showToast(data.message || `📩 Verification code sent to ${data.email}`);
-              setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+              if (data.user) {
+                showToast(data.message || `✨ Welcome, ${data.user.name || data.user.fullName || 'Devotee'}!`);
+                handleSuccessfulAuth(data.user);
+              } else if (data.requiresOtp) {
+                setGoogleEmail(data.email);
+                setGoogleTempToken(data.tempAuthToken || '');
+                setFlow(FLOW.GOOGLE_OTP);
+                setOtpDigits(['', '', '', '', '', '']);
+                setCooldownSeconds(data.cooldownSeconds || 30);
+                showToast(data.message || `📩 Verification code sent to ${data.email}`);
+                setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
+              }
             } else {
               setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
             }
@@ -366,7 +376,7 @@ export default function LoginPage({
         })();
       }
     }
-  }, []);
+  }, [handleSuccessfulAuth]);
 
   // ═══════════════════════════════════════════════════════════════
   //  3. CREATE ACCOUNT (REGISTRATION) FLOW
