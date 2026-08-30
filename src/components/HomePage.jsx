@@ -30,6 +30,7 @@ export default function HomePage({
   onGoToLanding, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
   onGoToBlog,
   onGoToAbout,
   onGoToContact,

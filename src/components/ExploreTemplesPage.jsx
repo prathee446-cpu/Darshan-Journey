@@ -83,6 +83,7 @@ export default function ExploreTemplesPage({
   onGoToLanding, 
   onExploreTemples,
   onGoToProducts,
+  onGoToServices,
   onGoToAbout,
   onGoToContact,
   onGoToDashboard,
@@ -273,6 +274,7 @@ export default function ExploreTemplesPage({
         onGoToLanding={onGoToLanding}
         onExploreTemples={() => setSelectedTemple(null)}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onGoToContact={onGoToContact}
         onGoToDashboard={onGoToDashboard}
@@ -993,6 +995,7 @@ export default function ExploreTemplesPage({
         onGoToHome={onGoToHome}
         onExploreTemples={() => setSelectedTemple(null)}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onGoToContact={onGoToContact}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}

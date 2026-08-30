@@ -18,6 +18,7 @@ import UserDashboardPage from './components/UserDashboardPage';
 import DateTimeWidget from './components/DateTimeWidget';
 import { AuthProvider } from './context/AuthContext';
 import MaintenanceGuard from './components/MaintenanceGuard';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Admin Panel Imports
 import '../admin/src/index.css';
