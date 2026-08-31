@@ -95,10 +95,17 @@ export default function AboutPage({
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingTempleName, setBookingTempleName] = useState('');
+  const [aboutData, setAboutData] = useState(null);
 
-  // Scroll to top on load
+  // Fetch live about content & scroll to top on load
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetch('/api/about')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setAboutData(data.data || data);
+      })
+      .catch(() => {});
   }, []);
 
   // Framer Motion Animation Variants
@@ -162,7 +169,7 @@ export default function AboutPage({
         <div className="about-hero-left">
           <div className="about-hero-img-container">
             <motion.img
-              src={templeSculpture}
+              src={aboutData?.heroImage || templeSculpture}
               alt="Temple Sculpture Carving"
               className="about-hero-img"
               initial="hidden"
@@ -182,12 +189,12 @@ export default function AboutPage({
               animate="visible"
               variants={rightContentVariants}
             >
-              <span className="about-hero-tag">Who We Are</span>
-              <h1 className="about-hero-title">About Darshan Journey</h1>
-              <h2 className="about-hero-subtitle">Where Technology Meets Spirituality.</h2>
+              <span className="about-hero-tag">{aboutData?.heroTag || "Who We Are"}</span>
+              <h1 className="about-hero-title">{aboutData?.heroTitle || "About Darshan Journey"}</h1>
+              <h2 className="about-hero-subtitle">{aboutData?.heroSubtitle || "Where Technology Meets Spirituality."}</h2>
               <div className="temple-accent" style={{ margin: '0.5rem 0 1.5rem 0' }} />
               <p className="about-hero-desc">
-                Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling.
+                {aboutData?.heroDescription || "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling."}
               </p>
             </motion.div>
           </div>
@@ -207,29 +214,29 @@ export default function AboutPage({
               viewport={{ once: true, margin: "-100px" }}
               variants={itemVariants}
             >
-              <img src={pilgrimageImg} alt="Pilgrimage Experience" className="about-story-img" />
+              <img src={aboutData?.storyImage || pilgrimageImg} alt="Pilgrimage Experience" className="about-story-img" />
               <div className="about-story-img-overlay" />
             </motion.div>
 
             <motion.div
-              className="about-story-right"
+              className="about-story-content"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={itemVariants}
             >
-              <span className="section-tag">Our Genesis</span>
-              <h2 className="about-story-title">Our Journey Began With a Simple Question</h2>
-              <div className="temple-accent" style={{ margin: '0.2rem 0 1.2rem 0' }} />
-
-              <p className="about-story-p">
-                Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find.
+              <span className="section-tag">{aboutData?.storyTag || "Our Genesis"}</span>
+              <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
+                {aboutData?.storyTitle || "Our Journey Began With a Simple Question"}
+              </h2>
+              <p className="about-story-text">
+                {aboutData?.storyParagraph1 || "Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find."}
               </p>
-              <p className="about-story-p">
-                <strong>Darshan Journey</strong> was created to bridge this gap.
+              <p className="about-story-text">
+                {aboutData?.storyParagraph2 || "Darshan Journey was created to bridge this gap between timeless Vedic traditions and modern digital convenience."}
               </p>
-              <p className="about-story-p">
-                Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place.
+              <p className="about-story-text">
+                {aboutData?.storyParagraph3 || "Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place."}
               </p>
             </motion.div>
           </div>

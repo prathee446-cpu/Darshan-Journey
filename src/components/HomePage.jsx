@@ -45,6 +45,16 @@ export default function HomePage({
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [readBlog, setReadBlog] = useState(null);
+  const [websiteContent, setWebsiteContent] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/website-content')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setWebsiteContent(data.data || data);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleBlogClick = (slug) => {
     if (onGoToBlog) {
@@ -101,7 +111,13 @@ export default function HomePage({
 
 
       {/* ---------------- HERO SECTION ---------------- */}
-      <section id="hero" className="hero-section">
+      <section
+        id="hero"
+        className="hero-section"
+        style={websiteContent?.heroImage && websiteContent.heroImage !== '/temple_hero_bg.png' && websiteContent.heroImage !== '/assets/temple_hero_bg.png' ? {
+          backgroundImage: `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${websiteContent.heroImage}")`
+        } : undefined}
+      >
         <div className="hero-overlay" />
         <div className="hero-content">
           <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -116,18 +132,18 @@ export default function HomePage({
               }} 
             />
           </div>
-          <span className="hero-subtitle-tag">WELCOME TO OUR TEMPLE</span>
-          <h1 className="hero-heading">Experience Divine Peace & Spiritual Heritage</h1>
+          <span className="hero-subtitle-tag">{websiteContent?.heroSubtitle || "WELCOME TO OUR TEMPLE"}</span>
+          <h1 className="hero-heading">{websiteContent?.heroTitle || "Experience Divine Peace & Spiritual Heritage"}</h1>
           <p className="hero-desc">
-            Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace and devotion.
+            {websiteContent?.heroDescription || "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace and devotion."}
           </p>
 
           <div className="hero-buttons">
             <button className="btn-primary" onClick={onExploreTemples}>
-              Explore Temple <ArrowRight size={18} />
+              {websiteContent?.ctaPrimaryText || "Explore Temple"} <ArrowRight size={18} />
             </button>
             <button className="btn-outline" onClick={() => setIsBookingOpen(true)}>
-              Book Darshan
+              {websiteContent?.ctaSecondaryText || "Book Darshan"}
             </button>
           </div>
         </div>

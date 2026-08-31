@@ -4,8 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.js",
+    "client": "vite",
+    "frontend": "vite",
     "server": "node server/server.js",
+    "admin": "node scripts/dev.js",
     "start": "node server/server.js",
     "build": "vite build",
     "lint": "eslint .",

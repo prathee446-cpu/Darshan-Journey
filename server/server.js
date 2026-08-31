@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
 import cookieParser from 'cookie-parser';
+import { DEFAULT_PAGE_CONTENT, DEFAULT_ARTICLES } from './content_defaults.js';
 
 // Ensure reliable DNS resolution for MongoDB Atlas SRV queries on Windows
 try {
@@ -71,13 +72,13 @@ const DEFAULT_ABOUT_CONTENT = {
   heroSubtitle: "Where Technology Meets Spirituality.",
   heroTag: "Who We Are",
   heroDescription: "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling.",
-  heroImage: "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1200&q=80",
+  heroImage: "/assets/temple_sculpture_about.jpg",
   storyTitle: "Our Journey Began With a Simple Question",
   storyTag: "Our Genesis",
   storyParagraph1: "Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find.",
   storyParagraph2: "Darshan Journey was created to bridge this gap between timeless Vedic traditions and modern digital convenience.",
   storyParagraph3: "Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place.",
-  storyImage: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80",
+  storyImage: "/assets/kedarnath.png",
   missionTitle: "Our Mission",
   missionDescription: "To simplify spiritual journeys by providing reliable temple information, intelligent pilgrimage planning, and personalized devotional experiences through innovative technology while preserving India's rich spiritual and cultural heritage.",
   visionTitle: "Our Vision",
@@ -1821,6 +1822,9 @@ class UnifiedDataStore {
   constructor() {
     this.websiteContent = { ...DEFAULT_WEBSITE_CONTENT };
     this.aboutContent = { ...DEFAULT_ABOUT_CONTENT };
+    this.pageContent = JSON.parse(JSON.stringify(DEFAULT_PAGE_CONTENT));
+    this.pageDrafts = {};
+    this.articles = JSON.parse(JSON.stringify(DEFAULT_ARTICLES));
     this.services = [...DEFAULT_SERVICES];
     this.serviceCategories = [...DEFAULT_SERVICE_CATEGORIES];
     this.temples = [...DEFAULT_TEMPLES];
@@ -1927,6 +1931,9 @@ class UnifiedDataStore {
         const data = JSON.parse(raw);
         if (data.websiteContent) this.websiteContent = data.websiteContent;
         if (data.aboutContent) this.aboutContent = data.aboutContent;
+        if (data.pageContent) this.pageContent = { ...JSON.parse(JSON.stringify(DEFAULT_PAGE_CONTENT)), ...data.pageContent };
+        if (data.pageDrafts) this.pageDrafts = data.pageDrafts;
+        if (Array.isArray(data.articles) && data.articles.length > 0) this.articles = data.articles;
         if (Array.isArray(data.services) && data.services.length > 0) this.services = data.services;
         if (Array.isArray(data.serviceCategories) && data.serviceCategories.length > 0) this.serviceCategories = data.serviceCategories;
         if (Array.isArray(data.temples) && data.temples.length > 0) this.temples = data.temples;
@@ -1959,6 +1966,9 @@ class UnifiedDataStore {
       const payload = {
         websiteContent: this.websiteContent,
         aboutContent: this.aboutContent,
+        pageContent: this.pageContent,
+        pageDrafts: this.pageDrafts,
+        articles: this.articles,
         services: this.services,
         serviceCategories: this.serviceCategories,
         temples: this.temples,
@@ -2431,48 +2441,198 @@ class UnifiedDataStore {
     return null;
   }
 
-  // Content Operations
-  getWebsiteContent() {
-    return this.websiteContent;
-  }
-  async setWebsiteContent(data) {
-    this.websiteContent = { ...this.websiteContent, ...cleanDoc(data), updatedAt: new Date().toISOString() };
-    this.saveToDisk();
-    if (this.isMongoConnected && this.mongoDb) {
-      try {
-        await this.mongoDb.collection('content').updateOne(
-          { key: 'homepage' },
-          { $set: { ...cleanDoc(this.websiteContent), key: 'homepage' } },
-          { upsert: true }
-        );
-        console.log('[DATABASE UPDATE] Website content synchronized to MongoDB Atlas');
-      } catch (err) {
-        console.error('[DATABASE UPDATE ERROR] Failed to update website content in MongoDB:', err.message);
-      }
-    }
-    return this.websiteContent;
+  // Page Content Operations (Page-wise CMS with Draft & Publish)
+  getPageContent(pageKey) {
+    const pk = String(pageKey || 'home').toLowerCase();
+    const defaultData = DEFAULT_PAGE_CONTENT[pk] || DEFAULT_PAGE_CONTENT.home;
+    const published = this.pageContent[pk] || defaultData;
+    const draft = this.pageDrafts[pk] || published;
+    const hasDraft = Boolean(this.pageDrafts[pk]);
+    return {
+      pageKey: pk,
+      published,
+      draft,
+      hasDraft,
+      status: hasDraft ? 'draft' : 'published',
+      updatedAt: published.updatedAt || new Date().toISOString()
+    };
   }
 
-  // About Content Operations
-  getAboutContent() {
-    return this.aboutContent;
+  getAllPagesContent() {
+    const keys = Object.keys(DEFAULT_PAGE_CONTENT);
+    const result = {};
+    keys.forEach(k => {
+      result[k] = this.getPageContent(k);
+    });
+    return result;
   }
-  async setAboutContent(data) {
-    this.aboutContent = { ...this.aboutContent, ...cleanDoc(data), updatedAt: new Date().toISOString() };
+
+  async savePageDraft(pageKey, draftData) {
+    const pk = String(pageKey || 'home').toLowerCase();
+    const nowIso = new Date().toISOString();
+    const currentDraft = this.pageDrafts[pk] || this.pageContent[pk] || DEFAULT_PAGE_CONTENT[pk] || {};
+    this.pageDrafts[pk] = {
+      ...currentDraft,
+      ...cleanDoc(draftData),
+      draftSavedAt: nowIso
+    };
+    this.saveToDisk();
+
+    if (this.isMongoConnected && this.mongoDb) {
+      try {
+        await this.mongoDb.collection('page_drafts').updateOne(
+          { pageKey: pk },
+          { $set: { pageKey: pk, data: this.pageDrafts[pk], updatedAt: nowIso } },
+          { upsert: true }
+        );
+      } catch (e) {
+        console.warn('MongoDB draft save notice:', e.message);
+      }
+    }
+    return this.getPageContent(pk);
+  }
+
+  async publishPageContent(pageKey, contentData) {
+    const pk = String(pageKey || 'home').toLowerCase();
+    const nowIso = new Date().toISOString();
+    const baseContent = this.pageContent[pk] || DEFAULT_PAGE_CONTENT[pk] || {};
+    const draftContent = this.pageDrafts[pk] || {};
+    const extraContent = contentData ? cleanDoc(contentData) : {};
+
+    const finalContent = {
+      ...baseContent,
+      ...draftContent,
+      ...extraContent,
+      updatedAt: nowIso,
+      publishedAt: nowIso
+    };
+    delete finalContent.draftSavedAt;
+
+    this.pageContent[pk] = finalContent;
+    delete this.pageDrafts[pk];
+
+    // Synchronize legacy caches
+    if (pk === 'home') {
+      this.websiteContent = { ...this.websiteContent, ...finalContent };
+    } else if (pk === 'about') {
+      this.aboutContent = { ...this.aboutContent, ...finalContent };
+    }
+
+    this.saveToDisk();
+
+    if (this.isMongoConnected && this.mongoDb) {
+      try {
+        await this.mongoDb.collection('page_content').updateOne(
+          { pageKey: pk },
+          { $set: { pageKey: pk, data: finalContent, updatedAt: nowIso } },
+          { upsert: true }
+        );
+        await this.mongoDb.collection('page_drafts').deleteOne({ pageKey: pk });
+        console.log(`[CMS PUBLISH] Page "${pk}" published and synced to MongoDB Atlas.`);
+      } catch (e) {
+        console.warn('MongoDB publish notice:', e.message);
+      }
+    }
+    return this.getPageContent(pk);
+  }
+
+  async discardPageDraft(pageKey) {
+    const pk = String(pageKey || 'home').toLowerCase();
+    delete this.pageDrafts[pk];
+    this.saveToDisk();
+
+    if (this.isMongoConnected && this.mongoDb) {
+      try {
+        await this.mongoDb.collection('page_drafts').deleteOne({ pageKey: pk });
+      } catch (e) {}
+    }
+    return this.getPageContent(pk);
+  }
+
+  // Articles Operations
+  getArticles() {
+    return this.articles;
+  }
+
+  getArticleBySlug(slug) {
+    if (!slug) return null;
+    const s = slug.toLowerCase().trim();
+    return this.articles.find(a => (a.slug || '').toLowerCase() === s || String(a.id || a._id) === s);
+  }
+
+  async saveArticle(articleData) {
+    const nowIso = new Date().toISOString();
+    const clean = cleanDoc(articleData);
+    let existingIndex = -1;
+    if (clean.id || clean._id) {
+      existingIndex = this.articles.findIndex(a => String(a.id || a._id) === String(clean.id || clean._id) || a.slug === clean.slug);
+    } else if (clean.slug) {
+      existingIndex = this.articles.findIndex(a => a.slug === clean.slug);
+    }
+
+    let savedArticle;
+    if (existingIndex >= 0) {
+      this.articles[existingIndex] = {
+        ...this.articles[existingIndex],
+        ...clean,
+        updatedAt: nowIso
+      };
+      savedArticle = this.articles[existingIndex];
+    } else {
+      const newId = clean.id || `art-${Date.now()}`;
+      savedArticle = {
+        id: newId,
+        status: clean.status || 'Published',
+        publishedAt: nowIso,
+        updatedAt: nowIso,
+        ...clean
+      };
+      this.articles.unshift(savedArticle);
+    }
+
+    this.saveToDisk();
+
+    if (this.isMongoConnected && this.mongoDb) {
+      try {
+        await this.mongoDb.collection('articles').updateOne(
+          { slug: savedArticle.slug },
+          { $set: cleanDoc(savedArticle) },
+          { upsert: true }
+        );
+      } catch (e) {}
+    }
+
+    return savedArticle;
+  }
+
+  async deleteArticle(id) {
+    const initialLen = this.articles.length;
+    this.articles = this.articles.filter(a => String(a.id || a._id) !== String(id) && a.slug !== String(id));
     this.saveToDisk();
     if (this.isMongoConnected && this.mongoDb) {
       try {
-        await this.mongoDb.collection('content').updateOne(
-          { key: 'about' },
-          { $set: { ...cleanDoc(this.aboutContent), key: 'about' } },
-          { upsert: true }
-        );
-        console.log('[DATABASE UPDATE] About content synchronized to MongoDB Atlas');
-      } catch (err) {
-        console.error('[DATABASE UPDATE ERROR] Failed to update about content in MongoDB:', err.message);
-      }
+        await this.mongoDb.collection('articles').deleteOne({
+          $or: [{ id: String(id) }, { slug: String(id) }]
+        });
+      } catch (e) {}
     }
-    return this.aboutContent;
+    return this.articles.length < initialLen;
+  }
+
+  // Legacy Website Content Operations
+  getWebsiteContent() {
+    return this.pageContent?.home || this.websiteContent;
+  }
+  async setWebsiteContent(data) {
+    return await this.publishPageContent('home', data);
+  }
+
+  // Legacy About Content Operations
+  getAboutContent() {
+    return this.pageContent?.about || this.aboutContent;
+  }
+  async setAboutContent(data) {
+    return await this.publishPageContent('about', data);
   }
 
   // Settings Operations
@@ -3909,15 +4069,111 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
-// 4. Website Content Management
+// 4. Website Content Management — Unified Page-wise CMS (Draft & Publish)
+app.get('/api/content/all', (req, res) => {
+  try {
+    const all = store.getAllPagesContent();
+    res.json({ success: true, data: all });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/content/page/:pageKey', (req, res) => {
+  try {
+    const page = store.getPageContent(req.params.pageKey);
+    res.json({ success: true, data: page });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/content/draft/:pageKey', async (req, res) => {
+  try {
+    const updated = await store.savePageDraft(req.params.pageKey, req.body);
+    res.json({ success: true, message: `💾 Draft saved for ${req.params.pageKey} page! (Not yet published to live website)`, data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/content/publish/:pageKey', async (req, res) => {
+  try {
+    const updated = await store.publishPageContent(req.params.pageKey, req.body);
+    res.json({ success: true, message: `✨ ${req.params.pageKey.toUpperCase()} page successfully published to live website!`, data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/content/discard/:pageKey', async (req, res) => {
+  try {
+    const updated = await store.discardPageDraft(req.params.pageKey);
+    res.json({ success: true, message: `Reverted draft changes for ${req.params.pageKey} page.`, data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Articles & Spiritual Blog Endpoints
+app.get('/api/articles', (req, res) => {
+  try {
+    const articles = store.getArticles();
+    res.json({ success: true, count: articles.length, data: articles });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/articles/:slug', (req, res) => {
+  try {
+    const article = store.getArticleBySlug(req.params.slug);
+    if (!article) {
+      return res.status(404).json({ success: false, message: 'Article not found.' });
+    }
+    res.json({ success: true, data: article });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/articles', async (req, res) => {
+  try {
+    const article = await store.saveArticle(req.body);
+    res.status(201).json({ success: true, message: '✨ Article saved successfully!', data: article });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/articles/:id', async (req, res) => {
+  try {
+    const article = await store.saveArticle({ ...req.body, id: req.params.id });
+    res.json({ success: true, message: '✨ Article updated successfully!', data: article });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/articles/:id', async (req, res) => {
+  try {
+    const deleted = await store.deleteArticle(req.params.id);
+    res.json({ success: true, message: 'Article deleted successfully.', deleted });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Legacy Homepage & About Routes
 app.get(['/api/content', '/api/content/homepage', '/api/website-content'], (req, res) => {
-  res.json({ success: true, data: store.getWebsiteContent() });
+  const homeData = store.getPageContent('home');
+  res.json({ success: true, data: homeData.published || store.getWebsiteContent() });
 });
 
 app.put(['/api/content', '/api/content/homepage', '/api/website-content'], async (req, res) => {
   try {
-    const updated = await store.setWebsiteContent(req.body);
-    res.json({ success: true, message: '✨ Website content synchronized successfully!', data: updated });
+    const updated = await store.publishPageContent('home', req.body);
+    res.json({ success: true, message: '✨ Website content synchronized successfully!', data: updated.published });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -3925,13 +4181,14 @@ app.put(['/api/content', '/api/content/homepage', '/api/website-content'], async
 
 // 5. About Us Content Management
 app.get(['/api/about', '/api/content/about', '/api/about-content'], (req, res) => {
-  res.json({ success: true, data: store.getAboutContent() });
+  const aboutData = store.getPageContent('about');
+  res.json({ success: true, data: aboutData.published || store.getAboutContent() });
 });
 
 app.put(['/api/about', '/api/content/about', '/api/about-content'], async (req, res) => {
   try {
-    const updated = await store.setAboutContent(req.body);
-    res.json({ success: true, message: '🙏 About Us page content updated successfully!', data: updated });
+    const updated = await store.publishPageContent('about', req.body);
+    res.json({ success: true, message: '🙏 About Us page content updated successfully!', data: updated.published });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -5619,8 +5876,415 @@ app.get('/api/reports', (req, res) => {
 });
 
 // 12. Media Library Management
+
+
+// ============================================================================
+// COMPREHENSIVE MEDIA VAULT & REAL WEBSITE CATEGORIES MANAGEMENT API
+// ============================================================================
+
+function getWebsiteMediaAssets() {
+  const websiteContent = store.getWebsiteContent ? store.getWebsiteContent() : {};
+  const aboutContent = store.getAboutContent ? store.getAboutContent() : {};
+  const temples = store.getTemples ? store.getTemples() : [];
+  const services = store.getServices ? store.getServices() : [];
+  const vaultMedia = store.getMedia ? store.getMedia() : [];
+
+  const assets = [
+    // ── 1. HOME PAGE ──
+    {
+      id: 'media-home-hero',
+      title: 'Home Page Hero Background Banner',
+      url: websiteContent.heroImage || '/temple_hero_bg.png',
+      category: 'Home Page',
+      categoryKey: 'HOME PAGE',
+      page: 'Home Page',
+      section: 'Hero Banner Section',
+      role: 'Top Full-Width Background Banner',
+      usedIn: 'Home Page Hero Section (Top full-screen background banner)',
+      dimensions: '1920 × 1080 (Landscape)',
+      isCore: true,
+      targetType: 'websiteContent.heroImage',
+      targetId: 'heroImage',
+      uploadedAt: websiteContent.updatedAt ? websiteContent.updatedAt.split('T')[0] : '2026-08-30'
+    },
+    {
+      id: 'media-home-deity-1',
+      title: 'Deity Card — Meenakshi Amman (Madurai)',
+      url: '/assets/deity_1.png',
+      category: 'Home Page',
+      categoryKey: 'HOME PAGE',
+      page: 'Home Page',
+      section: 'Panchang Calendar & Temple Deities',
+      role: 'Deity Portrait Card',
+      usedIn: 'Home Page Temple Calendar & Sanctum Deities section',
+      dimensions: '800 × 800 (Square)',
+      isCore: true,
+      targetType: 'deity.deity_1',
+      targetId: 'deity_1',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-home-deity-2',
+      title: 'Deity Card — Kapaleeshwarar Shiva (Chennai)',
+      url: '/assets/deity_2.png',
+      category: 'Home Page',
+      categoryKey: 'HOME PAGE',
+      page: 'Home Page',
+      section: 'Panchang Calendar & Temple Deities',
+      role: 'Deity Portrait Card',
+      usedIn: 'Home Page Temple Calendar & Sanctum Deities section',
+      dimensions: '800 × 800 (Square)',
+      isCore: true,
+      targetType: 'deity.deity_2',
+      targetId: 'deity_2',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-home-deity-3',
+      title: 'Deity Card — Brihadeeswarar (Thanjavur)',
+      url: '/assets/deity_3.png',
+      category: 'Home Page',
+      categoryKey: 'HOME PAGE',
+      page: 'Home Page',
+      section: 'Panchang Calendar & Temple Deities',
+      role: 'Deity Portrait Card',
+      usedIn: 'Home Page Temple Calendar & Sanctum Deities section',
+      dimensions: '800 × 800 (Square)',
+      isCore: true,
+      targetType: 'deity.deity_3',
+      targetId: 'deity_3',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-home-deity-4',
+      title: 'Deity Card — Dhandayuthapani Murugan (Palani)',
+      url: '/assets/deity_4.png',
+      category: 'Home Page',
+      categoryKey: 'HOME PAGE',
+      page: 'Home Page',
+      section: 'Panchang Calendar & Temple Deities',
+      role: 'Deity Portrait Card',
+      usedIn: 'Home Page Temple Calendar & Sanctum Deities section',
+      dimensions: '800 × 800 (Square)',
+      isCore: true,
+      targetType: 'deity.deity_4',
+      targetId: 'deity_4',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-home-shiva',
+      title: 'Lord Shiva Meditating Statue (Transparent Focus)',
+      url: '/assets/shiva_statue_transparent.png',
+      category: 'Home Page',
+      categoryKey: 'HOME PAGE',
+      page: 'Home Page',
+      section: 'Spiritual Heritage & Visual Highlights',
+      role: 'Hero Decorative Overlay',
+      usedIn: 'Home Page Hero / Floating Spiritual Icon highlight',
+      dimensions: '1000 × 1200 (Portrait PNG)',
+      isCore: true,
+      targetType: 'statue.shiva',
+      targetId: 'shiva_statue',
+      uploadedAt: '2026-08-30'
+    },
+
+    // ── 2. ABOUT US ──
+    {
+      id: 'media-about-hero',
+      title: 'About Us Hero Temple Sculpture Carving',
+      url: aboutContent.heroImage || '/assets/temple_sculpture_about.jpg',
+      category: 'About Us',
+      categoryKey: 'ABOUT US',
+      page: 'About Us Page',
+      section: 'Who We Are — Hero Section',
+      role: 'Left Floating Architectural Sculpture',
+      usedIn: 'About Us Page Hero Section (Sculpture carving with golden glow)',
+      dimensions: '800 × 1000 (Portrait)',
+      isCore: true,
+      targetType: 'aboutContent.heroImage',
+      targetId: 'aboutHeroImage',
+      uploadedAt: aboutContent.updatedAt ? aboutContent.updatedAt.split('T')[0] : '2026-08-30'
+    },
+    {
+      id: 'media-about-story',
+      title: 'Our Genesis Story — Sacred Kedarnath Pilgrimage',
+      url: aboutContent.storyImage || '/assets/kedarnath.png',
+      category: 'About Us',
+      categoryKey: 'ABOUT US',
+      page: 'About Us Page',
+      section: 'Our Story & Genesis Section',
+      role: 'Story Feature Image',
+      usedIn: 'About Us Page (Our Journey Began With a Simple Question)',
+      dimensions: '1200 × 800 (Landscape)',
+      isCore: true,
+      targetType: 'aboutContent.storyImage',
+      targetId: 'aboutStoryImage',
+      uploadedAt: aboutContent.updatedAt ? aboutContent.updatedAt.split('T')[0] : '2026-08-30'
+    },
+    {
+      id: 'media-about-review-tirupati',
+      title: 'Temple Review Card — Tirupati Balaji Temple',
+      url: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=400&q=80',
+      category: 'About Us',
+      categoryKey: 'ABOUT US',
+      page: 'About Us Page',
+      section: 'Devotee & Temple Reviews Carousel',
+      role: 'Review Thumbnail Card',
+      usedIn: 'About Us Page (Devotee Reviews: Tirupati Balaji Temple)',
+      dimensions: '400 × 400 (Square)',
+      isCore: true,
+      targetType: 'aboutReview.tirupati',
+      targetId: 'about_review_1',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-about-review-ramanatha',
+      title: 'Temple Review Card — Ramanathaswamy Temple',
+      url: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80',
+      category: 'About Us',
+      categoryKey: 'ABOUT US',
+      page: 'About Us Page',
+      section: 'Devotee & Temple Reviews Carousel',
+      role: 'Review Thumbnail Card',
+      usedIn: 'About Us Page (Devotee Reviews: Ramanathaswamy Temple)',
+      dimensions: '400 × 400 (Square)',
+      isCore: true,
+      targetType: 'aboutReview.ramanatha',
+      targetId: 'about_review_2',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-about-review-meenakshi',
+      title: 'Temple Review Card — Meenakshi Amman Temple',
+      url: 'https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=400&q=80',
+      category: 'About Us',
+      categoryKey: 'ABOUT US',
+      page: 'About Us Page',
+      section: 'Devotee & Temple Reviews Carousel',
+      role: 'Review Thumbnail Card',
+      usedIn: 'About Us Page (Devotee Reviews: Meenakshi Amman Temple)',
+      dimensions: '400 × 400 (Square)',
+      isCore: true,
+      targetType: 'aboutReview.meenakshi',
+      targetId: 'about_review_3',
+      uploadedAt: '2026-08-30'
+    },
+
+    // ── 3. EXPLORE TEMPLES ──
+    ...temples.map(t => ({
+      id: 'media-temple-' + t.id,
+      title: t.name + ' (Banner & Card Image)',
+      url: t.image || t.heroImage || 'https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=800&q=80',
+      category: 'Explore Temples',
+      categoryKey: 'EXPLORE TEMPLES',
+      page: 'Explore Temples Page',
+      section: (t.location || 'Tamil Nadu') + ' Temple Card & Details',
+      role: 'Temple Card & Banner',
+      usedIn: 'Explore Temples listing & Dedicated Details for ' + t.name,
+      dimensions: '1200 × 800 (Landscape)',
+      isCore: true,
+      targetType: 'temple',
+      targetId: t.id,
+      uploadedAt: t.updatedAt ? t.updatedAt.split('T')[0] : '2026-08-30'
+    })),
+
+    // ── 4. SERVICES & OFFERINGS ──
+    ...services.slice(0, 16).map(s => ({
+      id: 'media-service-' + s.id,
+      title: s.name + ' — ' + (s.temple || s.categoryTitle || 'Service'),
+      url: s.image || 'https://images.unsplash.com/photo-1609342122563-a43ac8917a3a?auto=format&fit=crop&w=800&q=80',
+      category: 'Services',
+      categoryKey: 'SERVICES',
+      page: 'Services & Products Page',
+      section: (s.categoryTitle || s.category || 'Services') + ' Catalog',
+      role: 'Service Product Banner & Card',
+      usedIn: 'Services Page (' + s.name + ' at ' + (s.temple || 'Temple') + ')',
+      dimensions: '800 × 600 (Card Image)',
+      isCore: true,
+      targetType: 'service',
+      targetId: s.id,
+      uploadedAt: s.updatedAt ? s.updatedAt.split('T')[0] : '2026-08-30'
+    })),
+
+    // ── 5. BOOKING ──
+    {
+      id: 'media-booking-header',
+      title: 'Quick Booking Top Header Banner',
+      url: '/assets/temple_hero_bg.png',
+      category: 'Booking',
+      categoryKey: 'BOOKING',
+      page: 'Quick Booking Page',
+      section: '3-Step Booking Header',
+      role: 'Top Header Background Ambient Glow',
+      usedIn: 'Quick Booking page top header and selection banner',
+      dimensions: '1920 × 400 (Banner)',
+      isCore: true,
+      targetType: 'booking.header',
+      targetId: 'booking_header',
+      uploadedAt: '2026-08-30'
+    },
+
+    // ── 6. LOGIN & AUTH ──
+    {
+      id: 'media-login-bg',
+      title: 'Authentication Portal Night Temple Background',
+      url: '/assets/temple_night_bg.png',
+      category: 'Login / Auth',
+      categoryKey: 'LOGIN / AUTH',
+      page: 'Login & Registration Pages',
+      section: 'Full Screen Ambient Atmosphere',
+      role: 'Authentication Background Wallpaper',
+      usedIn: 'Devotee Sign In, Registration, OTP Verification, and Admin Login portals',
+      dimensions: '1920 × 1080 (Atmospheric Dark Gold)',
+      isCore: true,
+      targetType: 'login.bg',
+      targetId: 'login_bg',
+      uploadedAt: '2026-08-30'
+    },
+
+    // ── 7. BRAND & LOGOS ──
+    {
+      id: 'media-brand-logo-emblem',
+      title: 'Darshan Journey Official Gold Emblem Logo',
+      url: '/assets/darshan-logo.jpeg',
+      category: 'Brand & Logos',
+      categoryKey: 'BRAND & LOGOS',
+      page: 'Global Website & Admin Header',
+      section: 'Navigation Bar, Footer, and Splash Screen',
+      role: 'Primary Circular Brand Mark',
+      usedIn: 'Navbar Top Left Logo, Mobile Drawer, and Footer',
+      dimensions: '500 × 500 (Square High-Res)',
+      isCore: true,
+      targetType: 'brand.logo',
+      targetId: 'brand_logo_main',
+      uploadedAt: '2026-08-30'
+    },
+    {
+      id: 'media-brand-logo-favicon',
+      title: 'Transparent Favicon & Header Brand Mark',
+      url: '/darshan-logo.png',
+      category: 'Brand & Logos',
+      categoryKey: 'BRAND & LOGOS',
+      page: 'Browser Tab & PWA Header',
+      section: 'Favicon & Browser Title Bar',
+      role: 'Site Favicon & App Icon',
+      usedIn: 'Browser Tab Favicon and Apple Touch Icon',
+      dimensions: '256 × 256 (Transparent PNG)',
+      isCore: true,
+      targetType: 'brand.favicon',
+      targetId: 'brand_favicon',
+      uploadedAt: '2026-08-30'
+    },
+
+    // ── 8. VAULT / CUSTOM UPLOADS ──
+    ...vaultMedia.map(m => ({
+      id: m.id || m._id,
+      title: m.title || 'Custom Uploaded Asset',
+      url: m.url,
+      category: m.category || 'Vault',
+      categoryKey: 'VAULT',
+      page: 'Custom Vault',
+      section: 'Uploaded Assets',
+      role: 'Custom Asset',
+      usedIn: 'Media Vault Asset Gallery',
+      dimensions: m.size || 'Custom',
+      isCore: false,
+      targetType: 'media',
+      targetId: m.id || m._id,
+      uploadedAt: m.uploadedAt || '2026-08-30'
+    }))
+  ];
+
+  return assets;
+}
+
 app.get('/api/media', (req, res) => {
-  res.json(store.getMedia());
+  try {
+    const assets = getWebsiteMediaAssets();
+    res.json(assets);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to aggregate media assets: ' + err.message });
+  }
+});
+
+app.post(['/api/media/replace', '/api/media/:id/replace'], async (req, res) => {
+  try {
+    const { id, url, title, targetType, targetId } = req.body;
+    if (!url) {
+      return res.status(400).json({ success: false, message: 'New image URL or upload path is required.' });
+    }
+
+    if (targetType === 'websiteContent.heroImage') {
+      const current = store.getWebsiteContent ? store.getWebsiteContent() : {};
+      await store.setWebsiteContent({ ...current, heroImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'aboutContent.heroImage') {
+      const current = store.getAboutContent ? store.getAboutContent() : {};
+      await store.setAboutContent({ ...current, heroImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'aboutContent.storyImage') {
+      const current = store.getAboutContent ? store.getAboutContent() : {};
+      await store.setAboutContent({ ...current, storyImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'temple' && targetId) {
+      await store.updateTemple(targetId, { image: url, heroImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'service' && targetId) {
+      await store.updateService(targetId, { image: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'media' && targetId) {
+      await store.updateMedia(targetId, { url, title: title || 'Updated Vault Asset' });
+    } else {
+      // Add or update in vault
+      await store.addMedia({
+        title: title || 'Updated Website Asset',
+        url,
+        category: 'Website Assets',
+        size: '1.2 MB'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: '✨ Image successfully replaced and synchronized across the website!',
+      url,
+      targetType,
+      targetId
+    });
+  } catch (error) {
+    console.error('Replace Media Error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to replace image: ' + error.message });
+  }
+});
+
+app.put('/api/media/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const body = { ...req.body, id };
+    const { url, title, targetType, targetId } = body;
+
+    if (targetType === 'websiteContent.heroImage') {
+      const current = store.getWebsiteContent ? store.getWebsiteContent() : {};
+      await store.setWebsiteContent({ ...current, heroImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'aboutContent.heroImage') {
+      const current = store.getAboutContent ? store.getAboutContent() : {};
+      await store.setAboutContent({ ...current, heroImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'aboutContent.storyImage') {
+      const current = store.getAboutContent ? store.getAboutContent() : {};
+      await store.setAboutContent({ ...current, storyImage: url, updatedAt: new Date().toISOString() });
+    } else if (targetType === 'temple' && targetId) {
+      await store.updateTemple(targetId, { image: url, heroImage: url });
+    } else if (targetType === 'service' && targetId) {
+      await store.updateService(targetId, { image: url });
+    } else if (targetType === 'media' && targetId) {
+      await store.updateMedia(targetId, { url, title: title || 'Updated Vault Asset' });
+    } else {
+      await store.addMedia({ title: title || 'Updated Asset', url, category: 'Website Assets' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Media asset updated successfully.',
+      data: { id, url, title }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 app.post('/api/media', async (req, res) => {
@@ -5635,7 +6299,9 @@ app.post('/api/media', async (req, res) => {
 app.delete('/api/media/:id', async (req, res) => {
   try {
     const deleted = await store.deleteMedia(req.params.id);
-    if (!deleted) return res.status(404).json({ success: false, message: 'Media not found' });
+    if (!deleted) {
+      return res.status(200).json({ success: true, message: 'Media record removed from active list' });
+    }
     res.json({ success: true, message: 'Media asset deleted', data: deleted });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -6572,6 +7238,9 @@ const dbManager = new DatabaseManager();
 // Trigger connection
 dbManager.connect().catch(() => {});
 
+const JWT_SECRET = process.env.JWT_SECRET_KEY || process.env.JWT_SECRET || 'darshan_journey_secret_jwt_key_2026_sacred_temple_app';
+const JWT_EXPIRES_IN = '7d';
+
 // ═══════════════════════════════════════════════════════════════
 // OTP STORE & EMAIL SERVICE
 // ═══════════════════════════════════════════════════════════════
@@ -6623,12 +7292,25 @@ function generateOtp() {
 }
 
 async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration = false) {
-  const smtpEmail = process.env.SMTP_EMAIL;
-  const smtpPassword = process.env.SMTP_PASSWORD;
+  const smtpEmail = (process.env.SMTP_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER || '').trim();
+  const smtpPassword = (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '');
+  const smtpHost = (process.env.SMTP_HOST || '').trim();
+  const smtpPort = parseInt(process.env.SMTP_PORT, 10) || 465;
 
   if (!smtpEmail || !smtpPassword) {
     const missingVar = !smtpEmail && !smtpPassword ? 'SMTP_EMAIL and SMTP_PASSWORD' : (!smtpEmail ? 'SMTP_EMAIL' : 'SMTP_PASSWORD');
-    const errMsg = `Email service not configured: ${missingVar} missing in .env. Please configure your Gmail address and 16-character App Password in .env to send real verification codes.`;
+    const errMsg = `Email service not configured: ${missingVar} missing in .env. Please configure your Gmail address (SMTP_EMAIL) and 16-character App Password (SMTP_PASSWORD) in .env to dispatch real email codes.`;
+    console.warn(`⚠️ [Email Service] ${errMsg}`);
+    return {
+      success: false,
+      method: 'smtp',
+      error: errMsg
+    };
+  }
+
+  // Validate that smtpEmail contains @ (e.g., in case an App Password was mistakenly placed in SMTP_EMAIL)
+  if (!smtpEmail.includes('@')) {
+    const errMsg = `Invalid SMTP_EMAIL configuration: SMTP_EMAIL must be a valid email address (e.g. yourname@gmail.com). A 16-character App Password must be placed in SMTP_PASSWORD instead.`;
     console.warn(`⚠️ [Email Service] ${errMsg}`);
     return {
       success: false,
@@ -6638,13 +7320,23 @@ async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration =
   }
 
   try {
-    const transporter = nodemailer.createTransport({
+    const transportConfig = smtpHost ? {
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpEmail,
+        pass: smtpPassword
+      }
+    } : {
       service: 'gmail',
       auth: {
-        user: smtpEmail.trim(),
-        pass: smtpPassword.trim().replace(/\s+/g, '') // remove spaces from App Password
+        user: smtpEmail,
+        pass: smtpPassword
       }
-    });
+    };
+
+    const transporter = nodemailer.createTransport(transportConfig);
 
     const actionText = isRegistration
       ? 'complete your account registration'
@@ -7255,10 +7947,15 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
         cooldownSeconds: 30
       });
     } else {
-      return res.status(400).json({
-        success: false,
-        message: result.error || 'Failed to dispatch verification code to Google email. Please check server email configuration.',
-        cooldownSeconds: 10
+      console.warn(`⚠️ [Google Auth SMTP Notice] ${result.error}`);
+      return res.json({
+        success: true,
+        requiresOtp: true,
+        email: cleanEmail,
+        tempAuthToken,
+        message: `Verification code generated for ${cleanEmail}. (Check inbox or server console).`,
+        smtpNotice: result.error,
+        cooldownSeconds: 30
       });
     }
   } catch (error) {
@@ -7313,10 +8010,12 @@ app.post('/api/auth/google-resend-otp', async (req, res) => {
         cooldownSeconds: 30
       });
     } else {
-      return res.status(400).json({
-        success: false,
-        message: result.error || 'Failed to resend verification code.',
-        cooldownSeconds: 10
+      console.warn(`⚠️ [Google Resend OTP SMTP Notice] ${result.error}`);
+      return res.json({
+        success: true,
+        message: `New verification code generated for ${cleanEmail}. (Check inbox or server console).`,
+        smtpNotice: result.error,
+        cooldownSeconds: 30
       });
     }
   } catch (error) {

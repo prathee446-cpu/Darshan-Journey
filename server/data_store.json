@@ -1,9 +1,9 @@
 {
   "websiteContent": {
-    "heroTitle": "TEST DARSHAN JOURNEY",
+    "heroTitle": "Experience Divine Peace & Spiritual Heritage",
     "heroSubtitle": "WELCOME TO OUR SACRED SANCTUARY",
     "heroDescription": "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace, devotion, and divine bliss.",
-    "heroImage": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1600&q=80",
+    "heroImage": "/temple_hero_bg.png",
     "ctaPrimaryText": "Explore Temples",
     "ctaPrimaryLink": "/temples",
     "ctaSecondaryText": "Book Darshan",
@@ -11,7 +11,42 @@
     "promotionalBannerText": "✨ Maha Shivratri 2026 Special Live Rudra Abhishekam bookings are now open! Reserve your sacred slot today.",
     "promotionalBannerActive": true,
     "featuredTagline": "SACRED HERITAGE & MODERN CONVENIENCE",
-    "updatedAt": "2026-08-17T16:43:20.982Z"
+    "updatedAt": "2026-08-31T04:41:44.703Z",
+    "darshanCards": [
+      {
+        "id": "card-1",
+        "title": "Virtual Darshan",
+        "description": "Experience 360° virtual deity darshan with sacred Vedic audio chanting.",
+        "image": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=600&q=80",
+        "buttonText": "Join Darshan",
+        "buttonLink": "/services"
+      },
+      {
+        "id": "card-2",
+        "title": "Temple Pooja Sevas",
+        "description": "Book personalized Abhishekam, Archana, and Homam with consecrated sankalpam.",
+        "image": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=600&q=80",
+        "buttonText": "Book Seva",
+        "buttonLink": "/services"
+      },
+      {
+        "id": "card-3",
+        "title": "Temple Prasadam",
+        "description": "Receive fresh consecrated temple prasadam delivered directly to your doorstep.",
+        "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
+        "buttonText": "Order Prasad",
+        "buttonLink": "/services"
+      },
+      {
+        "id": "card-4",
+        "title": "Temple History & Vastu",
+        "description": "Explore millennia-old Dravidian architecture, sacred lore, and sanctum history.",
+        "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=600&q=80",
+        "buttonText": "Read Insights",
+        "buttonLink": "/about"
+      }
+    ],
+    "publishedAt": "2026-08-31T04:41:44.703Z"
   },
   "aboutContent": {
     "heroTitle": "About Darshan Journey",
@@ -29,8 +64,326 @@
     "missionDescription": "To simplify spiritual journeys by providing reliable temple information, intelligent pilgrimage planning, and personalized devotional experiences through innovative technology while preserving India's rich spiritual and cultural heritage.",
     "visionTitle": "Our Vision",
     "visionDescription": "To become the world's most trusted AI-powered spiritual ecosystem, enabling millions of devotees to connect with temples, traditions, and divine experiences through one unified digital platform.",
-    "updatedAt": "2026-08-18T14:28:25.041Z"
+    "updatedAt": "2026-08-30T16:28:18.561Z"
   },
+  "pageContent": {
+    "home": {
+      "heroImage": "/temple_hero_bg.png",
+      "heroTitle": "Experience Divine Peace & Spiritual Heritage",
+      "heroSubtitle": "WELCOME TO OUR SACRED SANCTUARY",
+      "heroDescription": "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace, devotion, and divine bliss.",
+      "ctaPrimaryText": "Explore Temples",
+      "ctaPrimaryLink": "/temples",
+      "ctaSecondaryText": "Book Darshan",
+      "ctaSecondaryLink": "/services",
+      "promotionalBannerText": "✨ Maha Shivratri 2026 Special Live Rudra Abhishekam bookings are now open! Reserve your sacred slot today.",
+      "promotionalBannerActive": true,
+      "featuredTagline": "SACRED HERITAGE & MODERN CONVENIENCE",
+      "darshanCards": [
+        {
+          "id": "card-1",
+          "title": "Virtual Darshan",
+          "description": "Experience 360° virtual deity darshan with sacred Vedic audio chanting.",
+          "image": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=600&q=80",
+          "buttonText": "Join Darshan",
+          "buttonLink": "/services"
+        },
+        {
+          "id": "card-2",
+          "title": "Temple Pooja Sevas",
+          "description": "Book personalized Abhishekam, Archana, and Homam with consecrated sankalpam.",
+          "image": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=600&q=80",
+          "buttonText": "Book Seva",
+          "buttonLink": "/services"
+        },
+        {
+          "id": "card-3",
+          "title": "Temple Prasadam",
+          "description": "Receive fresh consecrated temple prasadam delivered directly to your doorstep.",
+          "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80",
+          "buttonText": "Order Prasad",
+          "buttonLink": "/services"
+        },
+        {
+          "id": "card-4",
+          "title": "Temple History & Vastu",
+          "description": "Explore millennia-old Dravidian architecture, sacred lore, and sanctum history.",
+          "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=600&q=80",
+          "buttonText": "Read Insights",
+          "buttonLink": "/about"
+        }
+      ],
+      "updatedAt": "2026-08-31T04:41:44.703Z",
+      "publishedAt": "2026-08-31T04:41:44.703Z"
+    },
+    "about": {
+      "heroImage": "/assets/temple_sculpture_about.jpg",
+      "heroTag": "Who We Are",
+      "heroTitle": "About Darshan Journey",
+      "heroSubtitle": "Where Technology Meets Spirituality.",
+      "heroDescription": "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling.",
+      "storyTag": "Our Genesis",
+      "storyTitle": "Our Journey Began With a Simple Question",
+      "storyParagraph1": "Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find.",
+      "storyParagraph2": "Darshan Journey was created to bridge this gap between timeless Vedic traditions and modern digital convenience.",
+      "storyParagraph3": "Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place.",
+      "storyImage": "/assets/kedarnath.png",
+      "missionTitle": "Our Mission",
+      "missionDescription": "To simplify spiritual journeys by providing reliable temple information, intelligent pilgrimage planning, and personalized devotional experiences through innovative technology while preserving India's rich spiritual and cultural heritage.",
+      "visionTitle": "Our Vision",
+      "visionDescription": "To become the world's most trusted AI-powered spiritual ecosystem, enabling millions of devotees to connect with temples, traditions, and divine experiences through one unified digital platform.",
+      "pillars": [
+        {
+          "id": "pillar-1",
+          "title": "Authentic Temple Knowledge",
+          "description": "Direct verified timings, rituals, dress codes, and festive calendars vetted by priests."
+        },
+        {
+          "id": "pillar-2",
+          "title": "Intelligent Pilgrimage Planning",
+          "description": "AI-guided customized temple circuits optimizing travel time, crowd flow, and pooja slots."
+        },
+        {
+          "id": "pillar-3",
+          "title": "Seamless Sacred Booking",
+          "description": "Direct reservation of VIP darshan, special Abhishekam, and consecrated prasadam delivery."
+        },
+        {
+          "id": "pillar-4",
+          "title": "Preserving Sacred Heritage",
+          "description": "Digital archiving of temple history, architectural marvels, and Vedic scriptural traditions."
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rev-1",
+          "templeName": "Tirupati Balaji Temple",
+          "devoteeName": "Rajesh & Priya Sharma",
+          "location": "Bengaluru, Karnataka",
+          "rating": 5,
+          "text": "Darshan Journey made our Tirupati pilgrimage seamless. The timing guidance and darshan pass coordination saved us hours of waiting in line.",
+          "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=400&q=80"
+        },
+        {
+          "id": "rev-2",
+          "templeName": "Ramanathaswamy Temple",
+          "devoteeName": "Sundaramurthy Iyer",
+          "location": "Chennai, Tamil Nadu",
+          "rating": 5,
+          "text": "The 22 holy theertham bath guidance and early morning Spatika Linga Darshan booking was handled with utmost reverence.",
+          "image": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80"
+        },
+        {
+          "id": "rev-3",
+          "templeName": "Meenakshi Amman Temple",
+          "devoteeName": "Lakshmi Narayanan",
+          "location": "Coimbatore, Tamil Nadu",
+          "rating": 5,
+          "text": "Receiving the consecrated Kumkum and Laddu prasad within two days after our virtual sankalpam was truly divine.",
+          "image": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=400&q=80"
+        }
+      ],
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "temples": {
+      "heroImage": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1600&q=80",
+      "heroTag": "Sanctified Shrines",
+      "heroTitle": "Explore Ancient Temples of Tamil Nadu",
+      "heroSubtitle": "DISCOVER SACRED HERITAGE & LIVING TRADITIONS",
+      "heroDescription": "Journey through millennia-old Dravidian architecture, sacred energy centers, and sanctified shrines across Madurai, Thanjavur, Chennai, Rameswaram, and Palani.",
+      "searchPlaceholder": "Search temple by name, deity, or district...",
+      "featuredTagline": "6 ANCIENT MAHA KSHETRAS OPEN FOR VIRTUAL & PHYSICAL DARSHAN",
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "services": {
+      "heroImage": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1600&q=80",
+      "heroTag": "Sacred Offerings",
+      "heroTitle": "Temple Sevas, Pooja & Consecrated Prasadam",
+      "heroSubtitle": "BOOK SACRED RITUALS DIRECTLY AT SANCTIFIED SHRINES",
+      "heroDescription": "Experience authentic Vedic rituals performed by sanctified temple priests, receive blessed prasadam delivered to your doorstep, and reserve priority darshan passes.",
+      "promotionalBannerText": "✨ Special Navagraha Shanti & Mahamrityunjaya Homam slots available this auspicious month.",
+      "promotionalBannerActive": true,
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "booking": {
+      "heroImage": "/assets/temple_hero_bg.png",
+      "heroTag": "Simple 3-Step Seva Reservation",
+      "heroTitle": "Quick Darshan & Pooja Booking",
+      "heroSubtitle": "CONFIRM YOUR SACRED DEVOTIONAL APPOINTMENT",
+      "heroDescription": "Reserve pooja sevas, prasadam combos, and priority darshan slots in 3 easy steps with authentic sankalpam verification.",
+      "step1Title": "Select Temple & Deity",
+      "step2Title": "Choose Pooja Seva / Prasadam",
+      "step3Title": "Sankalpam Details & Secure Payment",
+      "guaranteeBadge": "100% Authentic Consecrated Rituals Guaranteed",
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "articles": {
+      "heroImage": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1600&q=80",
+      "heroTag": "Spiritual Wisdom & Heritage",
+      "heroTitle": "Vedic Insights, Temple History & Sacred Traditions",
+      "heroSubtitle": "ENRICH YOUR SPIRITUAL JOURNEY WITH AUTHENTIC KNOWLEDGE",
+      "heroDescription": "Deep-dive into ancient temple acoustics, sacred Gopuram geometry, Panchakshari mantra science, and scriptural insights penned by traditional Vedic scholars.",
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "login": {
+      "backgroundImage": "/assets/temple_night_bg.png",
+      "portalTitle": "Devotee Sacred Portal",
+      "portalSubtitle": "Sign in to manage your temple darshan, view bookings, and access virtual pooja livestreams.",
+      "googleButtonText": "Continue with Google",
+      "supportNotice": "Facing login issues? Reach out to support@darshanjourney.com or call 1800-108-VEDA.",
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "contact": {
+      "heroImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80",
+      "heroTag": "Devotee Support",
+      "heroTitle": "Connect With Darshan Journey",
+      "heroSubtitle": "WE ARE HERE TO GUIDE YOUR SACRED PILGRIMAGE",
+      "heroDescription": "Have questions regarding temple rituals, customized pilgrimage routes, or order tracking? Our dedicated devotee assistance team is here 24/7.",
+      "email": "contact@darshanjourney.com",
+      "phone": "+91 98765 43210",
+      "whatsapp": "+91 98765 43211",
+      "address": "Temple Corridor, 108 Sacred Way, Mylapore, Chennai, Tamil Nadu - 600004",
+      "hours": "Daily 6:00 AM – 9:00 PM IST",
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    },
+    "brand": {
+      "brandName": "Darshan Journey",
+      "logoMain": "/assets/darshan-logo.jpeg",
+      "logoTransparent": "/darshan-logo.png",
+      "favicon": "/darshan-logo.png",
+      "tagline": "Sacred Temple Journey, Virtual Darshan & Vedic Pilgrimage Portal",
+      "copyrightText": "© 2026 Darshan Journey. All rights reserved. Dedicated to the preservation and digital accessibility of Sanatana Dharma heritage.",
+      "updatedAt": "2026-08-31T04:41:24.333Z"
+    }
+  },
+  "pageDrafts": {},
+  "articles": [
+    {
+      "id": "art-1",
+      "slug": "gopuram-geometry-vastu",
+      "title": "The Sacred Geometry & Vastu of Indian Gopuram Towers",
+      "author": "Acharya Sundaram",
+      "authorRole": "Vedic Architecture & Vastu Scholar",
+      "authorAvatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+      "date": "AUG 12, 2026",
+      "readTime": "5 MIN READ",
+      "category": "HERITAGE & VASTU",
+      "categoryBadge": "🏛️ HERITAGE & VASTU",
+      "image": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
+      "snippet": "Discover how ancient Dravidian and Nagara temple architecture channels cosmic energy through geometric alignment and stone acoustics.",
+      "content": "\n      <p class=\"article-lead\">\n        For centuries, the magnificent Gopuram towers of South Indian temples have stood as silent beacons of divine energy and architectural mastery. Rising high into the sky with intricate relief sculptures of deities, these towering pyramids are far more than ornamental entry gates—they are precise cosmic antennas designed according to ancient Vastu Shastra principles.\n      </p>\n\n      <h3>1. Principles of Cosmic Alignment in Dravidian Architecture</h3>\n      <p>\n        The construction of a traditional Gopuram begins with the sacred <em>Vastu Purusha Mandala</em>, a geometric grid layout that maps cosmic forces onto physical space. Master sculptors (Sthapatis) select dense interlocking granite stones, placing each stone according to cardinal directions so that magnetic lines of force align with the central sanctum (Garbhagriha).\n      </p>\n      \n      <blockquote class=\"spiritual-quote\">\n        \"As above, so below. The Gopuram is a ladder connecting human consciousness with the unmanifest cosmos.\" — Agama Shastra\n      </blockquote>\n\n      <h3>2. Acoustic & Vibrational Resonance of Granite Stone</h3>\n      <p>\n        Unlike modern concrete structures, hand-chiseled granite possesses piezoelectric properties that resonate with Vedic mantra chanting. When temple bells ring and Vedic hymns are recited at dawn, the Gopuram's pyramidal structure directs sound vibrations downward into the inner courtyard, creating a calming acoustic sphere for devotees.\n      </p>\n\n      <h3>3. The Golden Kalasam: Storing Telluric Energy</h3>\n      <p>\n        At the pinnacle of every major Gopuram sit gold-plated copper vessels called <em>Kalasams</em>. Traditionally filled with sacred grains like paddy and millet, these Kalasams act as natural lightning arresters and energy accumulators during stormy weather, protecting the surrounding village while sanctifying the environment.\n      </p>\n\n      <p>\n        Visiting a temple and passing beneath its grand Gopuram offers a moment to pause, look upward, and appreciate the profound spiritual wisdom embedded within South India's living architectural heritage.\n      </p>\n    ",
+      "tags": [
+        "Vastu",
+        "Dravidian Architecture",
+        "Gopuram",
+        "Temple Heritage",
+        "Vedic Science"
+      ],
+      "status": "Published",
+      "publishedAt": "2026-08-12T00:00:00.000Z",
+      "updatedAt": "2026-08-30T10:00:00.000Z"
+    },
+    {
+      "id": "art-2",
+      "slug": "om-namah-shivaya-benefits",
+      "title": "Spiritual Benefits of Chanting Om Namah Shivaya at Dawn",
+      "author": "Pandit Ramanathan",
+      "authorRole": "Head Priest & Vedic Scholar",
+      "authorAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      "date": "JUL 28, 2026",
+      "readTime": "4 MIN READ",
+      "category": "VEDIC PRACTICE",
+      "categoryBadge": "🕉 VEDIC PRACTICE",
+      "image": "https://images.unsplash.com/photo-1609946782701-790100780287?auto=format&fit=crop&w=1200&q=80",
+      "snippet": "Uncover the sound vibration frequency of the Panchakshari Mantra and its therapeutic effect on stress, focus, and inner peace.",
+      "content": "\n      <p class=\"article-lead\">\n        The sacred mantra <em>\"Om Namah Shivaya\"</em> is known as the Panchakshari (five-syllable) mantra in ancient Vedic tradition. Chanted by millions across generations, this timeless vibration balances the five fundamental elements of existence—Earth, Water, Fire, Air, and Space.\n      </p>\n\n      <h3>1. The Five Syllables of Creation</h3>\n      <p>\n        Each sound in the mantra represents one of the cosmic elements (Pancha Bhoota):\n      </p>\n      <ul>\n        <li><strong>Na:</strong> Earth element (Prithvi) — provides grounding and stability.</li>\n        <li><strong>Ma:</strong> Water element (Jala) — brings emotional fluidity and purity.</li>\n        <li><strong>Shi:</strong> Fire element (Agni) — ignites spiritual radiance and willpower.</li>\n        <li><strong>Va:</strong> Air element (Vayu) — purifies breath and life force (Prana).</li>\n        <li><strong>Ya:</strong> Space element (Akasha) — expands cosmic consciousness.</li>\n      </ul>\n\n      <h3>2. Why Chanting at Brahma Muhurta is Most Powerful</h3>\n      <p>\n        The ideal period for mantra recitation is <em>Brahma Muhurta</em> (roughly 1 hour and 36 minutes before sunrise). During these early dawn hours, the atmosphere is quiet, pollution-free, and rich in natural cosmic energy, making it easiest for the mind to enter deep meditation.\n      </p>\n\n      <blockquote class=\"spiritual-quote\">\n        \"Chanting Om Namah Shivaya clears mental clutter, stills the heart, and awakens the divine light within.\"\n      </blockquote>\n\n      <h3>3. Scientific & Mental Wellness Impact</h3>\n      <p>\n        Modern neuroscience studies reveal that rhythmic chanting of the 108-cycle Panchakshari mantra activates the parasympathetic nervous system, lowering cortisol levels, regulating heart rate variability, and promoting alpha brainwave states associated with relaxation and focus.\n      </p>\n\n      <p>\n        Incorporating 10 to 15 minutes of dawn chanting into your daily routine offers a peaceful anchor in today's fast-paced world.\n      </p>\n    ",
+      "tags": [
+        "Mantra",
+        "Shiva",
+        "Meditation",
+        "Panchakshari",
+        "Spiritual Health"
+      ],
+      "status": "Published",
+      "publishedAt": "2026-07-28T00:00:00.000Z",
+      "updatedAt": "2026-08-30T10:00:00.000Z"
+    },
+    {
+      "id": "art-3",
+      "slug": "panchamrit-divine-nectars",
+      "title": "Understanding Panchamrit: The 5 Divine Nectars of Abhishekam",
+      "author": "Dr. Ananya Sharma",
+      "authorRole": "Ayurvedic Physician & Heritage Researcher",
+      "authorAvatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+      "date": "JUL 15, 2026",
+      "readTime": "6 MIN READ",
+      "category": "RITUAL EXPLANATIONS",
+      "categoryBadge": "🌺 RITUAL EXPLANATIONS",
+      "image": "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80",
+      "snippet": "Why milk, curd, honey, ghee, and jaggery are offered to the Lingam and how each nectar symbolizes purity and health.",
+      "content": "\n      <p class=\"article-lead\">\n        During sacred temple Abhishekam ceremonies, the deity is bathed with <em>Panchamrit</em>—a holy elixir composed of five sacred ingredients: Milk, Curd, Honey, Cow's Ghee, and Jaggery (or Sugar). Beyond its ritual sanctity, Panchamrit is a revered Ayurvedic formulation rich in physical and spiritual nourishment.\n      </p>\n\n      <h3>1. Symbolic & Health Signification of the 5 Nectars</h3>\n      <p>\n        Each element of Panchamrit symbolizes a distinct virtue and provides specific Ayurvedic benefits:\n      </p>\n      <ul>\n        <li><strong>Pure Milk (Ksheera):</strong> Represents purity and peace. Rich in calcium and essential protein.</li>\n        <li><strong>Fresh Curd (Dadhi):</strong> Symbolizes prosperity and stability. Packed with gut-friendly probiotics.</li>\n        <li><strong>Wild Honey (Madhu):</strong> Represents sweet speech and unity. A natural antimicrobial energy booster.</li>\n        <li><strong>Desi Ghee (Ghrita):</strong> Symbolizes victory and radiance. Nourishes brain tissue and joint health.</li>\n        <li><strong>Raw Jaggery / Sugar (Sharkara):</strong> Symbolizes sweetness and joy. Provides vital minerals and iron.</li>\n      </ul>\n\n      <blockquote class=\"spiritual-quote\">\n        \"Panchamrit sanctifies the body when consumed as Prasad and purifies the mind when offered with pure devotion.\"\n      </blockquote>\n\n      <h3>2. The Science Behind Temple Abhishekam</h3>\n      <p>\n        When poured over consecrated stone or metal idols (like Palani's Navapashanam idol or Lord Shiva's Lingam), these natural ingredients absorb subtle mineral energies from the idol, creating a potent bio-active Prasad distributed to devotees.\n      </p>\n\n      <p>\n        Understanding the deep connection between ritual and wellbeing enriches our experience of ancient Indian traditions.\n      </p>\n    ",
+      "tags": [
+        "Abhishekam",
+        "Panchamrit",
+        "Ayurveda",
+        "Temple Prasad",
+        "Vedic Rituals"
+      ],
+      "status": "Published",
+      "publishedAt": "2026-07-15T00:00:00.000Z",
+      "updatedAt": "2026-08-30T10:00:00.000Z"
+    },
+    {
+      "id": "art-4",
+      "slug": "daily-pooja-benefits",
+      "title": "Daily Pooja Benefits: Elevating Home Energy & Inner Tranquility",
+      "author": "Acharya Sundaram",
+      "authorRole": "Vedic Architecture & Vastu Scholar",
+      "authorAvatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+      "date": "AUG 01, 2026",
+      "readTime": "5 MIN READ",
+      "category": "DEVOTIONAL LIVING",
+      "categoryBadge": "✨ DEVOTIONAL LIVING",
+      "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80",
+      "snippet": "Discover how performing daily morning lamp lighting and stotra recitations transforms household atmosphere into a sanctuary of peace.",
+      "content": "\n      <p class=\"article-lead\">\n        In Vedic tradition, performing a daily morning Sandhya Pooja at home is considered one of the simplest yet most transformative spiritual disciplines (Sadhana). Lighting a brass Diya filled with pure sesame or ghee creates an immediate sanctuary of warmth and tranquility.\n      </p>\n\n      <h3>1. Purification of Living Space</h3>\n      <p>\n        Lighting a camphor lamp or incense during morning worship clears stagnant room energy, releases natural fragrant oils, and establishes a serene rhythm for family members before the day begins.\n      </p>\n\n      <h3>2. Cultivating Gratitude & Mindfulness</h3>\n      <p>\n        Spending even 10 minutes in silent prayer or offering fresh flowers helps redirect focus away from daily stressors onto higher virtues of peace, compassion, and divine grace.\n      </p>\n\n      <blockquote class=\"spiritual-quote\">\n        \"Where the sacred lamp burns with devotion, peace and wisdom abide.\"\n      </blockquote>\n    ",
+      "tags": [
+        "Pooja",
+        "Devotion",
+        "Home Altar",
+        "Vedic Lifestyle",
+        "Mindfulness"
+      ],
+      "status": "Published",
+      "publishedAt": "2026-08-01T00:00:00.000Z",
+      "updatedAt": "2026-08-30T10:00:00.000Z"
+    },
+    {
+      "id": "art-5",
+      "slug": "sacred-prashad-significance",
+      "title": "Sacred Prashad Significance: Divine Blessings & Spiritual Nectar",
+      "author": "Pandit Ramanathan",
+      "authorRole": "Head Priest & Vedic Scholar",
+      "authorAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      "date": "JUL 20, 2026",
+      "readTime": "4 MIN READ",
+      "category": "TEMPLE TRADITIONS",
+      "categoryBadge": "🪷 TEMPLE TRADITIONS",
+      "image": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80",
+      "snippet": "Unveil the sacred spiritual mystery of Naivedyam offerings and how temple Prasad distributes divine grace to all devotees.",
+      "content": "\n      <p class=\"article-lead\">\n        Prashad (or Prasad) is the sacred food offering first presented to the deity as <em>Naivedyam</em> during pooja rituals and subsequently shared among devotees with reverent gratitude.\n      </p>\n\n      <h3>1. The Alchemy of Naivedyam</h3>\n      <p>\n        During offering mantras, the food is blessed by divine vision (Drishti) and sound vibrations. It transforms from physical food into spiritual nectar infused with divine vibrations.\n      </p>\n\n      <h3>2. Sharing Prasad in Community</h3>\n      <p>\n        Accepting Prasad with folded hands cultivates humility and equality among all devotees regardless of background.\n      </p>\n    ",
+      "tags": [
+        "Prasad",
+        "Naivedyam",
+        "Temple Traditions",
+        "Devotion",
+        "Blessings"
+      ],
+      "status": "Published",
+      "publishedAt": "2026-07-20T00:00:00.000Z",
+      "updatedAt": "2026-08-30T10:00:00.000Z"
+    }
+  ],
   "services": [
     {
       "_id": "6a841dec5111d231ae67e62e",
@@ -1129,7 +1482,9 @@
       "coverImage": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1200&q=80",
       "address": "Madurai, Tamil Nadu",
       "history": "Heritage Temple updated at 7:49:57 pm",
-      "festivals": "Chithirai Thiruvizha (Meenakshi Thirukalyanam), Navarathri, Float Festival"
+      "festivals": "Chithirai Thiruvizha (Meenakshi Thirukalyanam), Navarathri, Float Festival",
+      "heroImage": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1200&q=80",
+      "updatedAt": "2026-08-30T16:28:18.607Z"
     },
     {
       "_id": "6a841ded5111d231ae67e639",
@@ -1621,31 +1976,6 @@
   ],
   "users": [
     {
-      "id": "u-g-1788082574565-250615",
-      "fullName": "Sri Krishna Devotee (Updated)",
-      "name": "Sri Krishna Google Devotee",
-      "username": "google_devotee_1788082573970",
-      "email": "google_devotee_1788082573970@gmail.com",
-      "phone": "+91 99887 76655",
-      "mobile": "",
-      "passwordHash": null,
-      "address": "Temple Street, Madurai, Tamil Nadu",
-      "emergencyContact": "",
-      "authProvider": "google",
-      "provider": "google",
-      "googleId": "google_sub_1788082573970",
-      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-      "role": "Devotee",
-      "status": "Active",
-      "emailVerified": true,
-      "bookingCount": 0,
-      "totalSpent": "₹0",
-      "createdAt": "2026-08-30T09:36:14.530Z",
-      "updatedAt": "2026-08-30T09:36:14.880Z",
-      "lastLogin": "2026-08-30T09:36:14.761Z",
-      "registrationDate": "2026-08-30"
-    },
-    {
       "_id": "6a841ded5111d231ae67e63d",
       "id": "u-3",
       "name": "Siddharth Iyer",
@@ -1710,6 +2040,102 @@
       "bookingCount": 4,
       "totalSpent": "₹8,400",
       "status": "Active"
+    },
+    {
+      "_id": "6a93f98ef9d908d827f76ced",
+      "id": "u-g-1788082574565-250615",
+      "fullName": "Sri Krishna Devotee (Updated)",
+      "name": "Sri Krishna Google Devotee",
+      "username": "google_devotee_1788082573970",
+      "email": "google_devotee_1788082573970@gmail.com",
+      "phone": "+91 99887 76655",
+      "mobile": "",
+      "passwordHash": null,
+      "address": "Temple Street, Madurai, Tamil Nadu",
+      "emergencyContact": "",
+      "authProvider": "google",
+      "provider": "google",
+      "googleId": "google_sub_1788082573970",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
+      "role": "Devotee",
+      "status": "Active",
+      "emailVerified": true,
+      "bookingCount": 0,
+      "totalSpent": "₹0",
+      "createdAt": "2026-08-30T09:36:14.530Z",
+      "updatedAt": "2026-08-30T09:36:14.880Z",
+      "lastLogin": "2026-08-30T09:36:14.761Z",
+      "registrationDate": "2026-08-30"
+    },
+    {
+      "_id": "6a94064b6bb32b3fa95d327a",
+      "id": "u-g-1788085835971-e3208b",
+      "fullName": "Prathee",
+      "name": "Prathee",
+      "username": "prathee446",
+      "email": "prathee446@gmail.com",
+      "phone": "",
+      "mobile": "",
+      "passwordHash": null,
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "google",
+      "provider": "google",
+      "googleId": "109161774221264938410",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKk2dcNZsc0wtpy5We33pUUMyc7hRuXVjzpoB-xf6vwhWoVew=s96-c",
+      "role": "Devotee",
+      "status": "Active",
+      "emailVerified": true,
+      "bookingCount": 0,
+      "totalSpent": "₹0",
+      "createdAt": "2026-08-30T10:30:35.920Z",
+      "updatedAt": "2026-08-30T10:30:35.920Z",
+      "lastLogin": "2026-08-30T10:30:35.920Z",
+      "registrationDate": "2026-08-30"
+    },
+    {
+      "_id": "6a950074672f90a2db9ecaad",
+      "fullName": "Devotee Test",
+      "name": "Devotee Test",
+      "username": "devoteedarshantest",
+      "email": "devotee.darshan.test@gmail.com",
+      "phone": "",
+      "mobile": "",
+      "passwordHash": null,
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "google",
+      "googleId": "10987654321",
+      "googleSub": "10987654321",
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "https://lh3.googleusercontent.com/a/default-user",
+      "createdAt": "2026-08-31T04:17:56.323Z",
+      "updatedAt": "2026-08-31T04:17:56.323Z",
+      "lastLogin": "2026-08-31T04:17:56.323Z",
+      "id": "6a950074672f90a2db9ecaad"
+    },
+    {
+      "_id": "6a95014af81b33d768bf3433",
+      "fullName": "Devotee Pilgrim",
+      "name": "Devotee Pilgrim",
+      "username": "testgoogledevotee",
+      "email": "test.google.devotee@gmail.com",
+      "phone": "",
+      "mobile": "",
+      "passwordHash": null,
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "google",
+      "googleId": "google_sub_108108108",
+      "googleSub": "google_sub_108108108",
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "https://lh3.googleusercontent.com/a/sample-photo",
+      "createdAt": "2026-08-31T04:21:30.307Z",
+      "updatedAt": "2026-08-31T04:21:30.307Z",
+      "lastLogin": "2026-08-31T04:21:30.307Z",
+      "id": "6a95014af81b33d768bf3433"
     }
   ],
   "admins": [
@@ -1740,7 +2166,7 @@
       "email": "admin@darshanjourney.com",
       "role": "Super Admin",
       "status": "Active",
-      "lastLogin": "2026-08-30 09:36",
+      "lastLogin": "2026-08-31 04:44",
       "permissions": "Full Access (All Operations, Settings & Financials)",
       "passwordHash": "914d005625805d5687ff5dbb335c781466ed4fc166a61634f72a163b203f7f3415b0b73f23205560b20938b361c8d42e47efd7fa3cb0416b23ca7004d53fd056",
       "salt": "fb0ce17ed1772a7a2edeb90ff170114c",
@@ -2091,6 +2517,15 @@
       "category": "Temples",
       "size": "1.4 MB",
       "uploadedAt": "2026-08-10"
+    },
+    {
+      "_id": "6a9503cb1416ad2168aac6e9",
+      "title": "Deity Card — Meenakshi Amman (Madurai)",
+      "url": "https://media.istockphoto.com/id/614963888/photo/madurai-temple.jpg?s=612x612&w=0&k=20&c=DsQA3jxKCY-nPESfzGsrd1EZlM5fIs8Xu1WyXQOcfHU=",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1788150731000",
+      "uploadedAt": "2026-08-31"
     }
   ],
   "settings": {
@@ -2454,5 +2889,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-08-30T09:36:19.233Z"
+  "lastSaved": "2026-08-31T04:44:04.769Z"
 }
