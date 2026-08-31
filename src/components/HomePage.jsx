@@ -16,8 +16,7 @@ import {
   Flower2, 
   CheckCircle2 
 } from 'lucide-react';
-import logoImg from '../assets/darshan-logo.jpeg';
-
+import logoImg from '../assets/exact_darshan_logo.png';
 import heroBg from '../assets/temple_hero_bg.png';
 import TempleCalendar from './TempleCalendar';
 import TestimonialsSection from './TestimonialsSection';
@@ -114,9 +113,11 @@ export default function HomePage({
       <section
         id="hero"
         className="hero-section"
-        style={websiteContent?.heroImage && websiteContent.heroImage !== '/temple_hero_bg.png' && websiteContent.heroImage !== '/assets/temple_hero_bg.png' ? {
-          backgroundImage: `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${websiteContent.heroImage}")`
-        } : undefined}
+        style={{
+          backgroundImage: websiteContent?.heroImage && !websiteContent.heroImage.includes('temple_hero_bg')
+            ? `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${websiteContent.heroImage}")`
+            : `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${heroBg}")`
+        }}
       >
         <div className="hero-overlay" />
         <div className="hero-content">

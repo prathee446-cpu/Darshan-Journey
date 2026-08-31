@@ -73,7 +73,7 @@ const TEMPLE_REVIEWS = [
 ];
 
 // Assets
-import logoImg from '../assets/darshan-logo.jpeg';
+import logoImg from '../assets/exact_darshan_logo.png';
 import templeSculpture from '../assets/temple_sculpture_about.jpg';
 import pilgrimageImg from '../assets/kedarnath.png';
 
@@ -166,7 +166,7 @@ export default function AboutPage({
         <div className="about-hero-left">
           <div className="about-hero-img-container">
             <motion.img
-              src={aboutData?.heroImage || templeSculpture}
+              src={(aboutData?.heroImage && !aboutData.heroImage.includes('temple_sculpture_about')) ? aboutData.heroImage : templeSculpture}
               alt="Temple Sculpture Carving"
               className="about-hero-img"
               initial="hidden"
@@ -211,7 +211,11 @@ export default function AboutPage({
               viewport={{ once: true, margin: "-100px" }}
               variants={itemVariants}
             >
-              <img src={aboutData?.storyImage || pilgrimageImg} alt="Pilgrimage Experience" className="about-story-img" />
+              <img 
+                src={(aboutData?.storyImage && !aboutData.storyImage.includes('kedarnath')) ? aboutData.storyImage : pilgrimageImg} 
+                alt="Pilgrimage Experience" 
+                className="about-story-img" 
+              />
               <div className="about-story-img-overlay" />
             </motion.div>
 

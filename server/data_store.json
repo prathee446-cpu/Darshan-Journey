@@ -1,9 +1,9 @@
 {
   "websiteContent": {
-    "heroTitle": "Experience Divine Peace & Spiritual Heritage",
+    "heroTitle": "TEST DARSHAN JOURNEY",
     "heroSubtitle": "WELCOME TO OUR SACRED SANCTUARY",
     "heroDescription": "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace, devotion, and divine bliss.",
-    "heroImage": "/temple_hero_bg.png",
+    "heroImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80",
     "ctaPrimaryText": "Explore Temples",
     "ctaPrimaryLink": "/temples",
     "ctaSecondaryText": "Book Darshan",
@@ -11,7 +11,7 @@
     "promotionalBannerText": "✨ Maha Shivratri 2026 Special Live Rudra Abhishekam bookings are now open! Reserve your sacred slot today.",
     "promotionalBannerActive": true,
     "featuredTagline": "SACRED HERITAGE & MODERN CONVENIENCE",
-    "updatedAt": "2026-08-31T04:41:44.703Z",
+    "updatedAt": "2026-08-30T16:28:18.479Z",
     "darshanCards": [
       {
         "id": "card-1",
@@ -2136,6 +2136,28 @@
       "updatedAt": "2026-08-31T04:21:30.307Z",
       "lastLogin": "2026-08-31T04:21:30.307Z",
       "id": "6a95014af81b33d768bf3433"
+    },
+    {
+      "_id": "6a956d9ddd8a395992c02ea2",
+      "fullName": "Rajii",
+      "name": "Rajii",
+      "username": "rajielite28",
+      "email": "rajielite28@gmail.com",
+      "phone": "",
+      "mobile": "",
+      "passwordHash": null,
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "google",
+      "googleId": "113383827365448941466",
+      "googleSub": "113383827365448941466",
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJdmtTuZnMw7riIObgLYN3I7lmSfdZhX9e39iJijipCxe-wkqQ=s96-c",
+      "createdAt": "2026-08-31T12:03:41.597Z",
+      "updatedAt": "2026-08-31T12:03:41.597Z",
+      "lastLogin": "2026-08-31T12:03:41.597Z",
+      "id": "6a956d9ddd8a395992c02ea2"
     }
   ],
   "admins": [
@@ -2889,5 +2911,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-08-31T11:57:05.841Z"
+  "lastSaved": "2026-08-31T12:37:08.181Z"
 }

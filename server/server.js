@@ -7260,11 +7260,7 @@ class DatabaseManager {
 }
 
 const dbManager = new DatabaseManager();
-// Trigger connection
-dbManager.connect().catch(() => {});
-
-const JWT_SECRET = process.env.JWT_SECRET_KEY || process.env.JWT_SECRET || 'darshan_journey_secret_jwt_key_2026_sacred_temple_app';
-const JWT_EXPIRES_IN = '7d';
+// JWT_SECRET & JWT_EXPIRES_IN are declared at top of file
 
 // ═══════════════════════════════════════════════════════════════
 // OTP STORE & EMAIL SERVICE

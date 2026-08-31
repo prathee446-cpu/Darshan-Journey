@@ -102,10 +102,15 @@ function AppRoutes() {
         path="/" 
         element={
           <MaintenanceGuard>
-            <HomePage 
-              {...navProps} 
-              onGoToBlog={(slug) => { navigate(`/blogs/${slug}`); window.scrollTo(0, 0); }} 
-            />
+            <LandingPage onExplore={() => { navigate('/home'); window.scrollTo(0, 0); }} />
+          </MaintenanceGuard>
+        } 
+      />
+      <Route 
+        path="/landing" 
+        element={
+          <MaintenanceGuard>
+            <LandingPage onExplore={() => { navigate('/home'); window.scrollTo(0, 0); }} />
           </MaintenanceGuard>
         } 
       />
@@ -117,14 +122,6 @@ function AppRoutes() {
               {...navProps} 
               onGoToBlog={(slug) => { navigate(`/blogs/${slug}`); window.scrollTo(0, 0); }} 
             />
-          </MaintenanceGuard>
-        } 
-      />
-      <Route 
-        path="/landing" 
-        element={
-          <MaintenanceGuard>
-            <LandingPage onExplore={() => { navigate('/'); window.scrollTo(0, 0); }} />
           </MaintenanceGuard>
         } 
       />

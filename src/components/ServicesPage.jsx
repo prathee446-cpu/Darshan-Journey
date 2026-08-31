@@ -18,7 +18,7 @@ import {
   Video,
   Clock
 } from 'lucide-react';
-import logoImg from '../assets/darshan-logo.jpeg';
+import logoImg from '../assets/exact_darshan_logo.png';
 import heroBg from '../assets/temple_hero_bg.png';
 import product1Img from '../assets/product_1_pooja.jpg';
 import product2Img from '../assets/product_2_prashad.jpg';
