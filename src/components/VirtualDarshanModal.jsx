@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Play, Compass, BookOpen, Volume2 } from 'lucide-react';
+import logoImg from '../assets/darshan-logo.png';
 
 const TEMPLES = [
   {
@@ -46,11 +47,23 @@ export default function VirtualDarshanModal({ isOpen, onClose }) {
     <div className={`drawer-overlay ${isOpen ? 'active' : ''}`} onClick={onClose}>
       <div className="drawer-content" onClick={(e) => e.stopPropagation()}>
         <div className="drawer-header">
-          <div>
-            <h2 className="drawer-title">Explore Divine Temples</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.2rem' }}>
-              Immerse in virtual darshan, sacred chants, and ancient temple heritage
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+            <img 
+              src={logoImg} 
+              alt="Darshan Journey Logo" 
+              style={{ 
+                height: '52px', 
+                width: 'auto', 
+                filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.4))',
+                objectFit: 'contain'
+              }} 
+            />
+            <div>
+              <h2 className="drawer-title">Explore Divine Temples</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.2rem' }}>
+                Immerse in virtual darshan, sacred chants, and ancient temple heritage
+              </p>
+            </div>
           </div>
           <button className="modal-close" onClick={onClose}>
             <X size={26} />

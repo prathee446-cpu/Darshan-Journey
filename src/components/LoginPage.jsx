@@ -419,7 +419,7 @@ export default function LoginPage({
         })();
       }
     }
-  }, []);
+  }, [handleSuccessfulAuth]);
 
   // ═══════════════════════════════════════════════════════════════
   //  3. CREATE ACCOUNT (REGISTRATION) FLOW
@@ -803,9 +803,9 @@ export default function LoginPage({
           <motion.button
             type="submit"
             className="login-submit-pill-btn"
-            disabled={isSigningIn || !signinIdentifier || !signinPassword}
+            disabled={isSigningIn}
             variants={buttonVariants}
-            style={{ opacity: isSigningIn || !signinIdentifier || !signinPassword ? 0.6 : 1, marginTop: '0.25rem' }}
+            style={{ opacity: isSigningIn ? 0.6 : 1, marginTop: '0.25rem' }}
           >
             {isSigningIn ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1656,7 +1656,8 @@ export default function LoginPage({
         justifyContent: 'center',
         padding: '7rem 1.25rem 4rem',
         position: 'relative',
-        zIndex: 2
+        zIndex: 2,
+        pointerEvents: 'auto'
       }}>
         {/* Background Ambience */}
         <div style={{
@@ -1669,20 +1670,23 @@ export default function LoginPage({
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.25,
-          zIndex: 1,
-          filter: 'brightness(0.6)'
+          zIndex: 0,
+          filter: 'brightness(0.6)',
+          pointerEvents: 'none'
         }} />
 
         <GoldParticles />
 
         {/* Auth Card */}
-        <div className="login-glass-card">
+        <div className="login-glass-card" style={{ position: 'relative', zIndex: 10, pointerEvents: 'auto' }}>
           {/* Top Temple Logo & Emblem */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            marginBottom: '1rem'
+            marginBottom: '1rem',
+            position: 'relative',
+            zIndex: 11
           }}>
             <div style={{
               width: '68px',

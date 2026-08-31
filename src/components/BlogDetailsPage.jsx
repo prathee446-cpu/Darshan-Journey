@@ -12,7 +12,8 @@ import {
   X,
   FileQuestion
 } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
+import logoImg from '../assets/darshan-logo.jpeg';
+
 import { getBlogBySlug, getRelatedBlogs } from '../data/blogsData';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -22,6 +23,9 @@ export default function BlogDetailsPage({
   onGoToHome, 
   onExploreTemples, 
   onGoToProducts, 
+  onGoToServices,
+  onGoToLogin,
+  onGoToContact,
   onNavigateToBlog,
   onGoToAbout,
   onOpenBooking
@@ -61,6 +65,9 @@ export default function BlogDetailsPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
+        onGoToLogin={onGoToLogin}
+        onGoToContact={onGoToContact}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
         onOpenDonate={() => setIsDonateOpen(true)}
@@ -92,6 +99,18 @@ export default function BlogDetailsPage({
 
             {/* ARTICLE HEADER CONTAINER */}
             <header className="blog-details-header">
+              <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+                <img 
+                  src={logoImg} 
+                  alt="Darshan Journey Logo" 
+                  style={{ 
+                    height: '70px', 
+                    width: 'auto', 
+                    filter: 'drop-shadow(0 0 10px rgba(200, 169, 106, 0.4))',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
               <span className="blog-detail-category-tag">
                 {blog.categoryBadge || blog.category}
               </span>
@@ -222,6 +241,9 @@ export default function BlogDetailsPage({
         onGoToHome={onGoToHome}
         onExploreTemples={onExploreTemples}
         onGoToProducts={onGoToProducts}
+        onGoToServices={onGoToServices}
+        onGoToLogin={onGoToLogin}
+        onGoToContact={onGoToContact}
         onGoToAbout={onGoToAbout}
         onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
       />

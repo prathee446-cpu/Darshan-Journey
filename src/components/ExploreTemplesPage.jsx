@@ -28,8 +28,9 @@ import {
   Flame,
   Info
 } from 'lucide-react';
-import logoImg from '../assets/exact_darshan_logo.png';
-import { REAL_TAMIL_NADU_TEMPLES, fetchLiveTempleFromWeb } from '../services/templeDataService';
+import logoImg from '../assets/darshan-logo.jpeg';
+
+import { REAL_TAMIL_NADU_TEMPLES, fetchLiveTempleFromWeb, fetchLiveTempleSearchFromBackend } from '../services/templeDataService';
 import { isFuzzyMatch, getInstantSuggestions } from '../utils/searchUtils';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -99,9 +100,11 @@ export default function ExploreTemplesPage({
   const [selectedTemple, setSelectedTemple] = useState(null);
   const [mapMode, setMapMode] = useState('m'); // 'm' for normal roadmap, 'k' for satellite
   
-  // Instant Search Suggestions state
+  // Instant Search Suggestions & Real-Time Web Search state
   const [suggestions, setSuggestions] = useState([]);
   const [isSearchingLive, setIsSearchingLive] = useState(false);
+  const [webSearchResults, setWebSearchResults] = useState([]);
+  const [webSearchError, setWebSearchError] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef(null);
 
@@ -213,6 +216,8 @@ export default function ExploreTemplesPage({
     setDistrictFilter('all');
     setSortBy('popular');
     setShowSuggestions(false);
+    setWebSearchResults([]);
+    setWebSearchError(null);
   };
 
   // Select a temple from suggestion list or card
@@ -222,15 +227,21 @@ export default function ExploreTemplesPage({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Live dynamic web search for temples not in dictionary
+  // Real-Time Live Web Search via Express Backend API
   const handleLiveWebSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearchingLive(true);
-    const liveResult = await fetchLiveTempleFromWeb(searchQuery);
-    setIsSearchingLive(false);
-    if (liveResult) {
-      handleSelectTemple(liveResult);
-    } else {
+    setWebSearchError(null);
+    setWebSearchResults([]);
+
+    try {
+      const results = await fetchLiveTempleSearchFromBackend(searchQuery.trim());
+      setWebSearchResults(results || []);
+    } catch (err) {
+      console.error("Live web search error:", err);
+      setWebSearchError(err.message || `Unable to fetch live web search results for "${searchQuery}". Please try again.`);
+    } finally {
+      setIsSearchingLive(false);
       setShowSuggestions(false);
     }
   };
@@ -642,6 +653,18 @@ export default function ExploreTemplesPage({
           <section className="explore-hero-section">
             <div className="hero-overlay" />
             <div className="hero-content">
+              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <img 
+                  src={logoImg} 
+                  alt="Darshan Journey Logo" 
+                  style={{ 
+                    height: '85px', 
+                    width: 'auto', 
+                    filter: 'drop-shadow(0 0 14px rgba(200, 169, 106, 0.5)) drop-shadow(0 4px 10px rgba(0,0,0,0.4))',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </div>
               <span className="hero-subtitle-tag">DIVINE PILGRIMAGE JOURNEY</span>
               <h1 className="hero-heading">Explore Sacred Temples</h1>
               <p className="hero-desc">
@@ -836,23 +859,130 @@ export default function ExploreTemplesPage({
                   ))}
                 </div>
               ) : (
-                /* ---------------- 5. EMPTY STATE WITH DYNAMIC WEB SEARCH FALLBACK ---------------- */
-                <div className="empty-state-card">
+                /* ---------------- 5. EMPTY STATE WITH REAL-TIME BACKEND WEB SEARCH ---------------- */
+                <div className="empty-state-card" style={{ maxWidth: '850px', margin: '0 auto', textAlign: 'center' }}>
                   <div className="empty-state-icon">🙏</div>
-                  <h3 className="empty-state-title">🙏 No matching temple found.</h3>
+                  <h3 className="empty-state-title">No local pre-indexed match found</h3>
                   <p className="empty-state-desc">
-                    We couldn't find an exact pre-indexed match for "{searchQuery}". You can search live across all Tamil Nadu temples.
+                    {searchQuery.trim() ? (
+                      <>We couldn't find an exact match for "<strong>{searchQuery}</strong>" in our pre-indexed dataset. Perform a real-time live web search using our backend search engine.</>
+                    ) : (
+                      <>Please enter a temple search query above to perform a real-time live web search.</>
+                    )}
                   </p>
                   
-                  <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.2rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.4rem' }}>
                     <button className="btn-outline" onClick={resetFilters}>
                       <RotateCcw size={16} /> Reset Filters
                     </button>
                     
-                    <button className="btn-primary" onClick={handleLiveWebSearch} disabled={isSearchingLive}>
-                      <Search size={16} /> {isSearchingLive ? 'Searching Web...' : `Search Live Web for "${searchQuery}"`}
+                    <button 
+                      className="btn-primary" 
+                      onClick={handleLiveWebSearch} 
+                      disabled={!searchQuery.trim() || isSearchingLive}
+                      style={{
+                        opacity: (!searchQuery.trim() || isSearchingLive) ? 0.6 : 1,
+                        cursor: (!searchQuery.trim() || isSearchingLive) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <Search size={16} /> {
+                        isSearchingLive 
+                          ? 'Searching Live Web...' 
+                          : (searchQuery.trim() ? `Search Live Web for "${searchQuery}"` : 'Search Live Web')
+                      }
                     </button>
                   </div>
+
+                  {/* Web Search Error Alert */}
+                  {webSearchError && (
+                    <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(198, 40, 40, 0.08)', border: '1px solid rgba(198, 40, 40, 0.3)', color: '#C62828', borderRadius: '12px', padding: '1rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 600 }}>
+                      ⚠️ {webSearchError}
+                    </div>
+                  )}
+
+                  {/* Real-Time Live Web Search Results */}
+                  {webSearchResults.length > 0 && (
+                    <div style={{ marginTop: '2.2rem', textAlign: 'left' }}>
+                      <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: '#3B241C', marginBottom: '1.2rem', borderBottom: '1.5px solid #C89B4B', paddingBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Globe size={20} color="#C89B4B" /> Real-Time Live Web Search Results ({webSearchResults.length})
+                      </h4>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                        {webSearchResults.map((result, idx) => (
+                          <div 
+                            key={idx} 
+                            style={{
+                              backgroundColor: '#FFFFFF',
+                              border: '1.5px solid rgba(200, 155, 75, 0.35)',
+                              borderRadius: '18px',
+                              padding: '1.4rem',
+                              boxShadow: '0 8px 25px rgba(59, 36, 28, 0.06)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                              <div>
+                                <h5 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: '#3B241C', margin: '0 0 0.3rem 0', fontWeight: 800 }}>
+                                  {result.name}
+                                </h5>
+                                <p style={{ fontSize: '0.88rem', color: '#A57C52', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+                                  <MapPin size={15} /> {result.location || 'Tamil Nadu, India'}
+                                </p>
+                              </div>
+                              <span style={{ fontSize: '0.78rem', backgroundColor: 'rgba(200, 169, 106, 0.15)', color: '#3B241C', border: '1px solid #C8A96A', padding: '0.25rem 0.75rem', borderRadius: '99px', fontWeight: 800 }}>
+                                Source: {result.source || 'Web Search'}
+                              </span>
+                            </div>
+
+                            <p style={{ fontSize: '0.92rem', color: '#5C3A2E', lineHeight: 1.6, margin: '0.8rem 0 1.2rem 0' }}>
+                              {result.description}
+                            </p>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+                              {result.url && (
+                                <a 
+                                  href={result.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    color: '#C89B4B',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none'
+                                  }}
+                                >
+                                  Visit Source Website <ExternalLink size={15} />
+                                </a>
+                              )}
+
+                              {result.fullTempleObj && (
+                                <button 
+                                  onClick={() => handleSelectTemple(result.fullTempleObj)}
+                                  style={{
+                                    backgroundColor: '#3B241C',
+                                    color: '#C89B4B',
+                                    border: 'none',
+                                    borderRadius: '99px',
+                                    padding: '0.5rem 1.2rem',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem'
+                                  }}
+                                >
+                                  View Temple Overview <ArrowRight size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
