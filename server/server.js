@@ -8706,6 +8706,97 @@ app.get('/api/auth/me', (req, res) => {
   });
 });
 
+// ═══════════════════════════════════════════════════════════════
+// DEVOTEE CONTACT & ENQUIRIES ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+const handleContactSubmission = async (req, res) => {
+  try {
+    const { name, fullName, email, phone, mobile, subject, message, type, service } = req.body || {};
+    
+    if (!email || !message) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email address and message are required fields.' 
+      });
+    }
+
+    const contactName = (fullName || name || (email ? email.split('@')[0] : 'Devotee')).trim();
+    const contactPhone = (phone || mobile || '').trim();
+    const contactSubject = (subject || type || 'General Devotee Enquiry').trim();
+    const enquiryId = `DJ-ENQ-${Date.now().toString().slice(-6)}`;
+
+    const enquiryRecord = {
+      id: enquiryId,
+      fullName: contactName,
+      name: contactName,
+      email: email.trim().toLowerCase(),
+      phone: contactPhone,
+      subject: contactSubject,
+      service: service || 'Temple Devotee Seva',
+      message: message.trim(),
+      status: 'Pending',
+      createdAt: new Date().toISOString()
+    };
+
+    // Save in in-memory / local JSON store if available
+    try {
+      if (store && store.data) {
+        if (!Array.isArray(store.data.enquiries)) {
+          store.data.enquiries = [];
+        }
+        store.data.enquiries.unshift(enquiryRecord);
+        await store.save();
+      }
+    } catch (e) {
+      console.warn('Notice: Could not sync enquiry to local JSON store:', e.message);
+    }
+
+    // Save in MongoDB if connected
+    try {
+      if (dbManager) {
+        const enquiriesCol = dbManager.getCollection('enquiries');
+        if (enquiriesCol && typeof enquiriesCol.insertOne === 'function') {
+          await enquiriesCol.insertOne(enquiryRecord);
+        }
+      }
+    } catch (e) {
+      console.warn('Notice: Could not sync enquiry to MongoDB:', e.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: '🙏 Thank you for reaching out to Darshan Journey. Your message has been safely received by our temple seva desk and our coordinators will get back to you shortly.',
+      enquiryId: enquiryRecord.id,
+      data: enquiryRecord
+    });
+  } catch (err) {
+    console.error('Contact submission error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while submitting your enquiry. Please try again or call our hotline.'
+    });
+  }
+};
+
+app.post('/api/contact', handleContactSubmission);
+app.post('/api/enquiries', handleContactSubmission);
+app.get('/api/contact', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      address: 'The Executive Officer, Gollapudi, Vijayawada, Andhra Pradesh - 521 225, India.',
+      phones: ['+91 - 098490 05495', '+91 (044) 2836 7890'],
+      emails: ['contact@darshanjourney.org', 'support@darshanjourney.org'],
+      supportHours: {
+        monSat: '9:00 AM – 7:00 PM IST',
+        sun: '9:00 AM – 2:00 PM IST'
+      }
+    }
+  });
+});
+
+
 // Start listening after awaiting database initialization
 async function startServer() {
   console.log('🔄 Initializing Darshan Journey Express Backend...');
