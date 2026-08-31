@@ -1273,7 +1273,7 @@
         "phone": "+91 98765 11111",
         "designation": "Pooja Service In-Charge",
         "status": "Active",
-        "lastLogin": "2026-08-21 13:02",
+        "lastLogin": "2026-08-30 09:28",
         "servicePermissions": [
           {
             "subcategoryId": "sub-abh-1",
@@ -2158,6 +2158,27 @@
       "updatedAt": "2026-08-31T12:03:41.597Z",
       "lastLogin": "2026-08-31T12:03:41.597Z",
       "id": "6a956d9ddd8a395992c02ea2"
+    },
+    {
+      "_id": "6a95856e092ae9188c283da9",
+      "fullName": "Ravi Shankar Devotee",
+      "name": "Ravi Shankar Devotee",
+      "username": "devotee_1788183913782",
+      "email": "devotee_persisted_1788183913782@darshanjourney.com",
+      "phone": "9876543210",
+      "mobile": "9876543210",
+      "passwordHash": "$2b$10$65w4SivYnOrkt3CG0jJeuugFu1Tu6DvBMutp5iTek5hvqhHsb12dy",
+      "address": "Mylapore Temple Corridor, Chennai",
+      "emergencyContact": "9876500000",
+      "authProvider": "local",
+      "googleId": null,
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "R",
+      "createdAt": "2026-08-31T13:45:18.624Z",
+      "updatedAt": "2026-08-31T13:45:18.624Z",
+      "lastLogin": "2026-08-31T13:45:18.624Z",
+      "id": "6a95856e092ae9188c283da9"
     }
   ],
   "admins": [
@@ -2188,7 +2209,7 @@
       "email": "admin@darshanjourney.com",
       "role": "Super Admin",
       "status": "Active",
-      "lastLogin": "2026-08-31 04:44",
+      "lastLogin": "2026-08-31 13:59",
       "permissions": "Full Access (All Operations, Settings & Financials)",
       "passwordHash": "914d005625805d5687ff5dbb335c781466ed4fc166a61634f72a163b203f7f3415b0b73f23205560b20938b361c8d42e47efd7fa3cb0416b23ca7004d53fd056",
       "salt": "fb0ce17ed1772a7a2edeb90ff170114c",
@@ -2207,8 +2228,8 @@
       "temple": "Kapaleeshwarar Temple",
       "branch": "Chennai",
       "status": "Active",
-      "passwordHash": "d352ced76a837ceb80f3f122f0f19a2e96f90e235243594f9ecb0fb7d0afe29087650867af1b384bbcf3f64dc910b5adfc9a5a7637d0724493e4aa92875b2e16",
-      "salt": "9b8b491b12f2f4b729a442a4ebd22483",
+      "passwordHash": "073c435253745c8c662f87282a8749750db646fa2478bb544db4e44440cb686a4df22531a76514c04ef54da7f18afe38d4b40105f6f952b84cb56903bb522448",
+      "salt": "3ae955c95770710824ca5c71cc933e58",
       "servicePermissions": [
         {
           "subcategoryId": "sub-lad-1",
@@ -2303,8 +2324,8 @@
       "temple": "Kapaleeshwarar Temple",
       "templeId": "t-3",
       "status": "Active",
-      "passwordHash": "f5c20c5485cee761bc08879aa8396308fa97c3debcfc4c452d2a5551b3fac5da1b39d6ee6f753e2ab88eb26d3e665f14c82d6da847c9a67b6f784ea7ff43d155",
-      "salt": "dbaf6f0eea35e416e2b96a2b26fb5551",
+      "passwordHash": "72dbfe9933e4321f6abc1205db8ae9c2d2bbee657734315e3820cebc0047395241b91329086e3fe928eb2a67abca3865e85a0cefd1d471c6039d3a7ed905bc7a",
+      "salt": "f7d5f8d2dd4d5729e207b75172d96f4c",
       "serviceAssignments": [],
       "permissions": "Assigned Branch: Chennai - Temple: Kapaleeshwarar Temple",
       "createdAt": "2026-08-21T11:50:27.175Z",
@@ -2322,8 +2343,8 @@
       "temple": "Kapaleeshwarar Temple",
       "templeId": "t-3",
       "status": "Active",
-      "passwordHash": "ba482d6c1c5a4731b99f9dcaead18fdd104a9f015e49e182d0285adf1ed39e01310a06c8e9072d7fd3f6524fc47a255194bb86057b53d60a8d90d40195ca6fc1",
-      "salt": "07e8c8a3a36eee1158011f27baf10119",
+      "passwordHash": "aa3665360a1a2f7b320974d8e6b47007b502a7a9db2b4760eabd14013cdc3ce8bb001a9f897867abbba47481ea2858263bd21ef5a413191f19a2b9cc619a10f0",
+      "salt": "f0e2189cec34138bd2700be47a4aeca8",
       "serviceAssignments": [
         {
           "category": "Pooja Services",
@@ -2379,7 +2400,7 @@
       "permissions": "Assigned Branch: Madurai - Temple: Meenakshi Sundareswarar Temple",
       "createdAt": "2026-08-21T11:50:27.265Z",
       "id": "adm-1787313027265",
-      "lastLogin": "2026-08-30 09:28",
+      "lastLogin": "2026-08-31 13:58",
       "assignedModules": [
         "services",
         "bookings"
@@ -2911,5 +2932,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-08-31T12:37:08.181Z"
+  "lastSaved": "2026-08-31T13:59:43.704Z"
 }
