@@ -10,7 +10,7 @@ import GoldParticles from './GoldParticles';
 import templeNightBg from '../assets/temple_night_bg.png';
 import darshanLogo from '../assets/darshan-logo.jpeg';
 import Navbar from './Navbar';
-import Footer from './Footer';
+
 import { useAuth } from '../context/AuthContext';
 import { getGoogleClientId, ensureGoogleGisLoaded, triggerGoogleOAuthRedirect, checkOriginMatches, AUTHORIZED_ORIGIN } from '../utils/googleAuth';
 
@@ -1737,16 +1737,6 @@ export default function LoginPage({
           </AnimatePresence>
         </div>
       </main>
-
-      <Footer 
-        onGoToHome={onGoToHome}
-        onExploreTemples={onExploreTemples}
-        onGoToProducts={onGoToProducts}
-        onGoToServices={onGoToServices}
-        onGoToAbout={onGoToAbout}
-        onGoToContact={onGoToContact}
-        onOpenBooking={onOpenBooking}
-      />
     </div>
   );
 }

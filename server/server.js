@@ -920,75 +920,7 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
     const displayName = userInfo.name || cleanEmail.split('@')[0];
     const nowIso = new Date().toISOString();
 
-    // ─── RETURNING GOOGLE USER CHECK ───
-    // If the devotee has already verified their Google account previously, proceed directly to login
-    const usersCol = dbManager.getCollection('users');
-    let userDoc = await usersCol.findOne({
-      $or: [
-        { email: cleanEmail },
-        ...(userInfo.sub ? [{ googleId: userInfo.sub }, { googleSub: userInfo.sub }] : [])
-      ]
-    });
-
-    if (userDoc && userDoc.emailVerified === true && userDoc.status !== 'blocked') {
-      const updates = { lastLogin: nowIso, updatedAt: nowIso, status: 'active' };
-      if (userInfo.picture && (!userDoc.avatar || userDoc.avatar.length <= 2)) {
-        updates.avatar = userInfo.picture;
-        userDoc.avatar = userInfo.picture;
-      }
-      if (userInfo.sub && !userDoc.googleId) {
-        updates.googleId = userInfo.sub;
-        updates.googleSub = userInfo.sub;
-      }
-      await usersCol.updateOne({ _id: userDoc._id }, { $set: updates });
-
-      const userId = String(userDoc._id);
-      const token = jwt.sign(
-        {
-          sub: userId,
-          email: cleanEmail,
-          username: userDoc.username || '',
-          name: userDoc.fullName || displayName
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-
-      setSessionCookie(res, token);
-
-      const userObj = {
-        id: userId,
-        _id: userId,
-        fullName: userDoc.fullName || displayName,
-        name: userDoc.fullName || displayName,
-        username: userDoc.username || cleanEmail.split('@')[0],
-        email: cleanEmail,
-        phone: userDoc.phone || userDoc.mobile || '',
-        mobile: userDoc.mobile || userDoc.phone || '',
-        address: userDoc.address || '',
-        emergencyContact: userDoc.emergencyContact || '',
-        authProvider: userDoc.authProvider || 'google',
-        provider: userDoc.authProvider || 'google',
-        status: 'active',
-        emailVerified: true,
-        avatar: userDoc.avatar || userInfo.picture || 'G',
-        createdAt: userDoc.createdAt,
-        lastLogin: nowIso
-      };
-
-      console.log(`✨ [RETURNING GOOGLE USER] Devotee "${userObj.fullName}" (${cleanEmail}) authenticated without extra OTP.`);
-
-      return res.json({
-        success: true,
-        requiresOtp: false,
-        requireOtp: false,
-        message: `✨ Welcome back, ${userObj.fullName}!`,
-        user: userObj,
-        token
-      });
-    }
-
-    // ─── FIRST-TIME GOOGLE USER: REQUIRE 6-DIGIT EMAIL OTP VERIFICATION ───
+    // ─── MANDATORY 6-DIGIT EMAIL OTP DISPATCH FOR ALL GOOGLE LOGINS ───
     // Check rate limit
     if (!checkRateLimit(cleanEmail)) {
       return res.status(429).json({
@@ -1002,7 +934,7 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
     const otp = generateOtp();
     const tempAuthToken = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(24).toString('hex');
 
-    // Store in pendingGoogleAuth store (5-minute expiry)
+    // Store in pendingGoogleAuth store (10-minute expiry)
     pendingGoogleAuth.set(cleanEmail, {
       email: cleanEmail,
       name: displayName,
@@ -1015,12 +947,13 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
     });
     recordOtpRequest(cleanEmail);
 
-    console.log(`🔑 [FIRST-TIME GOOGLE AUTH OTP CREATED] Email: "${cleanEmail}" | OTP: "${otp}" | Valid for: 5m`);
+    console.log(`🔑 [GOOGLE AUTH OTP GENERATED] Email: "${cleanEmail}" | OTP: "${otp}" | Valid for: 10m`);
 
     // Dispatch real email verification code via Gmail SMTP
     const result = await sendOtpEmail(cleanEmail, otp, displayName, false);
 
     if (result.success) {
+      console.log(`✉️ [GOOGLE OTP SENT] Real OTP email successfully delivered to: "${cleanEmail}"`);
       return res.json({
         success: true,
         requiresOtp: true,
@@ -1031,9 +964,11 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
         cooldownSeconds: 30
       });
     } else {
-      return res.status(400).json({
+      console.error(`❌ [GOOGLE OTP SEND ERROR] Failed sending to "${cleanEmail}": ${result.error}`);
+      pendingGoogleAuth.delete(cleanEmail);
+      return res.status(500).json({
         success: false,
-        message: result.error || 'Failed to dispatch verification code to Google email. Please check server email configuration.',
+        message: result.error || 'Failed to dispatch verification code to your email. Please verify server SMTP configuration.',
         cooldownSeconds: 10
       });
     }
