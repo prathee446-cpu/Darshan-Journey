@@ -1,17 +1,7 @@
-const DEFAULT_SUPER_ADMIN_FALLBACK = {
-  id: 'adm-1',
-  name: 'Prathika (Chief Administrator)',
-  email: 'admin@darshanjourney.com',
-  role: 'SUPER_ADMIN',
-  designation: 'Super Admin',
-  status: 'Active',
-  permissions: 'Full Access (All Operations, Settings & Financials)'
-};
-
 export function getAuthHeaders() {
-  const token = localStorage.getItem('darshan_admin_token') || sessionStorage.getItem('darshan_admin_token') || 'darshan_adm_1_bypass';
+  const token = localStorage.getItem('darshan_admin_token') || sessionStorage.getItem('darshan_admin_token') || '';
   const userJson = localStorage.getItem('darshan_admin_user') || sessionStorage.getItem('darshan_admin_user');
-  let email = 'admin@darshanjourney.com';
+  let email = '';
   if (userJson) {
     try {
       const u = JSON.parse(userJson);
@@ -20,9 +10,8 @@ export function getAuthHeaders() {
   }
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-    'x-admin-token': token,
-    'x-admin-email': email
+    ...(token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {}),
+    ...(email ? { 'x-admin-email': email } : {})
   };
 }
 
@@ -33,8 +22,13 @@ export function getLoggedInAdmin() {
       return JSON.parse(userJson);
     } catch (e) {}
   }
-  // Default to Super Admin for direct access bypass
-  return DEFAULT_SUPER_ADMIN_FALLBACK;
+  return null;
+}
+
+export function isAuthenticatedAdmin() {
+  const token = localStorage.getItem('darshan_admin_token') || sessionStorage.getItem('darshan_admin_token');
+  const user = getLoggedInAdmin();
+  return Boolean(token && user);
 }
 
 export const getCurrentUser = getLoggedInAdmin;

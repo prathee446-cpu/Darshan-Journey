@@ -2155,8 +2155,8 @@
       "status": "active",
       "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJdmtTuZnMw7riIObgLYN3I7lmSfdZhX9e39iJijipCxe-wkqQ=s96-c",
       "createdAt": "2026-08-31T12:03:41.597Z",
-      "updatedAt": "2026-08-31T12:03:41.597Z",
-      "lastLogin": "2026-08-31T12:03:41.597Z",
+      "updatedAt": "2026-08-31T13:49:44.947Z",
+      "lastLogin": "2026-08-31T13:49:44.947Z",
       "id": "6a956d9ddd8a395992c02ea2"
     },
     {
@@ -2179,9 +2179,46 @@
       "updatedAt": "2026-08-31T13:45:18.624Z",
       "lastLogin": "2026-08-31T13:45:18.624Z",
       "id": "6a95856e092ae9188c283da9"
+    },
+    {
+      "_id": "6a9588871fe22e2665ebcdec",
+      "fullName": "zara",
+      "name": "zara",
+      "username": "zaraa_001",
+      "email": "chickenbiriyani032@gmail.com",
+      "phone": "9791323853",
+      "mobile": "9791323853",
+      "passwordHash": "$2b$10$1dd9HvloMyT3GtVI/SEF6u7aNPDAOF9ciFBqToBCDQrcP2vZ1wU4S",
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "local",
+      "googleId": null,
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "Z",
+      "createdAt": "2026-08-31T13:58:31.396Z",
+      "updatedAt": "2026-08-31T14:07:52.619Z",
+      "lastLogin": "2026-08-31T14:07:52.619Z",
+      "id": "6a9588871fe22e2665ebcdec"
     }
   ],
   "admins": [
+    {
+      "id": "adm-super-smtp",
+      "name": "Super Administrator",
+      "email": "rajielite28@gmail.com",
+      "role": "Super Admin",
+      "status": "Active",
+      "permissions": "Full Access (All Operations, Settings & Financials)",
+      "phone": "",
+      "branch": "",
+      "temple": "",
+      "templeId": "",
+      "passwordHash": "7e2a820bd4ed4ce6fb38579ade4de390b72b33940ca43149f49f83ff3f88ce349aa01970872f7017797e31d78d201a1adce156ea35eb01a2e72d4d5316949d69",
+      "salt": "8ce6a0b88e5e27db24a56b9069eee6aa",
+      "lastLogin": "2026-08-31 14:42",
+      "createdAt": "2026-08-31T14:20:18.200Z"
+    },
     {
       "_id": "6a841ded5111d231ae67e642",
       "id": "adm-2",
@@ -2932,5 +2969,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-08-31T13:59:43.704Z"
+  "lastSaved": "2026-08-31T14:42:37.832Z"
 }

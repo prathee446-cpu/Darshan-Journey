@@ -2062,10 +2062,15 @@ class UnifiedDataStore {
       }
 
       // 5. Admins
-      const adminsCount = await this.mongoDb.collection('admins').countDocuments();
-      if (adminsCount === 0) {
-        console.log('🌱 Seeding initial admins collection in MongoDB Atlas...');
-        await this.mongoDb.collection('admins').insertMany(this.admins.map(a => cleanDoc(a)));
+      for (const a of this.admins) {
+        if (a && a.email) {
+          const cleanAEmail = a.email.toLowerCase().trim();
+          const existing = await this.mongoDb.collection('admins').findOne({ email: cleanAEmail });
+          if (!existing) {
+            console.log(`🌱 [ADMIN SEED] Adding admin "${cleanAEmail}" to MongoDB Atlas...`);
+            await this.mongoDb.collection('admins').insertOne(cleanDoc(a));
+          }
+        }
       }
 
       // 6. Media
@@ -2210,11 +2215,21 @@ class UnifiedDataStore {
       // 5. Admins
       const dbAdmins = await this.mongoDb.collection('admins').find({}).toArray();
       if (dbAdmins.length > 0) {
-        this.admins = dbAdmins.map(a => ({
+        const mergedAdmins = dbAdmins.map(a => ({
           ...a,
           id: a.id || a._id?.toString(),
           _id: a._id?.toString()
         }));
+        for (const localA of (this.admins || [])) {
+          if (localA && localA.email && !mergedAdmins.some(m => norm(m.email) === norm(localA.email))) {
+            mergedAdmins.unshift(localA);
+            try {
+              await this.mongoDb.collection('admins').insertOne(cleanDoc(localA));
+              console.log(`🌱 [ADMIN SYNC] Synced admin "${localA.email}" to MongoDB Atlas.`);
+            } catch (e) {}
+          }
+        }
+        this.admins = mergedAdmins;
       }
 
       // 6. Media
@@ -6804,6 +6819,427 @@ app.post('/api/auth/admin-login', async (req, res) => {
   }
 });
 
+// Helper to look up an authorized Admin across in-memory DataStore, Mongo Atlas, and collections
+async function findAuthorizedAdmin(email) {
+  if (!email) return null;
+  const cleanEmail = normalizeEmail(email);
+  const escaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // 1. Check in store.getAdmins()
+  const admins = store.getAdmins() || [];
+  const inStore = admins.find(a => norm(a.email) === norm(cleanEmail));
+  if (inStore) return inStore;
+
+  // 2. Check in MongoDB Atlas admins collection
+  if (store.isMongoConnected && store.mongoDb) {
+    try {
+      const dbAdmin = await store.mongoDb.collection('admins').findOne({
+        $or: [
+          { email: cleanEmail },
+          { email: { $regex: new RegExp(`^${escaped}$`, 'i') } }
+        ]
+      });
+      if (dbAdmin) return dbAdmin;
+    } catch (e) {}
+  }
+
+  // 3. Check in DatabaseManager if present
+  try {
+    const adminsCol = dbManager.getCollection('admins');
+    if (adminsCol) {
+      const colAdmin = await adminsCol.findOne({
+        $or: [
+          { email: cleanEmail },
+          { email: { $regex: new RegExp(`^${escaped}$`, 'i') } }
+        ]
+      });
+      if (colAdmin) return colAdmin;
+    }
+  } catch (e) {}
+
+  // 4. Check if matching SMTP admin / superadmin email
+  const smtpAdmin = (process.env.SMTP_EMAIL || '').toLowerCase().trim();
+  if (smtpAdmin && cleanEmail === smtpAdmin) {
+    const defaultSuper = {
+      id: 'adm-super-smtp',
+      name: 'Super Administrator',
+      email: cleanEmail,
+      role: 'Super Admin',
+      status: 'Active',
+      permissions: 'Full Access (All Operations, Settings & Financials)'
+    };
+    try {
+      await store.addAdmin(defaultSuper);
+    } catch (e) {}
+    return defaultSuper;
+  }
+
+  return null;
+}
+
+// Helper to assemble clean and consistent admin session profile
+function buildSafeAdminUser(admin, token) {
+  const isService = isServiceSubAdmin(admin);
+  const isTemple = !isService && isTempleSubAdmin(admin);
+  const isSuper = isSuperAdmin(admin) && !isService && !isTemple;
+
+  let roleNormalized = 'SUPER_ADMIN';
+  let redirectUrl = '/admin';
+
+  if (isService) {
+    roleNormalized = 'SERVICE_SUB_ADMIN';
+    redirectUrl = '/sub-admin/service/dashboard';
+  } else if (isTemple) {
+    roleNormalized = 'TEMPLE_SUB_ADMIN';
+    redirectUrl = '/sub-admin/temple/dashboard';
+  } else {
+    roleNormalized = 'SUPER_ADMIN';
+    redirectUrl = '/admin';
+  }
+
+  return {
+    id: admin.id || admin._id?.toString() || 'adm-1',
+    _id: admin._id?.toString() || admin.id || 'adm-1',
+    name: admin.name || 'Administrator',
+    email: admin.email,
+    phone: admin.phone || '',
+    role: roleNormalized,
+    rawRole: admin.role || 'Super Admin',
+    redirectUrl,
+    designation: admin.designation || (isService ? 'Service In-Charge' : (isTemple ? 'Temple In-Charge' : 'Super Admin')),
+    branch: admin.branch || (isSuper ? 'All Branches' : 'Chennai'),
+    temple: admin.temple || (isSuper ? 'All Temples' : 'Kapaleeshwarar Temple'),
+    templeId: admin.templeId || 't-3',
+    serviceId: admin.serviceId || (isService ? 'srv-1' : ''),
+    serviceName: admin.serviceName || (isService ? 'Pooja Service' : ''),
+    servicePermissions: admin.servicePermissions || [],
+    status: admin.status || 'Active',
+    assignedModules: admin.assignedModules || (isSuper ? ['services', 'bookings', 'temples', 'users', 'payments', 'reports', 'media', 'website-content', 'about', 'admin-management', 'settings'] : ['services', 'bookings']),
+    serviceAssignments: admin.serviceAssignments || [],
+    templeAssignments: admin.templeAssignments || [],
+    permissions: admin.permissions || (isSuper ? 'Full Access (All Operations, Settings & Financials)' : (isService ? `Service In-Charge: ${admin.serviceName || 'Assigned Service'}` : `Assigned Temple: ${admin.temple || 'Kapaleeshwarar Temple'}`))
+  };
+}
+
+// 17b. DEDICATED ADMIN GOOGLE AUTHENTICATION (Step 1: Verify Google Token & Send 6-Digit OTP)
+app.post(['/api/auth/admin-google', '/api/auth/admin-google-send-otp', '/api/auth/admin/google-send-otp', '/api/auth/admin/google'], async (req, res) => {
+  try {
+    const { credential, accessToken } = req.body;
+    if (!credential && !accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google credential or access token is required.'
+      });
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+    const userInfo = await verifyGoogleToken(credential, accessToken, clientId);
+
+    if (!userInfo || !userInfo.email) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid Google authentication credential. Unable to extract user profile.'
+      });
+    }
+
+    const cleanEmail = normalizeEmail(userInfo.email);
+    console.log(`🔐 [ADMIN GOOGLE AUTH ATTEMPT] Email: "${cleanEmail}" | Name: "${userInfo.name}"`);
+
+    // Strict Authorization Check: Google account MUST exist in admins collection/store
+    const admin = await findAuthorizedAdmin(cleanEmail);
+    if (!admin) {
+      console.warn(`⛔ [ADMIN AUTH REJECTED] Unauthorized Google login attempt by non-admin: "${cleanEmail}"`);
+      return res.status(403).json({
+        success: false,
+        message: `Access Denied: The Google account (${cleanEmail}) is not authorized for administrative access. Please use an authorized administrator account or contact the Super Admin.`
+      });
+    }
+
+    if (admin.status === 'Disabled' || admin.status === 'Suspended') {
+      console.warn(`⛔ [ADMIN AUTH REJECTED] Disabled admin account attempted login: "${cleanEmail}"`);
+      return res.status(403).json({
+        success: false,
+        message: 'Account Deactivated: Your administrative access has been disabled. Please contact the Super Admin.'
+      });
+    }
+
+    if (!checkRateLimit(cleanEmail)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many verification requests. Please wait a few minutes before trying again.',
+        cooldownSeconds: 60
+      });
+    }
+
+    // Generate secure 6-digit OTP
+    const otp = generateOtp();
+    const tempAuthToken = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(24).toString('hex');
+    const now = Date.now();
+    const expiresAt = new Date(now + OTP_EXPIRY_MS);
+
+    // Save in MongoDB `admin_otps` collection
+    try {
+      const adminOtpsCol = dbManager.getCollection('admin_otps');
+      if (adminOtpsCol) {
+        await adminOtpsCol.updateOne(
+          { email: cleanEmail },
+          {
+            $set: {
+              email: cleanEmail,
+              name: admin.name || userInfo.name,
+              picture: userInfo.picture || '',
+              sub: userInfo.sub || '',
+              adminId: admin.id || admin._id,
+              otp: String(otp).trim(),
+              tempAuthToken,
+              createdAt: new Date(now),
+              expiresAt,
+              attempts: 0
+            }
+          },
+          { upsert: true }
+        );
+      }
+    } catch (e) {
+      console.warn('MongoDB admin_otps save note:', e.message);
+    }
+
+    // Save in memory store
+    pendingAdminGoogleAuth.set(cleanEmail, {
+      email: cleanEmail,
+      name: admin.name || userInfo.name,
+      picture: userInfo.picture || '',
+      sub: userInfo.sub || '',
+      adminId: admin.id || admin._id,
+      otp: String(otp).trim(),
+      tempAuthToken,
+      createdAt: now,
+      expiresAt: now + OTP_EXPIRY_MS,
+      attempts: 0
+    });
+    recordOtpRequest(cleanEmail);
+
+    console.log(`🔑 [ADMIN OTP DISPATCHED] Admin: "${admin.name}" (${cleanEmail}) | OTP: "${otp}" | Valid: 10m`);
+
+    // Dispatch real email verification code
+    await sendOtpEmail(cleanEmail, otp, admin.name || 'Administrator', false);
+
+    return res.json({
+      success: true,
+      requiresOtp: true,
+      email: cleanEmail,
+      tempAuthToken,
+      message: `Verification code sent to ${cleanEmail}. Please check your inbox.`,
+      cooldownSeconds: 30
+    });
+  } catch (error) {
+    console.error('Admin Google Auth Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during Admin Google authentication.'
+    });
+  }
+});
+
+// 17c. DEDICATED ADMIN GOOGLE AUTHENTICATION (Resend OTP)
+app.post(['/api/auth/admin-google-resend-otp', '/api/auth/admin/google-resend-otp', '/api/auth/admin-google-resend'], async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    const cleanEmail = normalizeEmail(email);
+
+    let pending = null;
+    try {
+      const adminOtpsCol = dbManager.getCollection('admin_otps');
+      if (adminOtpsCol) {
+        pending = await adminOtpsCol.findOne({ email: cleanEmail });
+      }
+    } catch (e) {}
+    if (!pending) {
+      pending = pendingAdminGoogleAuth.get(cleanEmail);
+    }
+
+    if (!pending) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active verification session found. Please sign in with Google again.'
+      });
+    }
+
+    if (!checkRateLimit(cleanEmail)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many verification requests. Please wait a few minutes before trying again.',
+        cooldownSeconds: 60
+      });
+    }
+
+    const newOtp = generateOtp();
+    const now = Date.now();
+    const expiresAt = new Date(now + OTP_EXPIRY_MS);
+
+    try {
+      const adminOtpsCol = dbManager.getCollection('admin_otps');
+      if (adminOtpsCol) {
+        await adminOtpsCol.updateOne(
+          { email: cleanEmail },
+          { $set: { otp: String(newOtp).trim(), createdAt: new Date(now), expiresAt, attempts: 0 } },
+          { upsert: true }
+        );
+      }
+    } catch (e) {}
+
+    pendingAdminGoogleAuth.set(cleanEmail, {
+      ...pending,
+      otp: String(newOtp).trim(),
+      createdAt: now,
+      expiresAt: now + OTP_EXPIRY_MS,
+      attempts: 0
+    });
+    recordOtpRequest(cleanEmail);
+
+    console.log(`🔑 [ADMIN OTP RESENT] Email: "${cleanEmail}" | New OTP: "${newOtp}"`);
+    await sendOtpEmail(cleanEmail, newOtp, pending.name || 'Administrator', false);
+
+    return res.json({
+      success: true,
+      message: `New verification code sent to ${cleanEmail}. Please check your inbox.`,
+      cooldownSeconds: 30
+    });
+  } catch (error) {
+    console.error('Admin Resend OTP Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while resending verification code.'
+    });
+  }
+});
+
+// 17d. DEDICATED ADMIN GOOGLE AUTHENTICATION (Step 2: Verify 6-Digit OTP & Create Admin Session)
+app.post(['/api/auth/admin-google-verify-otp', '/api/auth/admin/google-verify-otp', '/api/auth/admin-google-verify', '/api/auth/admin/google/verify'], async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and 6-digit verification code are required.'
+      });
+    }
+
+    const cleanEmail = normalizeEmail(email);
+    const cleanOtp = normalizeOtp(otp);
+
+    if (cleanOtp.length !== 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter all 6 digits of your verification code.'
+      });
+    }
+
+    let pending = null;
+    const adminOtpsCol = dbManager.getCollection('admin_otps');
+    if (adminOtpsCol) {
+      try {
+        pending = await adminOtpsCol.findOne({ email: cleanEmail });
+      } catch (e) {}
+    }
+    if (!pending) {
+      pending = pendingAdminGoogleAuth.get(cleanEmail);
+    }
+
+    if (!pending) {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending admin verification found for this email. Please sign in with Google again.'
+      });
+    }
+
+    const nowMs = Date.now();
+    const createdMs = pending.createdAt ? new Date(pending.createdAt).getTime() : 0;
+    const expiresMs = pending.expiresAt ? new Date(pending.expiresAt).getTime() : (createdMs + OTP_EXPIRY_MS);
+
+    if (nowMs > expiresMs) {
+      if (adminOtpsCol) await adminOtpsCol.deleteOne({ email: cleanEmail }).catch(() => {});
+      pendingAdminGoogleAuth.delete(cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please sign in with Google again to receive a new code.'
+      });
+    }
+
+    const currentAttempts = Number(pending.attempts || 0);
+    if (currentAttempts >= MAX_VERIFY_ATTEMPTS) {
+      if (adminOtpsCol) await adminOtpsCol.deleteOne({ email: cleanEmail }).catch(() => {});
+      pendingAdminGoogleAuth.delete(cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'Too many incorrect attempts. Please sign in with Google again.'
+      });
+    }
+
+    const storedOtp = normalizeOtp(pending.otp);
+    if (storedOtp !== cleanOtp) {
+      const nextAttempts = currentAttempts + 1;
+      if (adminOtpsCol) {
+        await adminOtpsCol.updateOne({ email: cleanEmail }, { $set: { attempts: nextAttempts } }).catch(() => {});
+      }
+      if (pendingAdminGoogleAuth.has(cleanEmail)) {
+        pendingAdminGoogleAuth.get(cleanEmail).attempts = nextAttempts;
+      }
+      const remaining = MAX_VERIFY_ATTEMPTS - nextAttempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid verification code. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Please request a new code.'}`
+      });
+    }
+
+    // OTP verified successfully -> cleanup pending OTP
+    if (adminOtpsCol) await adminOtpsCol.deleteOne({ email: cleanEmail }).catch(() => {});
+    pendingAdminGoogleAuth.delete(cleanEmail);
+
+    // Re-verify Admin Authorization in DB
+    const admin = await findAuthorizedAdmin(cleanEmail);
+    if (!admin) {
+      return res.status(403).json({
+        success: false,
+        message: `Access Denied: The Google account (${cleanEmail}) is not authorized for administrative access.`
+      });
+    }
+
+    if (admin.status === 'Disabled' || admin.status === 'Suspended') {
+      return res.status(403).json({
+        success: false,
+        message: 'Account Deactivated: Your administrative access has been disabled.'
+      });
+    }
+
+    const token = `darshan_adm_${admin.id || admin._id}_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 16);
+    await store.updateAdmin(admin.id || admin._id, { lastLogin: nowStr }).catch(() => {});
+
+    const safeUser = buildSafeAdminUser(admin, token);
+
+    console.log(`✨ [ADMIN AUTH SUCCESSFUL] Admin: "${safeUser.name}" (${cleanEmail}) authenticated via Google OTP.`);
+
+    return res.json({
+      success: true,
+      message: `🙏 Welcome to Operations Sanctum, ${safeUser.name}!`,
+      token,
+      redirectUrl: safeUser.redirectUrl || '/admin',
+      user: safeUser
+    });
+  } catch (error) {
+    console.error('Admin Verify OTP Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during Admin OTP verification.'
+    });
+  }
+});
+
 // SUB-ADMIN DIRECT SESSION SWITCH (For Manage Login -> Open Sub-Admin Login)
 app.post('/api/auth/subadmin-switch-session', async (req, res) => {
   try {
@@ -7210,6 +7646,14 @@ class DatabaseManager {
   async connect() {
     if (this.db) return this.db;
 
+    if (store && store.isMongoConnected && store.mongoDb) {
+      this.client = store.mongoClient;
+      this.db = store.mongoDb;
+      this.isAtlas = true;
+      console.log('✅ DatabaseManager attached to active MongoDB Atlas connection.');
+      return this.db;
+    }
+
     const mongoUri = process.env.MONGODB_URI || "mongodb+srv://Prathika:darshanjourneytemple@cluster0.tkdwmrz.mongodb.net/darshan_journey_db?retryWrites=true&w=majority";
     const dbName = process.env.DATABASE_NAME || "darshan_journey_db";
 
@@ -7217,8 +7661,8 @@ class DatabaseManager {
       try {
         console.log(`📡 Connecting to MongoDB Atlas (${dbName})...`);
         const client = new MongoClient(mongoUri, {
-          serverSelectionTimeoutMS: 5000,
-          connectTimeoutMS: 5000,
+          serverSelectionTimeoutMS: 8000,
+          connectTimeoutMS: 8000,
         });
         await client.connect();
         await client.db(dbName).command({ ping: 1 });
@@ -7252,6 +7696,12 @@ class DatabaseManager {
     if (this.isAtlas && this.db) {
       return this.db.collection(name);
     }
+    if (store && store.isMongoConnected && store.mongoDb) {
+      this.db = store.mongoDb;
+      this.client = store.mongoClient;
+      this.isAtlas = true;
+      return this.db.collection(name);
+    }
     if (!this.inMemoryCollections.has(name)) {
       this.inMemoryCollections.set(name, new InMemoryCollection(name));
     }
@@ -7270,6 +7720,8 @@ const dbManager = new DatabaseManager();
 const pendingRegistrations = new Map();
 // Pending Google Auth Store: { email: { email, name, picture, sub, otp, tempAuthToken, createdAt, attempts } }
 const pendingGoogleAuth = new Map();
+// Pending Admin Google Auth Store: { email: { email, name, picture, sub, adminId, otp, tempAuthToken, createdAt, attempts } }
+const pendingAdminGoogleAuth = new Map();
 // Rate Limit Store: { email: [timestamp1, timestamp2, ...] }
 const rateLimitStore = new Map();
 
@@ -7447,13 +7899,16 @@ app.post(['/api/auth/login', '/api/auth/signin'], async (req, res) => {
     }
 
     const cleanIdentifier = rawIdentifier.toLowerCase();
+    const escapedIdentifier = cleanIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const usersCol = dbManager.getCollection('users');
 
     // Find user by email or username (case-insensitive)
     let userDoc = await usersCol.findOne({
       $or: [
         { email: cleanIdentifier },
-        { username: { $regex: new RegExp(`^${cleanIdentifier}$`, 'i') } }
+        { email: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
+        { username: cleanIdentifier },
+        { username: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } }
       ]
     });
 
@@ -7483,7 +7938,7 @@ app.post(['/api/auth/login', '/api/auth/signin'], async (req, res) => {
     }
 
     const nowIso = new Date().toISOString();
-    const userId = String(userDoc._id);
+    const userId = String(userDoc._id || userDoc.id);
 
     // Update last login
     await usersCol.updateOne(
@@ -7718,6 +8173,18 @@ app.post('/api/auth/register-verify-otp', async (req, res) => {
 
     const insertResult = await usersCol.insertOne(newUser);
     const userId = String(insertResult.insertedId || newUser._id);
+
+    // Keep in-memory store synchronized
+    if (store && Array.isArray(store.users)) {
+      const syncUser = { ...newUser, id: userId, _id: userId };
+      const existingIdx = store.users.findIndex(u => u.email === cleanEmail || u.id === userId);
+      if (existingIdx >= 0) {
+        store.users[existingIdx] = syncUser;
+      } else {
+        store.users.unshift(syncUser);
+      }
+      store.saveToDisk();
+    }
 
     const token = jwt.sign(
       { sub: userId, email: cleanEmail, username: pending.username, name: pending.fullName },
@@ -8380,11 +8847,17 @@ app.get('/api/auth/me', async (req, res) => {
     let userDoc = null;
     if (decoded.sub) {
       try {
-        userDoc = await usersCol.findOne({ _id: decoded.sub });
+        userDoc = await usersCol.findOne(buildIdQuery(decoded.sub));
       } catch (e) { /* ignore */ }
     }
     if (!userDoc && decoded.email) {
-      userDoc = await usersCol.findOne({ email: decoded.email.toLowerCase() });
+      const escapedEmail = decoded.email.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      userDoc = await usersCol.findOne({
+        $or: [
+          { email: decoded.email.toLowerCase() },
+          { email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } }
+        ]
+      });
     }
 
     if (!userDoc) {
@@ -8447,9 +8920,17 @@ app.post('/api/auth/update-profile', async (req, res) => {
     if (emergencyContact) updateFields.emergencyContact = emergencyContact.trim();
 
     if (userId) {
-      await usersCol.updateOne({ _id: userId }, { $set: updateFields });
+      await usersCol.updateOne(buildIdQuery(userId), { $set: updateFields });
     } else if (cleanEmail) {
       await usersCol.updateOne({ email: cleanEmail }, { $set: updateFields });
+    }
+
+    if (store && Array.isArray(store.users)) {
+      const idx = store.users.findIndex(u => (userId && (u.id === userId || u._id === userId)) || (cleanEmail && u.email === cleanEmail));
+      if (idx >= 0) {
+        store.users[idx] = { ...store.users[idx], ...updateFields };
+        store.saveToDisk();
+      }
     }
 
     return res.json({
@@ -8801,10 +9282,11 @@ app.get('/api/contact', (req, res) => {
 async function startServer() {
   console.log('🔄 Initializing Darshan Journey Express Backend...');
   await store.init();
+  await dbManager.connect();
   app.listen(PORT, () => {
     console.log('============================================================');
     console.log(`🚀 Backend: http://localhost:${PORT}`);
-    console.log(`📊 MongoDB Status: ${store.isMongoConnected ? 'CONNECTED & SYNCHRONIZED' : 'LOCAL CACHE MODE'}`);
+    console.log(`📊 MongoDB Status: ${store.isMongoConnected || dbManager.isAtlas ? 'CONNECTED & SYNCHRONIZED' : 'LOCAL CACHE MODE'}`);
     console.log('============================================================');
   });
 }

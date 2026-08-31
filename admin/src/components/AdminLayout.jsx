@@ -15,21 +15,30 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [adminUser, setAdminUser] = useState({ name: 'Devotee Admin', email: 'admin@darshanjourney.com', role: 'Super Admin' });
+  const [adminUser, setAdminUser] = useState(null);
 
   const reloadAdminUser = () => {
+    const token = localStorage.getItem('darshan_admin_token') || sessionStorage.getItem('darshan_admin_token');
     const saved = localStorage.getItem('darshan_admin_user') || sessionStorage.getItem('darshan_admin_user');
-    if (saved) {
-      try {
-        setAdminUser(JSON.parse(saved));
-      } catch (e) {
-        // use default
-      }
+    if (!token || !saved) {
+      navigate('/admin/login', { replace: true });
+      return;
+    }
+    try {
+      setAdminUser(JSON.parse(saved));
+    } catch (e) {
+      navigate('/admin/login', { replace: true });
     }
   };
 
   // Load Admin User metadata & listen for updates
   useEffect(() => {
+    const token = localStorage.getItem('darshan_admin_token') || sessionStorage.getItem('darshan_admin_token');
+    const saved = localStorage.getItem('darshan_admin_user') || sessionStorage.getItem('darshan_admin_user');
+    if (!token || !saved) {
+      navigate('/admin/login', { replace: true });
+      return;
+    }
     reloadAdminUser();
     window.addEventListener('admin_profile_updated', reloadAdminUser);
     window.addEventListener('storage', reloadAdminUser);
@@ -37,7 +46,7 @@ export default function AdminLayout() {
       window.removeEventListener('admin_profile_updated', reloadAdminUser);
       window.removeEventListener('storage', reloadAdminUser);
     };
-  }, []);
+  }, [navigate]);
 
   // Update real-time clock in header
   useEffect(() => {
@@ -64,8 +73,12 @@ export default function AdminLayout() {
     localStorage.removeItem('darshan_admin_user');
     sessionStorage.removeItem('darshan_admin_token');
     sessionStorage.removeItem('darshan_admin_user');
-    navigate('/login');
+    navigate('/admin/login', { replace: true });
   };
+
+  if (!adminUser) {
+    return null;
+  }
 
   // Check if current logged-in user is Super Admin
   const isSuper = (adminUser.role || '').toUpperCase().includes('SUPER');
@@ -278,57 +291,87 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        {/* Sidebar Footer Admin Profile (Clickable to /admin/profile) */}
+        {/* Sidebar Footer Admin Profile & Logout */}
         <div 
-          onClick={() => {
-            navigate('/admin/profile');
-            setSidebarOpen(false);
-          }}
           style={{ 
-            padding: '1.25rem', 
+            padding: '1rem 1.25rem', 
             borderTop: '1px solid rgba(214, 181, 109, 0.12)',
             backgroundColor: isProfileActive ? 'rgba(200, 155, 75, 0.15)' : 'rgba(18, 9, 7, 0.3)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem',
             borderLeft: isProfileActive ? '3px solid var(--admin-gold)' : '3px solid transparent'
           }}
-          onMouseEnter={(e) => {
-            if (!isProfileActive) {
-              e.currentTarget.style.backgroundColor = 'rgba(214, 181, 109, 0.08)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = isProfileActive ? 'rgba(200, 155, 75, 0.15)' : 'rgba(18, 9, 7, 0.3)';
-          }}
-          title="View & Edit Admin Profile"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div 
+            onClick={() => {
+              navigate('/admin/profile');
+              setSidebarOpen(false);
+            }}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              flex: 1, 
+              cursor: 'pointer',
+              overflow: 'hidden'
+            }}
+            title="View & Edit Admin Profile"
+          >
             <div 
               className="flex-center"
               style={{ 
-                height: '38px', 
-                width: '38px', 
+                height: '36px', 
+                width: '36px', 
                 borderRadius: '50%', 
                 backgroundColor: 'var(--admin-primary-brown)',
                 border: '1.5px solid var(--admin-gold)',
                 color: 'var(--admin-gold)',
                 fontWeight: 'bold',
-                fontSize: '0.95rem',
+                fontSize: '0.9rem',
                 flexShrink: 0
               }}
             >
               {(adminUser.name || 'A').charAt(0).toUpperCase()}
             </div>
             <div style={{ overflow: 'hidden', flex: 1 }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: isProfileActive ? 'var(--admin-gold)' : '#FFFDF9', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.84rem', fontWeight: '600', color: isProfileActive ? 'var(--admin-gold)' : '#FFFDF9', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {adminUser.name || 'Administrator'}
               </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--admin-text-muted)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {adminUser.role || 'Super Admin'}
               </span>
             </div>
-            <ChevronRight size={15} style={{ color: isProfileActive ? 'var(--admin-gold)' : 'rgba(214, 181, 109, 0.5)', flexShrink: 0 }} />
           </div>
+
+          <button
+            onClick={handleLogout}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--admin-text-muted)',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#F87171';
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--admin-text-muted)';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title="Logout Admin Session"
+          >
+            <LogOut size={17} />
+          </button>
         </div>
       </aside>
 
@@ -471,21 +514,26 @@ export default function AdminLayout() {
                 ))}
               </nav>
 
-              {/* Drawer admin metadata (Clickable to /admin/profile) */}
+              {/* Drawer admin metadata & Logout */}
               <div 
-                onClick={() => {
-                  navigate('/admin/profile');
-                  setSidebarOpen(false);
-                }}
                 style={{ 
                   padding: '1rem', 
                   borderTop: '1px solid rgba(214, 181, 109, 0.12)', 
                   backgroundColor: isProfileActive ? 'rgba(200, 155, 75, 0.15)' : 'rgba(18, 9, 7, 0.3)',
-                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
                   borderLeft: isProfileActive ? '3px solid var(--admin-gold)' : '3px solid transparent'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div 
+                  onClick={() => {
+                    navigate('/admin/profile');
+                    setSidebarOpen(false);
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, cursor: 'pointer', overflow: 'hidden' }}
+                >
                   <div className="flex-center" style={{ height: '34px', width: '34px', borderRadius: '50%', backgroundColor: 'var(--admin-primary-brown)', color: 'var(--admin-gold)', fontWeight: 'bold' }}>
                     {(adminUser.name || 'A').charAt(0).toUpperCase()}
                   </div>
@@ -493,8 +541,34 @@ export default function AdminLayout() {
                     <span style={{ fontSize: '0.8rem', fontWeight: '600', color: isProfileActive ? 'var(--admin-gold)' : '#FFFDF9', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{adminUser.name}</span>
                     <span style={{ fontSize: '0.65rem', color: 'var(--admin-text-muted)', display: 'block' }}>{adminUser.role}</span>
                   </div>
-                  <ChevronRight size={15} style={{ color: 'var(--admin-gold)', opacity: 0.7 }} />
                 </div>
+
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--admin-text-muted)',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#F87171';
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--admin-text-muted)';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  title="Logout"
+                >
+                  <LogOut size={17} />
+                </button>
               </div>
             </motion.aside>
           </>
@@ -544,7 +618,7 @@ export default function AdminLayout() {
           </div>
 
           {/* Right panel widgets */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             {/* Clock Widget */}
             <div 
               className="header-clock"
@@ -563,7 +637,7 @@ export default function AdminLayout() {
             </div>
 
             {/* Simulated Search bar */}
-            <div className="header-search" style={{ position: 'relative', width: '220px' }}>
+            <div className="header-search" style={{ position: 'relative', width: '200px' }}>
               <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(214, 181, 109, 0.4)' }} />
               <input 
                 type="text"
@@ -652,6 +726,40 @@ export default function AdminLayout() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Clearly Visible Header Logout Action Button */}
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(214, 181, 109, 0.35)',
+                background: 'rgba(214, 181, 109, 0.08)',
+                color: 'var(--admin-gold)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.82rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                e.currentTarget.style.color = '#F87171';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(214, 181, 109, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(214, 181, 109, 0.35)';
+                e.currentTarget.style.color = 'var(--admin-gold)';
+              }}
+              title="Terminate Admin Session & Logout"
+            >
+              <LogOut size={15} />
+              <span>Logout</span>
+            </button>
           </div>
         </header>
 

@@ -167,8 +167,8 @@ export default function LoginPage({
   const [authenticatedDevotee, setAuthenticatedDevotee] = useState(null);
 
   // ─── Handle Successful Authentication ───
-  const handleSuccessfulAuth = useCallback((userData) => {
-    const pendingService = login(userData);
+  const handleSuccessfulAuth = useCallback((userData, token = null) => {
+    const pendingService = login(userData, token);
     setPendingRedirectService(pendingService);
     setAuthenticatedDevotee(userData);
     setFlow(FLOW.SPLASH);
@@ -235,7 +235,7 @@ export default function LoginPage({
 
       if (res.ok && data.success) {
         showToast(data.message || '✨ Signed in successfully!');
-        handleSuccessfulAuth(data.user);
+        handleSuccessfulAuth(data.user, data.token);
       } else {
         setFormError(data.message || data.detail || 'Invalid username/email or password.');
       }
@@ -329,7 +329,7 @@ export default function LoginPage({
                   } else if (data.user) {
                     // Returning verified Google devotee -> Immediate application session
                     showToast(data.message || `✨ Welcome back, ${data.user.fullName || data.user.name}!`);
-                    handleSuccessfulAuth(data.user);
+                    handleSuccessfulAuth(data.user, data.token);
                   }
                 } else {
                   if (res.status === 401) {
@@ -407,7 +407,7 @@ export default function LoginPage({
               } else if (data.user) {
                 // Returning verified Google devotee
                 showToast(data.message || `✨ Welcome back, ${data.user.fullName || data.user.name}!`);
-                handleSuccessfulAuth(data.user);
+                handleSuccessfulAuth(data.user, data.token);
               }
             } else {
               setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
@@ -523,7 +523,7 @@ export default function LoginPage({
 
       if (res.ok && data.success) {
         showToast(data.message || '✨ Account created & activated!');
-        handleSuccessfulAuth(data.user);
+        handleSuccessfulAuth(data.user, data.token);
       } else {
         setOtpError(data.detail || data.message || 'Invalid verification code. Please try again.');
         setOtpDigits(['', '', '', '', '', '']);
@@ -605,7 +605,7 @@ export default function LoginPage({
 
       if (res.ok && data.success) {
         showToast(data.message || '✨ Google account verified successfully!');
-        handleSuccessfulAuth(data.user);
+        handleSuccessfulAuth(data.user, data.token);
       } else {
         setOtpError(data.detail || data.message || 'Invalid verification code. Please try again.');
         setOtpDigits(['', '', '', '', '', '']);

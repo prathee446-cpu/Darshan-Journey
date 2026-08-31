@@ -167,7 +167,7 @@ export default function AdminProfilePage() {
 
   const handleLogout = () => {
     clearUserSession();
-    navigate('/login');
+    navigate('/admin/login', { replace: true });
   };
 
   const formatJoinedDate = (dateStr) => {

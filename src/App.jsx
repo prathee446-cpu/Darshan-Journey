@@ -260,7 +260,11 @@ function AppRoutes() {
       {/* ─── SUPER ADMIN DEDICATED ROUTES ─── */}
       <Route 
         path="/admin" 
-        element={<AdminLayout />}
+        element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+            <AdminLayout />
+          </RoleProtectedRoute>
+        }
       >
         <Route index element={<AdminDashboardPage />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />

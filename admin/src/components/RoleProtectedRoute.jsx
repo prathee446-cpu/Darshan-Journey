@@ -6,17 +6,13 @@ export default function RoleProtectedRoute({ children, allowedRoles }) {
   const token = localStorage.getItem('darshan_admin_token') || sessionStorage.getItem('darshan_admin_token');
   const user = getCurrentUser();
 
-  // Normalize allowed roles to uppercase
-  const normalizedAllowed = (allowedRoles || []).map(r => r.toUpperCase());
-
-  // Direct bypass for Super Admin routes (/admin/*)
-  if (normalizedAllowed.includes('SUPER_ADMIN') || normalizedAllowed.length === 0) {
-    return children;
-  }
-
-  if (!token && !user) {
+  // If unauthenticated, always redirect to Admin Login
+  if (!token || !user) {
     return <Navigate to="/admin/login" replace />;
   }
+
+  // Normalize allowed roles to uppercase
+  const normalizedAllowed = (allowedRoles || []).map(r => r.toUpperCase());
 
   const isSuper = isSuperAdminUser(user);
   const isService = isServiceSubAdminUser(user);
