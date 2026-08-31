@@ -56,4 +56,19 @@ class GoogleAuthRequest(BaseModel):
     credential: Optional[str] = Field(default=None, description="Google ID token (JWT) from GIS callback")
     accessToken: Optional[str] = Field(default=None, description="Google OAuth 2.0 Access Token from GIS token client")
 
+class GoogleAuthResponse(BaseModel):
+    success: bool = True
+    requiresOtp: Optional[bool] = False
+    email: Optional[str] = None
+    tempAuthToken: Optional[str] = None
+    message: Optional[str] = None
+    cooldownSeconds: Optional[int] = None
+    user: Optional[UserResponse] = None
+    token: Optional[str] = None
+
+class GoogleOTPVerify(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+    tempAuthToken: Optional[str] = None
+
 

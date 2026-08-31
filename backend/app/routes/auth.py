@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends, Header, status
 from app.schemas.user import (
     UserCreate, UserLogin, AuthResponse, UserResponse,
     OTPRequest, OTPVerify, OTPResponse, GoogleAuthRequest,
-    RegisterOTPRequest
+    RegisterOTPRequest, GoogleAuthResponse, GoogleOTPVerify
 )
 from app.services.auth_service import hash_password, verify_password, create_jwt_token, decode_jwt_token
 from app.services.email_service import (
@@ -456,15 +456,13 @@ def verify_otp_endpoint(data: OTPVerify):
 #  GOOGLE OAUTH AUTHENTICATION
 # ═══════════════════════════════════════════════════════════════
 
-@router.post("/google", response_model=AuthResponse)
-def google_auth(data: GoogleAuthRequest):
-    """Verify Google token (access token or ID token) and authenticate user."""
-    credential = data.credential
-    access_token = data.accessToken
-    google_client_id = settings.GOOGLE_CLIENT_ID
+# In-memory Google Auth store fallback: { email: { ... } }
+pending_google_auth = {}
+
+def _decode_google_token(credential: str = None, access_token: str = None, google_client_id: str = ""):
     user_info = None
 
-    # 1. If accessToken provided (fast GIS popup token client)
+    # 1. Access token (GIS token client)
     if access_token:
         try:
             import urllib.request
@@ -485,7 +483,7 @@ def google_auth(data: GoogleAuthRequest):
         except Exception as e:
             logger.warning(f"[Google Verification] UserInfo request failed: {e}")
 
-    # 2. If credential provided (ID token)
+    # 2. Credential (ID token)
     if not user_info and credential:
         try:
             import urllib.request
@@ -495,9 +493,6 @@ def google_auth(data: GoogleAuthRequest):
             with urllib.request.urlopen(req, timeout=4) as response:
                 payload = json.loads(response.read().decode('utf-8'))
                 if payload and payload.get("email"):
-                    aud = payload.get("aud") or payload.get("azp")
-                    if google_client_id and aud != google_client_id:
-                        logger.warning(f"[Google Verification] Audience mismatch: expected {google_client_id}, got {aud}")
                     user_info = {
                         "email": payload.get("email").lower(),
                         "name": payload.get("name", payload.get("email").split("@")[0]),
@@ -507,7 +502,7 @@ def google_auth(data: GoogleAuthRequest):
         except Exception as e:
             logger.warning(f"[Google Verification] Tokeninfo API request failed or timed out: {e}")
 
-    # Fallback: safe local decode (for offline development/local testing)
+    # Safe local decode fallback
     if not user_info and credential:
         try:
             import base64
@@ -523,9 +518,17 @@ def google_auth(data: GoogleAuthRequest):
                         "picture": payload.get("picture", ""),
                         "sub": payload.get("sub", "")
                     }
-                    logger.info("[Google Verification] Decoded locally via safe JWT fallback")
         except Exception as e:
             logger.error(f"[Google Verification] Local fallback decode failed: {e}")
+
+    return user_info
+
+
+@router.post("/google", response_model=GoogleAuthResponse)
+@router.post("/google-send-otp", response_model=GoogleAuthResponse)
+def google_auth(data: GoogleAuthRequest):
+    """Verify Google token. If returning verified user -> log in immediately; else dispatch OTP."""
+    user_info = _decode_google_token(data.credential, data.accessToken, settings.GOOGLE_CLIENT_ID)
 
     if not user_info or not user_info.get("email"):
         raise HTTPException(
@@ -533,43 +536,267 @@ def google_auth(data: GoogleAuthRequest):
             detail="Invalid Google credential. Please try again."
         )
 
-    # Upsert user in database
+    email = user_info["email"].lower().strip()
+    display_name = user_info.get("name") or email.split("@")[0].title()
     users_col = get_collection("users")
-    email = user_info["email"]
+
+    # Check if user is already registered and verified
     user_doc = users_col.find_one({"email": email})
+    if user_doc and (user_doc.get("emailVerified") is True or user_doc.get("provider") == "google" or user_doc.get("authProvider") == "google" or user_doc.get("googleSub") or user_doc.get("googleId")):
+        now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        updates = {"lastLogin": now_iso, "status": "active", "emailVerified": True}
+        if user_info.get("picture") and (not user_doc.get("avatar") or len(str(user_doc.get("avatar"))) <= 2):
+            updates["avatar"] = user_info["picture"]
+        if user_info.get("sub") and not user_doc.get("googleSub"):
+            updates["googleSub"] = user_info["sub"]
+        users_col.update_one({"_id": user_doc["_id"]}, {"$set": updates})
+
+        user_id = str(user_doc["_id"])
+        user_obj = UserResponse(
+            id=user_id,
+            fullName=user_doc.get("fullName", display_name),
+            name=user_doc.get("fullName", display_name),
+            email=email,
+            phone=user_doc.get("phone", ""),
+            provider="google",
+            status="active",
+            avatar=user_info.get("picture", user_doc.get("avatar", "G")),
+            createdAt=user_doc.get("createdAt"),
+            lastLogin=now_iso
+        )
+        token = create_jwt_token({"sub": user_id, "email": email, "name": user_obj.fullName})
+
+        return GoogleAuthResponse(
+            success=True,
+            requiresOtp=False,
+            message=f"✨ Welcome back, {user_obj.fullName}!",
+            user=user_obj,
+            token=token
+        )
+
+    # First-time / Unverified Google account -> Generate 6-digit OTP & Save in MongoDB
+    if not check_rate_limit(email):
+        return GoogleAuthResponse(
+            success=False,
+            requiresOtp=True,
+            message="Too many verification requests. Please wait before trying again.",
+            cooldownSeconds=60
+        )
+
+    import uuid
+    otp = generate_otp()
+    temp_auth_token = str(uuid.uuid4())
+    now = time.time()
+    expires_at = now + 600 # 10 minutes
+
+    # 1. Store in MongoDB `google_otps` collection
+    otps_col = get_collection("google_otps")
+    otp_doc = {
+        "email": email,
+        "name": display_name,
+        "picture": user_info.get("picture", ""),
+        "sub": user_info.get("sub", ""),
+        "otp": str(otp).strip(),
+        "tempAuthToken": temp_auth_token,
+        "createdAt": now,
+        "expiresAt": expires_at,
+        "attempts": 0
+    }
+    otps_col.update_one({"email": email}, {"$set": otp_doc}, upsert=True)
+
+    # 2. Store in memory fallback
+    pending_google_auth[email] = dict(otp_doc)
+    record_otp_request(email)
+
+    result = send_otp_email(email, otp, user_name=display_name)
+    if result["success"]:
+        return GoogleAuthResponse(
+            success=True,
+            requiresOtp=True,
+            email=email,
+            tempAuthToken=temp_auth_token,
+            message=f"Verification code sent to {email}. Please check your inbox.",
+            cooldownSeconds=30
+        )
+    return GoogleAuthResponse(
+        success=False,
+        requiresOtp=True,
+        email=email,
+        message=result.get("error", "Failed to send verification code."),
+        cooldownSeconds=10
+    )
+
+
+@router.post("/google-resend-otp", response_model=OTPResponse)
+@router.post("/google/resend-otp", response_model=OTPResponse)
+@router.post("/google-resend", response_model=OTPResponse)
+def google_resend_otp(data: OTPRequest):
+    """Resend OTP for Google authentication."""
+    email = data.email.lower().strip()
+    otps_col = get_collection("google_otps")
+    pending = otps_col.find_one({"email": email}) or pending_google_auth.get(email)
+
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active Google authentication session found. Please sign in with Google again."
+        )
+
+    if not check_rate_limit(email):
+        return OTPResponse(
+            success=False,
+            message="Too many verification requests. Please wait before trying again.",
+            cooldownSeconds=60
+        )
+
+    otp = generate_otp()
+    now = time.time()
+    expires_at = now + 600
+
+    otps_col.update_one(
+        {"email": email},
+        {"$set": {"otp": str(otp).strip(), "createdAt": now, "expiresAt": expires_at, "attempts": 0}},
+        upsert=True
+    )
+    pending_google_auth[email] = {
+        **pending,
+        "otp": str(otp).strip(),
+        "createdAt": now,
+        "expiresAt": expires_at,
+        "attempts": 0
+    }
+    record_otp_request(email)
+
+    result = send_otp_email(email, otp, user_name=pending.get("name", "Devotee"))
+    if result["success"]:
+        return OTPResponse(
+            success=True,
+            message=f"New verification code sent to {email}. Please check your inbox.",
+            cooldownSeconds=30
+        )
+    return OTPResponse(
+        success=False,
+        message=result.get("error", "Failed to resend verification code."),
+        cooldownSeconds=10
+    )
+
+
+@router.post("/google-verify-otp", response_model=AuthResponse)
+@router.post("/google/verify", response_model=AuthResponse)
+@router.post("/google-verify", response_model=AuthResponse)
+def google_verify_otp(data: GoogleOTPVerify):
+    """Verify Google OTP, mark user verified in MongoDB, and create session."""
+    email = data.email.lower().strip()
+    otp = str(data.otp).strip()
+
+    if len(otp) != 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please enter all 6 digits of your verification code."
+        )
+
+    otps_col = get_collection("google_otps")
+    pending = otps_col.find_one({"email": email}) or pending_google_auth.get(email)
+
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No pending Google verification found for this email. Please sign in with Google again."
+        )
+
+    now = time.time()
+    expires_at = pending.get("expiresAt", pending.get("createdAt", 0) + 600)
+    if now > expires_at:
+        otps_col.delete_one({"email": email})
+        pending_google_auth.pop(email, None)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code has expired. Please sign in with Google again."
+        )
+
+    current_attempts = int(pending.get("attempts", 0))
+    if current_attempts >= 5:
+        otps_col.delete_one({"email": email})
+        pending_google_auth.pop(email, None)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Too many incorrect attempts. Please sign in with Google again."
+        )
+
+    stored_otp = str(pending.get("otp", "")).strip()
+    if stored_otp != otp:
+        next_attempts = current_attempts + 1
+        otps_col.update_one({"email": email}, {"$set": {"attempts": next_attempts}})
+        if email in pending_google_auth:
+            pending_google_auth[email]["attempts"] = next_attempts
+        remaining = max(0, 5 - next_attempts)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid verification code. {remaining} attempt(s) remaining."
+        )
+
+    # Valid OTP -> Consume from MongoDB and memory
+    otps_col.delete_one({"email": email})
+    pending_google_auth.pop(email, None)
+
+    users_col = get_collection("users")
+    user_doc = users_col.find_one({"email": email})
+    now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     if not user_doc:
-        # Create new user from Google profile
         new_doc = {
-            "fullName": user_info["name"] or email.split("@")[0].title(),
+            "fullName": pending.get("name") or email.split("@")[0].title(),
+            "name": pending.get("name") or email.split("@")[0].title(),
+            "username": email.split("@")[0].lower(),
             "email": email,
             "phone": "",
             "provider": "google",
-            "avatar": user_info.get("picture", ""),
-            "googleSub": user_info.get("sub", ""),
-            "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            "authProvider": "google",
+            "avatar": pending.get("picture", "") or "G",
+            "googleSub": pending.get("sub", ""),
+            "googleId": pending.get("sub", ""),
+            "emailVerified": True,
+            "status": "active",
+            "createdAt": now_iso,
+            "lastLogin": now_iso
         }
         res = users_col.insert_one(new_doc)
         user_id = str(res.inserted_id)
         user_doc = new_doc
-        message = f"🙏 Sacred Welcome, {new_doc['fullName']}! Google account linked."
     else:
         user_id = str(user_doc["_id"])
-        message = f"✨ Welcome back, {user_doc.get('fullName', 'Devotee')}!"
+        updates = {
+            "lastLogin": now_iso,
+            "status": "active",
+            "emailVerified": True,
+            "provider": "google",
+            "authProvider": "google"
+        }
+        if pending.get("picture") and (not user_doc.get("avatar") or len(str(user_doc.get("avatar"))) <= 2):
+            updates["avatar"] = pending["picture"]
+        if pending.get("sub"):
+            updates["googleSub"] = pending["sub"]
+            updates["googleId"] = pending["sub"]
+        users_col.update_one({"_id": user_doc["_id"]}, {"$set": updates})
+        user_doc.update(updates)
 
     user_obj = UserResponse(
         id=user_id,
         fullName=user_doc.get("fullName", "Devotee"),
+        name=user_doc.get("fullName", "Devotee"),
         email=email,
         phone=user_doc.get("phone", ""),
         provider="google",
-        avatar=user_info.get("picture", user_doc.get("avatar", ""))
+        status="active",
+        avatar=user_doc.get("avatar", "G"),
+        createdAt=user_doc.get("createdAt"),
+        lastLogin=now_iso
     )
-    token = create_jwt_token({"sub": user_id, "email": email})
+    token = create_jwt_token({"sub": user_id, "email": email, "name": user_obj.fullName})
 
     return AuthResponse(
         success=True,
-        message=message,
+        message="✨ Google account verified successfully!",
         user=user_obj,
         token=token
     )

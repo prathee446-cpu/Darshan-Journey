@@ -73,6 +73,46 @@ class InMemoryCollection:
                 self.inserted_id = inserted_id
         return InsertResult(doc["_id"])
 
+    def update_one(self, filter_dict, update_dict, upsert=False):
+        doc = self.find_one(filter_dict)
+        if not doc:
+            if upsert:
+                new_doc = dict(filter_dict or {})
+                if "$set" in update_dict:
+                    new_doc.update(update_dict["$set"])
+                from bson.objectid import ObjectId
+                if "_id" not in new_doc:
+                    new_doc["_id"] = str(ObjectId())
+                self.docs.append(new_doc)
+                class UpsertResult:
+                    def __init__(self, upserted_id):
+                        self.upserted_id = upserted_id
+                        self.matched_count = 0
+                        self.modified_count = 0
+                return UpsertResult(new_doc["_id"])
+            class NoMatchResult:
+                matched_count = 0
+                modified_count = 0
+            return NoMatchResult()
+
+        if "$set" in update_dict:
+            doc.update(update_dict["$set"])
+        class UpdateResult:
+            matched_count = 1
+            modified_count = 1
+        return UpdateResult()
+
+    def delete_one(self, filter_dict):
+        doc = self.find_one(filter_dict)
+        if doc and doc in self.docs:
+            self.docs.remove(doc)
+            class DelResult:
+                deleted_count = 1
+            return DelResult()
+        class ZeroDelResult:
+            deleted_count = 0
+        return ZeroDelResult()
+
 class InMemoryDatabase:
     def __init__(self, db_name):
         self.name = db_name

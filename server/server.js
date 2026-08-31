@@ -23,6 +23,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_SECRET_KEY || 'darshan_journey_secret_jwt_key_2026_sacred_temple_app';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 const UPLOADS_DIR = path.resolve('public', 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
@@ -7153,16 +7155,36 @@ class InMemoryCollection {
     return { insertedId: insertedDoc._id, acknowledged: true };
   }
 
-  async updateOne(filter, update) {
+  async updateOne(filter, update, options = {}) {
     const doc = await this.findOne(filter);
-    if (!doc) return { matchedCount: 0, modifiedCount: 0 };
+    if (!doc) {
+      if (options && options.upsert) {
+        const newDoc = { ...(filter || {}) };
+        if (update.$set) Object.assign(newDoc, update.$set);
+        if (!newDoc._id) newDoc._id = new ObjectId().toString();
+        this.docs.push(newDoc);
+        return { matchedCount: 0, modifiedCount: 0, upsertedId: newDoc._id, acknowledged: true };
+      }
+      return { matchedCount: 0, modifiedCount: 0, acknowledged: true };
+    }
     
     const target = this.docs.find(d => String(d._id) === String(doc._id));
     if (target && update.$set) {
       Object.assign(target, update.$set);
-      return { matchedCount: 1, modifiedCount: 1 };
+      return { matchedCount: 1, modifiedCount: 1, acknowledged: true };
     }
-    return { matchedCount: 1, modifiedCount: 0 };
+    return { matchedCount: 1, modifiedCount: 0, acknowledged: true };
+  }
+
+  async deleteOne(filter = {}) {
+    const idx = this.docs.findIndex(d => {
+      return Object.entries(filter).every(([k, v]) => String(d[k]) === String(v));
+    });
+    if (idx !== -1) {
+      this.docs.splice(idx, 1);
+      return { deletedCount: 1, acknowledged: true };
+    }
+    return { deletedCount: 0, acknowledged: true };
   }
 
   async find(filter = {}) {
@@ -7188,15 +7210,15 @@ class DatabaseManager {
   async connect() {
     if (this.db) return this.db;
 
-    const mongoUri = process.env.MONGODB_URI || "mongodb+srv://darshan_user:DarshanJourney2026@cluster0.mongodb.net/darshan_journey_db?retryWrites=true&w=majority";
+    const mongoUri = process.env.MONGODB_URI || "mongodb+srv://Prathika:darshanjourneytemple@cluster0.tkdwmrz.mongodb.net/darshan_journey_db?retryWrites=true&w=majority";
     const dbName = process.env.DATABASE_NAME || "darshan_journey_db";
 
     if (mongoUri && mongoUri.startsWith('mongodb')) {
       try {
         console.log(`📡 Connecting to MongoDB Atlas (${dbName})...`);
         const client = new MongoClient(mongoUri, {
-          serverSelectionTimeoutMS: 4000,
-          connectTimeoutMS: 4000,
+          serverSelectionTimeoutMS: 5000,
+          connectTimeoutMS: 5000,
         });
         await client.connect();
         await client.db(dbName).command({ ping: 1 });
@@ -7205,11 +7227,14 @@ class DatabaseManager {
         this.isAtlas = true;
         console.log('✅ Connected successfully to MongoDB Atlas!');
         
-        // Ensure index on users
+        // Ensure index on users and google_otps
         try {
           const usersCol = this.db.collection('users');
           await usersCol.createIndex({ email: 1 }, { unique: true, sparse: true });
           await usersCol.createIndex({ username: 1 }, { unique: true, sparse: true });
+          const otpsCol = this.db.collection('google_otps');
+          await otpsCol.createIndex({ email: 1 });
+          await otpsCol.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
         } catch (idxErr) {
           /* ignore index creation error if exists */
         }
@@ -7881,8 +7906,7 @@ async function verifyGoogleToken(credential, accessToken, clientId) {
   return null;
 }
 
-// 5. GOOGLE OAUTH — Step 1: Verify Google Token, Generate & Send Real 6-Digit OTP to Gmail
-// (Mandatory OTP verification required for EVERY Google login)
+// 5. GOOGLE OAUTH — Step 1: Verify Google Token, Authenticate Returning User or Dispatch OTP
 app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => {
   try {
     const { credential, accessToken } = req.body;
@@ -7905,9 +7929,76 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
 
     const cleanEmail = normalizeEmail(userInfo.email);
     const displayName = userInfo.name || cleanEmail.split('@')[0];
+    const usersCol = dbManager.getCollection('users');
 
-    // ─── MANDATORY 6-DIGIT EMAIL OTP DISPATCH FOR ALL GOOGLE LOGINS ───
-    // Check rate limit
+    // Check if user already exists in database and is verified
+    let userDoc = await usersCol.findOne({
+      $or: [
+        { email: cleanEmail },
+        ...(userInfo.sub ? [{ googleId: userInfo.sub }, { googleSub: userInfo.sub }] : [])
+      ]
+    });
+
+    // If user is an existing verified Google user, log in immediately without OTP
+    if (userDoc && (userDoc.emailVerified === true || userDoc.authProvider === 'google' || userDoc.googleId || userDoc.googleSub)) {
+      const nowIso = new Date().toISOString();
+      const updates = { lastLogin: nowIso, updatedAt: nowIso, status: 'active', emailVerified: true };
+      if (userInfo.picture && (!userDoc.avatar || userDoc.avatar.length <= 2)) {
+        updates.avatar = userInfo.picture;
+        userDoc.avatar = userInfo.picture;
+      }
+      if (userInfo.sub && !userDoc.googleId) {
+        updates.googleId = userInfo.sub;
+        updates.googleSub = userInfo.sub;
+      }
+      await usersCol.updateOne({ _id: userDoc._id }, { $set: updates });
+      userDoc.lastLogin = nowIso;
+
+      const userId = String(userDoc._id);
+      const token = jwt.sign(
+        {
+          sub: userId,
+          email: cleanEmail,
+          username: userDoc.username || cleanEmail.split('@')[0],
+          name: userDoc.fullName || userDoc.name || displayName
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      setSessionCookie(res, token);
+
+      const userObj = {
+        id: userId,
+        _id: userId,
+        fullName: userDoc.fullName || userDoc.name || displayName,
+        name: userDoc.fullName || userDoc.name || displayName,
+        username: userDoc.username || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        phone: userDoc.phone || userDoc.mobile || '',
+        mobile: userDoc.mobile || userDoc.phone || '',
+        address: userDoc.address || '',
+        emergencyContact: userDoc.emergencyContact || '',
+        authProvider: 'google',
+        provider: 'google',
+        status: 'active',
+        emailVerified: true,
+        avatar: userDoc.avatar || userInfo.picture || 'G',
+        createdAt: userDoc.createdAt,
+        lastLogin: userDoc.lastLogin
+      };
+
+      console.log(`✨ [RETURNING GOOGLE DEVOTEE] "${userObj.fullName}" (${cleanEmail}) authenticated without OTP.`);
+      return res.json({
+        success: true,
+        requiresOtp: false,
+        message: `✨ Welcome back, ${userObj.fullName}!`,
+        user: userObj,
+        token
+      });
+    }
+
+    // New or unverified Google account -> Generate and dispatch 6-digit OTP
     if (!checkRateLimit(cleanEmail)) {
       return res.status(429).json({
         success: false,
@@ -7919,21 +8010,39 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
     // Generate a secure 6-digit OTP
     const otp = generateOtp();
     const tempAuthToken = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(24).toString('hex');
+    const now = Date.now();
+    const expiresAt = new Date(now + OTP_EXPIRY_MS);
 
-    // Store in pendingGoogleAuth store (10-minute expiry)
+    // 1. Save in MongoDB `google_otps` collection
+    const otpsCol = dbManager.getCollection('google_otps');
+    const otpDoc = {
+      email: cleanEmail,
+      name: displayName,
+      picture: userInfo.picture || '',
+      sub: userInfo.sub || '',
+      otp: String(otp).trim(),
+      tempAuthToken,
+      createdAt: new Date(now),
+      expiresAt,
+      attempts: 0
+    };
+    await otpsCol.updateOne({ email: cleanEmail }, { $set: otpDoc }, { upsert: true });
+
+    // 2. Also keep in-memory backup store for instant fallback
     pendingGoogleAuth.set(cleanEmail, {
       email: cleanEmail,
       name: displayName,
       picture: userInfo.picture || '',
       sub: userInfo.sub || '',
-      otp,
+      otp: String(otp).trim(),
       tempAuthToken,
-      createdAt: Date.now(),
+      createdAt: now,
+      expiresAt: now + OTP_EXPIRY_MS,
       attempts: 0
     });
     recordOtpRequest(cleanEmail);
 
-    console.log(`🔑 [GOOGLE AUTH OTP GENERATED] Email: "${cleanEmail}" | OTP: "${otp}" | Valid for: 10m`);
+    console.log(`🔑 [GOOGLE AUTH OTP CREATED & SAVED IN MONGO] Email: "${cleanEmail}" | OTP: "${otp}" | Valid for: 10m`);
 
     // Dispatch real email verification code via Gmail SMTP
     const result = await sendOtpEmail(cleanEmail, otp, displayName, false);
@@ -7970,7 +8079,7 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
 });
 
 // 6. GOOGLE OAUTH — Resend OTP
-app.post('/api/auth/google-resend-otp', async (req, res) => {
+app.post(['/api/auth/google-resend-otp', '/api/auth/google/resend-otp', '/api/auth/google-resend'], async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -7978,7 +8087,11 @@ app.post('/api/auth/google-resend-otp', async (req, res) => {
     }
 
     const cleanEmail = normalizeEmail(email);
-    const pending = pendingGoogleAuth.get(cleanEmail);
+    const otpsCol = dbManager.getCollection('google_otps');
+    let pending = await otpsCol.findOne({ email: cleanEmail });
+    if (!pending) {
+      pending = pendingGoogleAuth.get(cleanEmail);
+    }
 
     if (!pending) {
       return res.status(400).json({
@@ -7996,12 +8109,27 @@ app.post('/api/auth/google-resend-otp', async (req, res) => {
     }
 
     const newOtp = generateOtp();
-    pending.otp = newOtp;
-    pending.createdAt = Date.now();
-    pending.attempts = 0;
+    const now = Date.now();
+    const expiresAt = new Date(now + OTP_EXPIRY_MS);
+
+    // Update in MongoDB
+    await otpsCol.updateOne(
+      { email: cleanEmail },
+      { $set: { otp: String(newOtp).trim(), createdAt: new Date(now), expiresAt, attempts: 0 } },
+      { upsert: true }
+    );
+
+    // Update in memory
+    pendingGoogleAuth.set(cleanEmail, {
+      ...pending,
+      otp: String(newOtp).trim(),
+      createdAt: now,
+      expiresAt: now + OTP_EXPIRY_MS,
+      attempts: 0
+    });
     recordOtpRequest(cleanEmail);
 
-    console.log(`🔑 [GOOGLE OTP RESENT] Email: "${cleanEmail}" | New OTP: "${newOtp}" | Valid for: 10m`);
+    console.log(`🔑 [GOOGLE OTP RESENT & SAVED IN MONGO] Email: "${cleanEmail}" | New OTP: "${newOtp}" | Valid for: 10m`);
 
     const result = await sendOtpEmail(cleanEmail, newOtp, pending.name || 'Devotee', false);
 
@@ -8029,8 +8157,8 @@ app.post('/api/auth/google-resend-otp', async (req, res) => {
   }
 });
 
-// 7. GOOGLE OAUTH — Step 2: Verify OTP & Create Session
-app.post('/api/auth/google-verify-otp', async (req, res) => {
+// 7. GOOGLE OAUTH — Step 2: Verify OTP, Mark Google Account Verified & Create Session
+app.post(['/api/auth/google-verify-otp', '/api/auth/google/verify', '/api/auth/google-verify'], async (req, res) => {
   try {
     const { email, otp, tempAuthToken } = req.body;
     if (!email || !otp) {
@@ -8043,8 +8171,19 @@ app.post('/api/auth/google-verify-otp', async (req, res) => {
     const cleanEmail = normalizeEmail(email);
     const cleanOtp = normalizeOtp(otp);
 
-    // Look up in pendingGoogleAuth store
-    let pending = pendingGoogleAuth.get(cleanEmail);
+    if (cleanOtp.length !== 6) {
+      return res.status(400).json({
+        success: false,
+        detail: 'Please enter all 6 digits of your verification code.'
+      });
+    }
+
+    // Look up in MongoDB `google_otps` store first, fallback to in-memory store
+    const otpsCol = dbManager.getCollection('google_otps');
+    let pending = await otpsCol.findOne({ email: cleanEmail });
+    if (!pending) {
+      pending = pendingGoogleAuth.get(cleanEmail);
+    }
 
     console.log(`🔍 [GOOGLE OTP VERIFY ATTEMPT] Email: "${cleanEmail}" | Received OTP: "${cleanOtp}" | Found Record: ${Boolean(pending)}`);
 
@@ -8055,22 +8194,24 @@ app.post('/api/auth/google-verify-otp', async (req, res) => {
       });
     }
 
-    if (tempAuthToken && pending.tempAuthToken && pending.tempAuthToken !== tempAuthToken) {
-      return res.status(400).json({
-        success: false,
-        detail: 'Invalid authentication session. Please sign in with Google again.'
-      });
-    }
-
-    if (Date.now() - pending.createdAt > OTP_EXPIRY_MS) {
+    // Check expiry
+    const nowMs = Date.now();
+    const createdMs = pending.createdAt ? new Date(pending.createdAt).getTime() : 0;
+    const expiresMs = pending.expiresAt ? new Date(pending.expiresAt).getTime() : (createdMs + OTP_EXPIRY_MS);
+    
+    if (nowMs > expiresMs) {
+      await otpsCol.deleteOne({ email: cleanEmail }).catch(() => {});
       pendingGoogleAuth.delete(cleanEmail);
       return res.status(400).json({
         success: false,
-        detail: 'Verification code has expired. Please sign in with Google again.'
+        detail: 'Verification code has expired. Please sign in with Google again to receive a new code.'
       });
     }
 
-    if (pending.attempts >= MAX_VERIFY_ATTEMPTS) {
+    // Check max attempts
+    const currentAttempts = Number(pending.attempts || 0);
+    if (currentAttempts >= MAX_VERIFY_ATTEMPTS) {
+      await otpsCol.deleteOne({ email: cleanEmail }).catch(() => {});
       pendingGoogleAuth.delete(cleanEmail);
       return res.status(400).json({
         success: false,
@@ -8078,10 +8219,15 @@ app.post('/api/auth/google-verify-otp', async (req, res) => {
       });
     }
 
+    // Safe string comparison
     const storedOtp = normalizeOtp(pending.otp);
     if (storedOtp !== cleanOtp) {
-      pending.attempts += 1;
-      const remaining = MAX_VERIFY_ATTEMPTS - pending.attempts;
+      const nextAttempts = currentAttempts + 1;
+      await otpsCol.updateOne({ email: cleanEmail }, { $set: { attempts: nextAttempts } }).catch(() => {});
+      if (pendingGoogleAuth.has(cleanEmail)) {
+        pendingGoogleAuth.get(cleanEmail).attempts = nextAttempts;
+      }
+      const remaining = Math.max(0, MAX_VERIFY_ATTEMPTS - nextAttempts);
       console.warn(`❌ [GOOGLE OTP MISMATCH] Email: "${cleanEmail}" | Stored: "${storedOtp}" | Received: "${cleanOtp}" | Remaining: ${remaining}`);
       return res.status(400).json({
         success: false,
@@ -8091,10 +8237,11 @@ app.post('/api/auth/google-verify-otp', async (req, res) => {
 
     console.log(`✅ [GOOGLE OTP SUCCESS] Email: "${cleanEmail}" verified successfully!`);
 
-    // Valid OTP — consume from pending store
+    // Valid OTP — consume from MongoDB and memory store
+    await otpsCol.deleteOne({ email: cleanEmail }).catch(() => {});
     pendingGoogleAuth.delete(cleanEmail);
 
-    // Create or Link user in Database
+    // Create or Link user in Database and mark verified
     const usersCol = dbManager.getCollection('users');
     let userDoc = await usersCol.findOne({
       $or: [
@@ -8132,18 +8279,25 @@ app.post('/api/auth/google-verify-otp', async (req, res) => {
       userDoc = { ...newUser, _id: insertResult.insertedId || String(newUser._id) };
       console.log(`✨ [GOOGLE SIGN UP COMPLETED] Created account for: ${cleanEmail}`);
     } else {
-      // Existing user signed in via Google — link Google profile
-      const updates = { lastLogin: nowIso, updatedAt: nowIso, status: 'active', emailVerified: true };
+      // Existing user signed in via Google — link Google profile & mark verified
+      const updates = {
+        lastLogin: nowIso,
+        updatedAt: nowIso,
+        status: 'active',
+        emailVerified: true,
+        authProvider: 'google'
+      };
       if (pending.picture && (!userDoc.avatar || userDoc.avatar.length <= 2)) {
         updates.avatar = pending.picture;
         userDoc.avatar = pending.picture;
       }
-      if (pending.sub && !userDoc.googleId) {
+      if (pending.sub) {
         updates.googleId = pending.sub;
         updates.googleSub = pending.sub;
       }
       await usersCol.updateOne({ _id: userDoc._id }, { $set: updates });
       userDoc.lastLogin = nowIso;
+      userDoc.emailVerified = true;
       console.log(`✨ [GOOGLE SIGN IN COMPLETED] Verified devotee: ${cleanEmail}`);
     }
 
@@ -8184,7 +8338,7 @@ app.post('/api/auth/google-verify-otp', async (req, res) => {
 
     return res.json({
       success: true,
-      message: `🙏 Sacred Welcome, ${userObj.fullName}! You are signed in via Google.`,
+      message: `✨ Google account verified successfully!`,
       user: userObj,
       token
     });
@@ -8215,7 +8369,7 @@ app.get('/api/auth/me', async (req, res) => {
       (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
 
     if (!token) {
-      return res.status(401).json({ detail: 'No active session found.' });
+      return res.status(401).json({ authenticated: false, detail: 'No active session found.' });
     }
 
     let decoded;
@@ -8223,7 +8377,7 @@ app.get('/api/auth/me', async (req, res) => {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (err) {
       res.clearCookie('darshan_session');
-      return res.status(401).json({ detail: 'Session expired or token invalid.' });
+      return res.status(401).json({ authenticated: false, detail: 'Session expired or token invalid.' });
     }
 
     const usersCol = dbManager.getCollection('users');

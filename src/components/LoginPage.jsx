@@ -190,10 +190,10 @@ export default function LoginPage({
   // ─── Auto-navigate to /home after ONLY 2 seconds on Splash Screen ───
   useEffect(() => {
     if (flow === FLOW.SPLASH) {
-      const timer = setTimeout(() => {
+      const splashTimer = setTimeout(() => {
         handleExploreClick();
       }, 2000);
-      return () => clearTimeout(timer);
+      return () => clearTimeout(splashTimer);
     }
   }, [flow, handleExploreClick]);
 
