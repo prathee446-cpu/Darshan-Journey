@@ -273,13 +273,13 @@ export default function LoginPage({
     // Ensure Google Identity Services script is ready
     const isLoaded = await ensureGoogleGisLoaded(3500);
 
-    // Preferred Fast GIS OAuth 2.0 Popup Token Client
+    // Preferred Fast GIS OAuth 2.0 Popup Token Client (Forces Account Picker & Mandatory OTP)
     if (isLoaded && window.google?.accounts?.oauth2) {
       try {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'openid email profile',
-          prompt: '',
+          prompt: 'select_account',
           callback: async (tokenResponse) => {
             if (tokenResponse?.error) {
               setIsGoogleLoading(false);
@@ -316,21 +316,15 @@ export default function LoginPage({
                 const data = await res.json();
                 setIsGoogleLoading(false);
 
-                if (res.ok && data.success) {
-                  if (data.requiresOtp || data.requireOtp) {
-                    // First-time or unverified Google login -> Show OTP Verification screen
-                    setGoogleEmail(data.email);
-                    setGoogleTempToken(data.tempAuthToken || '');
-                    setFlow(FLOW.GOOGLE_OTP);
-                    setOtpDigits(['', '', '', '', '', '']);
-                    setCooldownSeconds(data.cooldownSeconds || 30);
-                    showToast(data.message || `📩 Verification code sent to ${data.email}`);
-                    setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
-                  } else if (data.user) {
-                    // Returning verified Google devotee -> Immediate application session
-                    showToast(data.message || `✨ Welcome back, ${data.user.fullName || data.user.name}!`);
-                    handleSuccessfulAuth(data.user, data.token);
-                  }
+                if (res.ok && data.success && data.email) {
+                  // Mandatory Google login OTP verification step
+                  setGoogleEmail(data.email);
+                  setGoogleTempToken(data.tempAuthToken || '');
+                  setFlow(FLOW.GOOGLE_OTP);
+                  setOtpDigits(['', '', '', '', '', '']);
+                  setCooldownSeconds(data.cooldownSeconds || 30);
+                  showToast(data.message || `📩 Verification code sent to ${data.email}`);
+                  setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
                 } else {
                   if (res.status === 401) {
                     setGoogleError('Invalid Google credential. Please try again.');
@@ -356,7 +350,7 @@ export default function LoginPage({
           }
         });
 
-        tokenClient.requestAccessToken();
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
       } catch (err) {
         console.warn('Failed to invoke Token Client, trying redirect fallback:', err);
@@ -394,21 +388,15 @@ export default function LoginPage({
             const data = await res.json();
             setIsGoogleLoading(false);
 
-            if (res.ok && data.success) {
-              if (data.requiresOtp || data.requireOtp) {
-                // First-time Google login
-                setGoogleEmail(data.email);
-                setGoogleTempToken(data.tempAuthToken || '');
-                setFlow(FLOW.GOOGLE_OTP);
-                setOtpDigits(['', '', '', '', '', '']);
-                setCooldownSeconds(data.cooldownSeconds || 30);
-                showToast(data.message || `📩 Verification code sent to ${data.email}`);
-                setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
-              } else if (data.user) {
-                // Returning verified Google devotee
-                showToast(data.message || `✨ Welcome back, ${data.user.fullName || data.user.name}!`);
-                handleSuccessfulAuth(data.user, data.token);
-              }
+            if (res.ok && data.success && data.email) {
+              // Mandatory Google login OTP verification step
+              setGoogleEmail(data.email);
+              setGoogleTempToken(data.tempAuthToken || '');
+              setFlow(FLOW.GOOGLE_OTP);
+              setOtpDigits(['', '', '', '', '', '']);
+              setCooldownSeconds(data.cooldownSeconds || 30);
+              showToast(data.message || `📩 Verification code sent to ${data.email}`);
+              setTimeout(() => otpInputRefs.current[0]?.focus(), 300);
             } else {
               setGoogleError(data.detail || data.message || 'Google authentication failed. Please try again.');
             }

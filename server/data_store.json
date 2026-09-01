@@ -1976,6 +1976,27 @@
   ],
   "users": [
     {
+      "fullName": "Ashwin",
+      "name": "Ashwin",
+      "username": "ashwin_09",
+      "email": "iftheworldwasending07@gmail.com",
+      "phone": "9791323853",
+      "mobile": "9791323853",
+      "passwordHash": "$2b$10$IsESJ0ocJSANyY9MZEEsp.oei7z/m2hnwmCpLyQSWXOZbsnzqqlwC",
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "local",
+      "googleId": null,
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "A",
+      "createdAt": "2026-09-01T14:31:12.768Z",
+      "updatedAt": "2026-09-01T14:31:12.768Z",
+      "lastLogin": "2026-09-01T14:31:12.768Z",
+      "_id": "6a96e1b0ad8d254f0436cefa",
+      "id": "6a96e1b0ad8d254f0436cefa"
+    },
+    {
       "_id": "6a841ded5111d231ae67e63d",
       "id": "u-3",
       "name": "Siddharth Iyer",
@@ -2155,8 +2176,8 @@
       "status": "active",
       "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJdmtTuZnMw7riIObgLYN3I7lmSfdZhX9e39iJijipCxe-wkqQ=s96-c",
       "createdAt": "2026-08-31T12:03:41.597Z",
-      "updatedAt": "2026-08-31T14:32:04.799Z",
-      "lastLogin": "2026-08-31T14:32:04.799Z",
+      "updatedAt": "2026-09-01T10:08:55.797Z",
+      "lastLogin": "2026-09-01T10:08:55.797Z",
       "id": "6a956d9ddd8a395992c02ea2"
     },
     {
@@ -2197,8 +2218,8 @@
       "status": "active",
       "avatar": "Z",
       "createdAt": "2026-08-31T13:58:31.396Z",
-      "updatedAt": "2026-08-31T14:31:48.887Z",
-      "lastLogin": "2026-08-31T14:31:48.887Z",
+      "updatedAt": "2026-09-01T08:55:59.611Z",
+      "lastLogin": "2026-09-01T08:55:59.611Z",
       "id": "6a9588871fe22e2665ebcdec"
     },
     {
@@ -2222,6 +2243,28 @@
       "updatedAt": "2026-08-31T14:31:30.677Z",
       "lastLogin": "2026-08-31T14:31:30.677Z",
       "id": "6a959042a9a233a1f07e0016"
+    },
+    {
+      "_id": "6a959675fc2a683f58319331",
+      "fullName": "Alan",
+      "name": "Alan",
+      "username": "bemyygirlll",
+      "email": "bemyygirlll@gmail.com",
+      "phone": "",
+      "mobile": "",
+      "passwordHash": null,
+      "address": "",
+      "emergencyContact": "",
+      "authProvider": "google",
+      "googleId": "114173066987758138465",
+      "googleSub": "114173066987758138465",
+      "emailVerified": true,
+      "status": "active",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJR0x7Na2VvgD_DUZ7gnjxem_ztWJynw9aKIGw-X4sDIGzxjA=s96-c",
+      "createdAt": "2026-08-31T14:57:57.600Z",
+      "updatedAt": "2026-08-31T14:57:57.600Z",
+      "lastLogin": "2026-08-31T14:57:57.600Z",
+      "id": "6a959675fc2a683f58319331"
     }
   ],
   "admins": [
@@ -2562,7 +2605,7 @@
       "templeId": "",
       "passwordHash": "7e2a820bd4ed4ce6fb38579ade4de390b72b33940ca43149f49f83ff3f88ce349aa01970872f7017797e31d78d201a1adce156ea35eb01a2e72d4d5316949d69",
       "salt": "8ce6a0b88e5e27db24a56b9069eee6aa",
-      "lastLogin": "2026-08-31 14:55",
+      "lastLogin": "2026-09-01 14:34",
       "createdAt": "2026-08-31T14:20:18.200Z"
     }
   ],
@@ -2992,5 +3035,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-08-31T14:55:47.318Z"
+  "lastSaved": "2026-09-01T14:34:16.748Z"
 }

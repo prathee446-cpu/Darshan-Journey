@@ -7764,14 +7764,56 @@ function generateOtp() {
   return String(crypto.randomInt(100000, 999999));
 }
 
+function getSmtpCredentials() {
+  const email = (process.env.SMTP_EMAIL || process.env.EMAIL_USER || process.env.SMTP_USER || process.env.GMAIL_USER || '').trim();
+  const password = (process.env.SMTP_PASSWORD || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '');
+  const host = (process.env.SMTP_HOST || '').trim();
+  const port = parseInt(process.env.SMTP_PORT, 10) || 465;
+  return { email, password, host, port };
+}
+
+function createSmtpTransporter() {
+  const { email, password, host, port } = getSmtpCredentials();
+  if (!email || !password) return null;
+
+  if (host) {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user: email, pass: password }
+    });
+  }
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: email, pass: password }
+  });
+}
+
+async function verifySmtpTransporter() {
+  const { email, password } = getSmtpCredentials();
+  if (!email || !password) {
+    console.warn('⚠️ [SMTP WARNING] SMTP_EMAIL / EMAIL_USER or SMTP_PASSWORD / EMAIL_PASS not configured in .env.');
+    return false;
+  }
+  try {
+    const transporter = createSmtpTransporter();
+    if (!transporter) return false;
+    await transporter.verify();
+    console.log(`✅ [SMTP TRANSPORTER] Gmail SMTP service verified & ready to dispatch OTPs (${email}).`);
+    return true;
+  } catch (err) {
+    console.error(`❌ [SMTP TRANSPORTER VERIFY FAILED] (${email}):`, err.message);
+    return false;
+  }
+}
+
 async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration = false) {
-  const smtpEmail = (process.env.SMTP_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER || '').trim();
-  const smtpPassword = (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '');
-  const smtpHost = (process.env.SMTP_HOST || '').trim();
-  const smtpPort = parseInt(process.env.SMTP_PORT, 10) || 465;
+  const { email: smtpEmail, password: smtpPassword, host: smtpHost, port: smtpPort } = getSmtpCredentials();
 
   if (!smtpEmail || !smtpPassword) {
-    const missingVar = !smtpEmail && !smtpPassword ? 'SMTP_EMAIL and SMTP_PASSWORD' : (!smtpEmail ? 'SMTP_EMAIL' : 'SMTP_PASSWORD');
+    const missingVar = !smtpEmail && !smtpPassword ? 'SMTP_EMAIL/EMAIL_USER and SMTP_PASSWORD' : (!smtpEmail ? 'SMTP_EMAIL/EMAIL_USER' : 'SMTP_PASSWORD');
     const errMsg = `Email service not configured: ${missingVar} missing in .env. Please configure your Gmail address (SMTP_EMAIL) and 16-character App Password (SMTP_PASSWORD) in .env to dispatch real email codes.`;
     console.warn(`⚠️ [Email Service] ${errMsg}`);
     return {
@@ -7781,7 +7823,6 @@ async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration =
     };
   }
 
-  // Validate that smtpEmail contains @ (e.g., in case an App Password was mistakenly placed in SMTP_EMAIL)
   if (!smtpEmail.includes('@')) {
     const errMsg = `Invalid SMTP_EMAIL configuration: SMTP_EMAIL must be a valid email address (e.g. yourname@gmail.com). A 16-character App Password must be placed in SMTP_PASSWORD instead.`;
     console.warn(`⚠️ [Email Service] ${errMsg}`);
@@ -7793,23 +7834,10 @@ async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration =
   }
 
   try {
-    const transportConfig = smtpHost ? {
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpEmail,
-        pass: smtpPassword
-      }
-    } : {
-      service: 'gmail',
-      auth: {
-        user: smtpEmail,
-        pass: smtpPassword
-      }
-    };
-
-    const transporter = nodemailer.createTransport(transportConfig);
+    const transporter = createSmtpTransporter();
+    if (!transporter) {
+      throw new Error('Failed to initialize Nodemailer SMTP transporter.');
+    }
 
     const actionText = isRegistration
       ? 'complete your account registration'
@@ -8392,76 +8420,7 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
 
     const cleanEmail = normalizeEmail(userInfo.email);
     const displayName = userInfo.name || cleanEmail.split('@')[0];
-    const usersCol = dbManager.getCollection('users');
-
-    // Check if user already exists in database and is verified
-    let userDoc = await usersCol.findOne({
-      $or: [
-        { email: cleanEmail },
-        ...(userInfo.sub ? [{ googleId: userInfo.sub }, { googleSub: userInfo.sub }] : [])
-      ]
-    });
-
-    // If user is an existing verified Google user, log in immediately without OTP
-    if (userDoc && (userDoc.emailVerified === true || userDoc.authProvider === 'google' || userDoc.googleId || userDoc.googleSub)) {
-      const nowIso = new Date().toISOString();
-      const updates = { lastLogin: nowIso, updatedAt: nowIso, status: 'active', emailVerified: true };
-      if (userInfo.picture && (!userDoc.avatar || userDoc.avatar.length <= 2)) {
-        updates.avatar = userInfo.picture;
-        userDoc.avatar = userInfo.picture;
-      }
-      if (userInfo.sub && !userDoc.googleId) {
-        updates.googleId = userInfo.sub;
-        updates.googleSub = userInfo.sub;
-      }
-      await usersCol.updateOne({ _id: userDoc._id }, { $set: updates });
-      userDoc.lastLogin = nowIso;
-
-      const userId = String(userDoc._id);
-      const token = jwt.sign(
-        {
-          sub: userId,
-          email: cleanEmail,
-          username: userDoc.username || cleanEmail.split('@')[0],
-          name: userDoc.fullName || userDoc.name || displayName
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-
-      setSessionCookie(res, token);
-
-      const userObj = {
-        id: userId,
-        _id: userId,
-        fullName: userDoc.fullName || userDoc.name || displayName,
-        name: userDoc.fullName || userDoc.name || displayName,
-        username: userDoc.username || cleanEmail.split('@')[0],
-        email: cleanEmail,
-        phone: userDoc.phone || userDoc.mobile || '',
-        mobile: userDoc.mobile || userDoc.phone || '',
-        address: userDoc.address || '',
-        emergencyContact: userDoc.emergencyContact || '',
-        authProvider: 'google',
-        provider: 'google',
-        status: 'active',
-        emailVerified: true,
-        avatar: userDoc.avatar || userInfo.picture || 'G',
-        createdAt: userDoc.createdAt,
-        lastLogin: userDoc.lastLogin
-      };
-
-      console.log(`✨ [RETURNING GOOGLE DEVOTEE] "${userObj.fullName}" (${cleanEmail}) authenticated without OTP.`);
-      return res.json({
-        success: true,
-        requiresOtp: false,
-        message: `✨ Welcome back, ${userObj.fullName}!`,
-        user: userObj,
-        token
-      });
-    }
-
-    // New or unverified Google account -> Generate and dispatch 6-digit OTP
+    // Mandatory OTP Verification: Generate and dispatch 6-digit OTP for every Google login attempt
     if (!checkRateLimit(cleanEmail)) {
       return res.status(429).json({
         success: false,
@@ -8521,15 +8480,11 @@ app.post(['/api/auth/google', '/api/auth/google-send-otp'], async (req, res) => 
         cooldownSeconds: 30
       });
     } else {
-      console.warn(`⚠️ [Google Auth SMTP Notice] ${result.error}`);
-      return res.json({
-        success: true,
-        requiresOtp: true,
-        email: cleanEmail,
-        tempAuthToken,
-        message: `Verification code generated for ${cleanEmail}. (Check inbox or server console).`,
-        smtpNotice: result.error,
-        cooldownSeconds: 30
+      console.error(`❌ [Google Auth SMTP Delivery Failed] ${result.error}`);
+      return res.status(500).json({
+        success: false,
+        detail: `Failed to deliver verification code to ${cleanEmail}: ${result.error || 'SMTP delivery failure'}.`,
+        message: `Unable to send verification email to ${cleanEmail}. Please verify your Gmail SMTP configuration in .env.`
       });
     }
   } catch (error) {
@@ -8550,6 +8505,16 @@ app.post(['/api/auth/google-resend-otp', '/api/auth/google/resend-otp', '/api/au
     }
 
     const cleanEmail = normalizeEmail(email);
+
+    if (!checkRateLimit(cleanEmail)) {
+      return res.status(429).json({
+        success: false,
+        detail: 'Too many resend attempts. Please wait a moment before requesting another code.',
+        cooldownSeconds: 60
+      });
+    }
+
+    // Lookup pending verification in Mongo or memory
     const otpsCol = dbManager.getCollection('google_otps');
     let pending = await otpsCol.findOne({ email: cleanEmail });
     if (!pending) {
@@ -8559,26 +8524,25 @@ app.post(['/api/auth/google-resend-otp', '/api/auth/google/resend-otp', '/api/au
     if (!pending) {
       return res.status(400).json({
         success: false,
-        detail: 'No active Google authentication session found. Please click Continue with Google again.'
-      });
-    }
-
-    if (!checkRateLimit(cleanEmail)) {
-      return res.status(429).json({
-        success: false,
-        message: 'Too many verification requests. Please wait a few minutes before trying again.',
-        cooldownSeconds: 60
+        detail: 'No active verification session found. Please sign in with Google again.'
       });
     }
 
     const newOtp = generateOtp();
+    const tempAuthToken = pending.tempAuthToken || (crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(24).toString('hex'));
     const now = Date.now();
-    const expiresAt = new Date(now + OTP_EXPIRY_MS);
 
-    // Update in MongoDB
     await otpsCol.updateOne(
       { email: cleanEmail },
-      { $set: { otp: String(newOtp).trim(), createdAt: new Date(now), expiresAt, attempts: 0 } },
+      {
+        $set: {
+          otp: String(newOtp).trim(),
+          tempAuthToken,
+          createdAt: new Date(now),
+          expiresAt: new Date(now + OTP_EXPIRY_MS),
+          attempts: 0
+        }
+      },
       { upsert: true }
     );
 
@@ -8603,12 +8567,11 @@ app.post(['/api/auth/google-resend-otp', '/api/auth/google/resend-otp', '/api/au
         cooldownSeconds: 30
       });
     } else {
-      console.warn(`⚠️ [Google Resend OTP SMTP Notice] ${result.error}`);
-      return res.json({
-        success: true,
-        message: `New verification code generated for ${cleanEmail}. (Check inbox or server console).`,
-        smtpNotice: result.error,
-        cooldownSeconds: 30
+      console.error(`❌ [Google Resend OTP SMTP Delivery Failed] ${result.error}`);
+      return res.status(500).json({
+        success: false,
+        detail: `Failed to resend verification code: ${result.error || 'SMTP delivery failure'}.`,
+        message: `Failed to resend verification code to ${cleanEmail}. Please verify SMTP settings.`
       });
     }
   } catch (error) {
@@ -9283,6 +9246,7 @@ async function startServer() {
   console.log('🔄 Initializing Darshan Journey Express Backend...');
   await store.init();
   await dbManager.connect();
+  await verifySmtpTransporter();
   app.listen(PORT, () => {
     console.log('============================================================');
     console.log(`🚀 Backend: http://localhost:${PORT}`);
