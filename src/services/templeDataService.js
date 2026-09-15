@@ -6,7 +6,7 @@ export const REAL_TAMIL_NADU_TEMPLES = [
   {
     id: 1,
     name: "Meenakshi Sundareswarar Temple",
-    coverImage: "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1200&q=80",
+    coverImage: "/temples/meenakshi_amman_temple.jpg",
     address: "Madurai Main, East Chitrai Street, Madurai, Tamil Nadu 625001",
     district: "Madurai",
     state: "Tamil Nadu",
@@ -74,7 +74,7 @@ export const REAL_TAMIL_NADU_TEMPLES = [
   {
     id: 3,
     name: "Arulmigu Subramaniya Swamy Temple (Tiruchendur)",
-    coverImage: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80",
+    coverImage: "/temples/thiruchendur_temple.jpg",
     address: "Temple Road, Tiruchendur, Thoothukudi District, Tamil Nadu 628215",
     district: "Thoothukudi",
     state: "Tamil Nadu",
@@ -109,7 +109,7 @@ export const REAL_TAMIL_NADU_TEMPLES = [
   {
     id: 4,
     name: "Sri Ranganathaswamy Temple (Srirangam)",
-    coverImage: "https://images.unsplash.com/photo-1609946782701-790100780287?auto=format&fit=crop&w=1200&q=80",
+    coverImage: "/temples/srirangam_temple.jpg",
     address: "Srirangam, Tiruchirappalli, Tamil Nadu 620006",
     district: "Tiruchirappalli",
     state: "Tamil Nadu",
@@ -143,7 +143,7 @@ export const REAL_TAMIL_NADU_TEMPLES = [
   {
     id: 5,
     name: "Arulmigu Dhandayuthapani Swamy Temple (Palani)",
-    coverImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80",
+    coverImage: "/temples/palani_temple.jpg",
     address: "Giri Veethi, Palani, Dindigul District, Tamil Nadu 624601",
     district: "Dindigul",
     state: "Tamil Nadu",

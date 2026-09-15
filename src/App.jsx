@@ -16,6 +16,7 @@ import QuickBookingPage from './components/QuickBookingPage';
 import ContactPage from './components/ContactPage';
 import UserDashboardPage from './components/UserDashboardPage';
 import DateTimeWidget from './components/DateTimeWidget';
+import CookieConsent from './components/CookieConsent';
 import { AuthProvider } from './context/AuthContext';
 import MaintenanceGuard from './components/MaintenanceGuard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -381,6 +382,7 @@ export default function App() {
       <BrowserRouter>
         <AppRoutes />
         <DateTimeWidget />
+        <CookieConsent />
       </BrowserRouter>
     </AuthProvider>
   );

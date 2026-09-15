@@ -68,7 +68,7 @@ const TEMPLE_REVIEWS = [
     location: "Madurai, Tamil Nadu",
     reviewerName: "Sharaa R",
     visitDate: "May 2026",
-    image: "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=400&q=80"
+    image: "/temples/meenakshi_amman_temple.jpg"
   }
 ];
 

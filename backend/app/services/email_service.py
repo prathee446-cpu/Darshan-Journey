@@ -118,8 +118,11 @@ def send_otp_email(to_email: str, otp: str, user_name: str = "Devotee") -> dict:
         }
 
     try:
+        from_name = getattr(settings, "SMTP_FROM_NAME", "Darshan Journey") or "Darshan Journey"
+        clean_from = f'"{from_name}" <{smtp_email}>'
         msg = MIMEMultipart("alternative")
-        msg["From"] = f"Darshan Journey <{smtp_email}>"
+        msg["From"] = clean_from
+        msg["Reply-To"] = clean_from
         msg["To"] = to_email
         msg["Subject"] = f"Darshan Journey — Verification Code: {otp}"
 

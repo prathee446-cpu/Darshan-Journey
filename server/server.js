@@ -6858,7 +6858,7 @@ async function findAuthorizedAdmin(email) {
   } catch (e) {}
 
   // 4. Check if matching SMTP admin / superadmin email
-  const smtpAdmin = (process.env.SMTP_EMAIL || '').toLowerCase().trim();
+  const smtpAdmin = (process.env.SMTP_EMAIL || process.env.EMAIL_USER || '').toLowerCase().trim();
   if (smtpAdmin && cleanEmail === smtpAdmin) {
     const defaultSuper = {
       id: 'adm-super-smtp',
@@ -7769,25 +7769,29 @@ function getSmtpCredentials() {
   const password = (process.env.SMTP_PASSWORD || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '');
   const host = (process.env.SMTP_HOST || '').trim();
   const port = parseInt(process.env.SMTP_PORT, 10) || 465;
-  return { email, password, host, port };
+  const rawFromName = (process.env.SMTP_FROM_NAME || process.env.EMAIL_FROM_NAME || 'Darshan Journey').trim();
+  const fromName = rawFromName.replace(/^["']|["']$/g, '').trim() || 'Darshan Journey';
+  return { email, password, host, port, fromName };
 }
 
 function createSmtpTransporter() {
-  const { email, password, host, port } = getSmtpCredentials();
+  const { email, password, host, port, fromName } = getSmtpCredentials();
   if (!email || !password) return null;
 
-  if (host) {
-    return nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user: email, pass: password }
-    });
-  }
+  const transportConfig = host
+    ? {
+        host,
+        port,
+        secure: port === 465,
+        auth: { user: email, pass: password }
+      }
+    : {
+        service: 'gmail',
+        auth: { user: email, pass: password }
+      };
 
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: email, pass: password }
+  return nodemailer.createTransport(transportConfig, {
+    from: `"Darshan Journey" <${email}>`
   });
 }
 
@@ -7810,7 +7814,7 @@ async function verifySmtpTransporter() {
 }
 
 async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration = false) {
-  const { email: smtpEmail, password: smtpPassword, host: smtpHost, port: smtpPort } = getSmtpCredentials();
+  const { email: smtpEmail, password: smtpPassword, host: smtpHost, port: smtpPort, fromName } = getSmtpCredentials();
 
   if (!smtpEmail || !smtpPassword) {
     const missingVar = !smtpEmail && !smtpPassword ? 'SMTP_EMAIL/EMAIL_USER and SMTP_PASSWORD' : (!smtpEmail ? 'SMTP_EMAIL/EMAIL_USER' : 'SMTP_PASSWORD');
@@ -7825,6 +7829,17 @@ async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration =
 
   if (!smtpEmail.includes('@')) {
     const errMsg = `Invalid SMTP_EMAIL configuration: SMTP_EMAIL must be a valid email address (e.g. yourname@gmail.com). A 16-character App Password must be placed in SMTP_PASSWORD instead.`;
+    console.warn(`⚠️ [Email Service] ${errMsg}`);
+    return {
+      success: false,
+      method: 'smtp',
+      error: errMsg
+    };
+  }
+
+  const cleanRecipientEmail = (toEmail || '').trim().toLowerCase();
+  if (!cleanRecipientEmail || !cleanRecipientEmail.includes('@')) {
+    const errMsg = `Invalid recipient email address: "${toEmail}".`;
     console.warn(`⚠️ [Email Service] ${errMsg}`);
     return {
       success: false,
@@ -7886,15 +7901,22 @@ async function sendOtpEmail(toEmail, otp, userName = 'Devotee', isRegistration =
 
     const textBody = `Namaste ${userName},\n\nYour Darshan Journey verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nBlessings,\nDarshan Journey Team`;
 
+    // ─── SENDER IDENTITY CONFIGURATION ───
+    const senderDisplayName = 'Darshan Journey';
+    const cleanSenderEmail = smtpEmail.trim();
+    // RFC 5322 formatted sender string: "Darshan Journey" <cleanSenderEmail>
+    const formattedSenderAddress = `"${senderDisplayName}" <${cleanSenderEmail}>`;
+
     await transporter.sendMail({
-      from: `"Darshan Journey" <${smtpEmail.trim()}>`,
-      to: toEmail,
+      from: formattedSenderAddress,
+      replyTo: formattedSenderAddress,
+      to: cleanRecipientEmail,
       subject: `Darshan Journey — Verification Code: ${otp}`,
       text: textBody,
       html: htmlBody
     });
 
-    console.log(`✉️ Real OTP email sent successfully to: ${toEmail}`);
+    console.log(`✉️ Real OTP email sent successfully from "${senderDisplayName}" <${cleanSenderEmail}> to: ${cleanRecipientEmail}`);
     return { success: true, method: 'smtp' };
   } catch (error) {
     console.error('❌ Failed to send OTP email via SMTP:', error.message);

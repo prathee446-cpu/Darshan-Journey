@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
 
     # Gmail SMTP for OTP email delivery
+    SMTP_FROM_NAME: str = "Darshan Journey"
     SMTP_EMAIL: str = ""
     SMTP_PASSWORD: str = ""
 
