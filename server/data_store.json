@@ -1593,6 +1593,44 @@
   ],
   "bookings": [
     {
+      "bookingType": "DARSHAN",
+      "templeId": 5,
+      "templeName": "Arulmigu Dhandayuthapani Swamy Temple (Palani)",
+      "location": "Dindigul",
+      "darshanType": "Special Darshan",
+      "serviceName": "Aarti",
+      "bookingDate": "2026-09-26",
+      "bookingTime": "5:00 PM – 6:00 PM",
+      "numberOfPeople": 1,
+      "devoteesBreakdown": {
+        "adults": 1,
+        "children": 0,
+        "seniors": 0
+      },
+      "devoteeName": "Rajii",
+      "mobile": "7826860201",
+      "email": "rajielite28@gmail.com",
+      "address": "",
+      "emergencyContact": "09876543768",
+      "amount": 1208,
+      "paymentMethod": "UPI",
+      "paymentStatus": "PAID",
+      "bookingStatus": "CONFIRMED",
+      "bookingReference": "DJ-XPVJKW",
+      "instructions": "Please arrive 15 minutes prior. Carry a valid government photo ID.",
+      "bookingId": "DJ-XPVJKW",
+      "timestamp": "2026-09-22T08:30:53.415Z",
+      "status": "CONFIRMED",
+      "id": "BK-9106",
+      "customer": "Rajii",
+      "service": "Special Pooja Pass",
+      "serviceType": "Special Pooja Pass",
+      "temple": "Arulmigu Dhandayuthapani Swamy Temple (Palani)",
+      "totalAmount": 501,
+      "transactionId": "UPI-TXN-1790065853439",
+      "createdAt": "2026-09-22T08:30:53.439Z"
+    },
+    {
       "_id": "6a7b428c6d4625c1ac770a84",
       "bookingId": "DJ-TEST-1786462859674",
       "refNumber": "DJ-TEST-1786462859674",
@@ -2012,6 +2050,46 @@
       "transactionId": "UPI-TXN-1788884662727",
       "createdAt": "2026-09-08T16:24:22.727Z",
       "date": "2026-09-23"
+    },
+    {
+      "_id": "6aabfeeea57af1416a3017a7",
+      "bookingType": "DARSHAN",
+      "templeId": 6,
+      "templeName": "Ramanathaswamy Temple (Rameswaram)",
+      "location": "Ramanathapuram",
+      "darshanType": "Special Darshan",
+      "serviceName": "Aarti",
+      "bookingDate": "2026-09-25",
+      "bookingTime": "7:00 PM – 8:00 PM",
+      "numberOfPeople": 5,
+      "devoteesBreakdown": {
+        "adults": 1,
+        "children": 2,
+        "seniors": 2
+      },
+      "devoteeName": "Rajii",
+      "mobile": "7826860201",
+      "email": "rajielite28@gmail.com",
+      "address": "",
+      "emergencyContact": "09876543768",
+      "amount": 4568,
+      "paymentMethod": "UPI",
+      "paymentStatus": "PAID",
+      "bookingStatus": "CONFIRMED",
+      "bookingReference": "DJ-B5R4ZG",
+      "instructions": "Please arrive 15 minutes prior. Carry a valid government photo ID.",
+      "bookingId": "DJ-B5R4ZG",
+      "timestamp": "2026-09-17T14:53:34.724Z",
+      "status": "CONFIRMED",
+      "id": "BK-1265",
+      "customer": "Rajii",
+      "service": "Special Pooja Pass",
+      "serviceType": "Special Pooja Pass",
+      "temple": "Ramanathaswamy Temple (Rameswaram)",
+      "totalAmount": 501,
+      "transactionId": "UPI-TXN-1789656814730",
+      "createdAt": "2026-09-17T14:53:34.730Z",
+      "date": "2026-09-25"
     }
   ],
   "users": [
@@ -2124,14 +2202,15 @@
       "googleId": "109161774221264938410",
       "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKk2dcNZsc0wtpy5We33pUUMyc7hRuXVjzpoB-xf6vwhWoVew=s96-c",
       "role": "Devotee",
-      "status": "Active",
+      "status": "active",
       "emailVerified": true,
       "bookingCount": 0,
       "totalSpent": "₹0",
       "createdAt": "2026-08-30T10:30:35.920Z",
-      "updatedAt": "2026-09-13T16:24:42.801Z",
-      "lastLogin": "2026-08-30T10:30:35.920Z",
-      "registrationDate": "2026-08-30"
+      "updatedAt": "2026-09-16T15:42:26.977Z",
+      "lastLogin": "2026-09-16T15:42:26.977Z",
+      "registrationDate": "2026-08-30",
+      "googleSub": "109161774221264938410"
     },
     {
       "_id": "6a950074672f90a2db9ecaad",
@@ -2183,11 +2262,11 @@
       "name": "Rajii",
       "username": "rajielite28",
       "email": "rajielite28@gmail.com",
-      "phone": "",
+      "phone": "7826860201",
       "mobile": "",
       "passwordHash": null,
       "address": "",
-      "emergencyContact": "",
+      "emergencyContact": "09876543768",
       "authProvider": "google",
       "googleId": "113383827365448941466",
       "googleSub": "113383827365448941466",
@@ -2195,8 +2274,8 @@
       "status": "active",
       "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJdmtTuZnMw7riIObgLYN3I7lmSfdZhX9e39iJijipCxe-wkqQ=s96-c",
       "createdAt": "2026-08-31T12:03:41.597Z",
-      "updatedAt": "2026-09-01T14:33:11.868Z",
-      "lastLogin": "2026-09-01T14:33:11.868Z",
+      "updatedAt": "2026-09-22T08:30:47.106Z",
+      "lastLogin": "2026-09-15T14:55:47.239Z",
       "id": "6a956d9ddd8a395992c02ea2"
     },
     {
@@ -2230,15 +2309,15 @@
       "mobile": "9791323853",
       "passwordHash": "$2b$10$1dd9HvloMyT3GtVI/SEF6u7aNPDAOF9ciFBqToBCDQrcP2vZ1wU4S",
       "address": "",
-      "emergencyContact": "",
+      "emergencyContact": "09876543247",
       "authProvider": "local",
       "googleId": null,
       "emailVerified": true,
       "status": "active",
       "avatar": "Z",
       "createdAt": "2026-08-31T13:58:31.396Z",
-      "updatedAt": "2026-09-15T05:47:08.881Z",
-      "lastLogin": "2026-09-15T05:47:08.881Z",
+      "updatedAt": "2026-09-22T08:31:56.769Z",
+      "lastLogin": "2026-09-15T14:52:32.139Z",
       "id": "6a9588871fe22e2665ebcdec"
     },
     {
@@ -2336,11 +2415,11 @@
       "email": "admin@darshanjourney.com",
       "role": "Super Admin",
       "status": "Active",
-      "lastLogin": "2026-08-31 13:59",
+      "lastLogin": "2026-09-16 15:54",
       "permissions": "Full Access (All Operations, Settings & Financials)",
-      "passwordHash": "914d005625805d5687ff5dbb335c781466ed4fc166a61634f72a163b203f7f3415b0b73f23205560b20938b361c8d42e47efd7fa3cb0416b23ca7004d53fd056",
-      "salt": "fb0ce17ed1772a7a2edeb90ff170114c",
-      "updatedAt": "2026-08-30T09:27:22.995Z"
+      "passwordHash": "7e80fe9a76c8e6d59e5cf767b33271587dd2a2de074a238b0a8eb044809989984d609d05db3b76901efe0a4f22d262e932edf34d86d0913a2ec9f88fab3f930a",
+      "salt": "3958cb5dbbbec0e07a4fdc228c0f31b9",
+      "updatedAt": "2026-09-17T14:52:26.373Z"
     },
     {
       "_id": "6a841ded5111d231ae67e642",
@@ -3113,5 +3192,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-09-15T06:14:05.284Z"
+  "lastSaved": "2026-09-22T08:31:56.851Z"
 }
