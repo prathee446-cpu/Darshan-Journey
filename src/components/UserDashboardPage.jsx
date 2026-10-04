@@ -645,7 +645,7 @@ export default function UserDashboardPage({
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '0.85rem'
           }}>
             {/* 1. Book Darshan */}
@@ -704,60 +704,7 @@ export default function UserDashboardPage({
               <span>Book Pooja / Seva</span>
             </button>
 
-            {/* 3. My Bookings */}
-            <button
-              onClick={() => {
-                setActiveTab('bookings');
-                setBookingFilter('all');
-              }}
-              style={{
-                background: activeTab === 'bookings' ? 'rgba(200, 169, 106, 0.16)' : '#FFFFFF',
-                border: `1.5px solid ${activeTab === 'bookings' ? '#C8A96A' : '#EADBCA'}`,
-                borderRadius: '14px',
-                padding: '0.9rem 1.1rem',
-                color: '#2A1715',
-                fontSize: '0.92rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={(e) => { if (activeTab !== 'bookings') e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
-            >
-              <span style={{ fontSize: '1.25rem' }}>🎫</span>
-              <span>My Bookings ({totalBookingsCount})</span>
-            </button>
-
-            {/* 4. Saved Temples */}
-            <button
-              onClick={() => setActiveTab('wishlist')}
-              style={{
-                background: activeTab === 'wishlist' ? 'rgba(200, 169, 106, 0.16)' : '#FFFFFF',
-                border: `1.5px solid ${activeTab === 'wishlist' ? '#C8A96A' : '#EADBCA'}`,
-                borderRadius: '14px',
-                padding: '0.9rem 1.1rem',
-                color: '#2A1715',
-                fontSize: '0.92rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                boxShadow: '0 3px 12px rgba(52, 31, 29, 0.03)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8A96A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={(e) => { if (activeTab !== 'wishlist') e.currentTarget.style.borderColor = '#EADBCA'; e.currentTarget.style.transform = 'none'; }}
-            >
-              <span style={{ fontSize: '1.25rem' }}>❤️</span>
-              <span>Saved Temples ({savedTemplesCount})</span>
-            </button>
-
-            {/* 5. Explore Temples */}
+            {/* 3. Explore Temples */}
             <button
               onClick={() => {
                 if (onExploreTemples) onExploreTemples();
@@ -875,52 +822,27 @@ export default function UserDashboardPage({
                 padding: '1.5rem 1.75rem',
                 boxShadow: '0 4px 20px rgba(52, 31, 29, 0.04)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.3rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: 'rgba(200, 169, 106, 0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#8C6036'
-                    }}>
-                      <Calendar size={20} />
-                    </div>
-                    <div>
-                      <h2 style={{ fontSize: '1.22rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
-                        Upcoming Bookings & Passes
-                      </h2>
-                      <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>
-                        Live confirmed bookings from database
-                      </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.3rem' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(200, 169, 106, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#8C6036'
+                  }}>
+                    <Calendar size={20} />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '1.22rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
+                      Upcoming Bookings & Passes
+                    </h2>
+                    <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>
+                      Live confirmed bookings from database
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => {
-                      setActiveTab('bookings');
-                      setBookingFilter('upcoming');
-                    }}
-                    style={{
-                      background: 'rgba(200, 169, 106, 0.1)',
-                      border: '1px solid #C8A96A',
-                      color: '#8C6036',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      borderRadius: '8px',
-                      padding: '0.4rem 0.85rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem'
-                    }}
-                  >
-                    <span>View All ({totalBookingsCount})</span>
-                    <ChevronRight size={14} />
-                  </button>
                 </div>
 
                 {isLoadingBookings ? (
@@ -1105,47 +1027,27 @@ export default function UserDashboardPage({
                 padding: '1.5rem 1.75rem',
                 boxShadow: '0 4px 20px rgba(52, 31, 29, 0.04)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: 'rgba(212, 175, 55, 0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#9B7536'
-                    }}>
-                      <Compass size={20} />
-                    </div>
-                    <div>
-                      <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
-                        Continue Your Pilgrimage
-                      </h2>
-                      <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>
-                        Curated historic temple destinations
-                      </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(212, 175, 55, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9B7536'
+                  }}>
+                    <Compass size={20} />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#2A1715', margin: 0 }}>
+                      Continue Your Pilgrimage
+                    </h2>
+                    <div style={{ fontSize: '0.78rem', color: '#7A6258' }}>
+                      Curated historic temple destinations
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#8C6036',
-                      fontWeight: 700,
-                      fontSize: '0.84rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem'
-                    }}
-                  >
-                    <span>Explore All</span>
-                    <ChevronRight size={14} />
-                  </button>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1187,30 +1089,10 @@ export default function UserDashboardPage({
                           </p>
                         </div>
 
-                        <div style={{ marginTop: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#8C6036', background: 'rgba(200, 169, 106, 0.12)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                        <div style={{ marginTop: '0.65rem', display: 'flex', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#8C6036', background: 'rgba(200, 169, 106, 0.12)', padding: '0.18rem 0.55rem', borderRadius: '6px' }}>
                             {item.category}
                           </span>
-
-                          <button
-                            onClick={() => onOpenBooking ? onOpenBooking() : (window.location.href = '/quick-booking')}
-                            style={{
-                              background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
-                              color: '#1A0F0E',
-                              border: 'none',
-                              borderRadius: '6px',
-                              padding: '0.38rem 0.85rem',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem'
-                            }}
-                          >
-                            <span>Book Darshan</span>
-                            <ArrowRight size={12} />
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -1311,29 +1193,11 @@ export default function UserDashboardPage({
                 padding: '1.4rem 1.5rem',
                 boxShadow: '0 4px 15px rgba(52, 31, 29, 0.03)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <User size={18} color="#8C6036" />
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#2A1715', margin: 0 }}>
-                      Devotee Profile Details
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => setIsProfileModalOpen(true)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#8C6036',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <Edit3 size={13} /> Edit
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.9rem' }}>
+                  <User size={18} color="#8C6036" />
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#2A1715', margin: 0 }}>
+                    Devotee Profile Details
+                  </h3>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.84rem' }}>
@@ -1683,31 +1547,13 @@ export default function UserDashboardPage({
         {/* ═══════════════════════════════════════════════════════════════ */}
         {activeTab === 'wishlist' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '2.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.3rem' }}>
-              <div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
-                  Your Saved Temples & Sacred Wishlist
-                </h2>
-                <p style={{ fontSize: '0.86rem', color: '#7A6258', margin: 0 }}>
-                  Sacred shrines bookmarked for future pilgrimages
-                </p>
-              </div>
-
-              <button
-                onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
-                style={{
-                  background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
-                  color: '#1A0F0E',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '0.55rem 1.2rem',
-                  fontSize: '0.86rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                + Explore More Temples
-              </button>
+            <div style={{ marginBottom: '1.3rem' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
+                Your Saved Temples & Sacred Wishlist
+              </h2>
+              <p style={{ fontSize: '0.86rem', color: '#7A6258', margin: 0 }}>
+                Sacred shrines bookmarked for future pilgrimages
+              </p>
             </div>
 
             {savedTemples.length === 0 ? (
@@ -1723,23 +1569,9 @@ export default function UserDashboardPage({
                 <h3 style={{ fontSize: '1.2rem', color: '#2A1715', margin: '0 0 0.5rem 0' }}>
                   No Saved Temples Yet
                 </h3>
-                <p style={{ fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto 1.5rem auto' }}>
+                <p style={{ fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto', lineHeight: 1.5 }}>
                   Explore Tamil Nadu's sacred temples and tap the heart icon to save them to your pilgrimage wishlist.
                 </p>
-                <button
-                  onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
-                  style={{
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
-                    color: '#1A0F0E',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '0.65rem 1.4rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Explore Temples Catalog
-                </button>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.3rem' }}>
@@ -1791,44 +1623,9 @@ export default function UserDashboardPage({
                       <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#2A1715', margin: '0 0 0.25rem 0' }}>
                         {temple.name}
                       </h3>
-                      <div style={{ fontSize: '0.82rem', color: '#7A6258', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.85rem' }}>
+                      <div style={{ fontSize: '0.82rem', color: '#7A6258', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <MapPin size={13} color="#8C6036" />
                         <span>{temple.location || 'Tamil Nadu, India'}</span>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          onClick={() => onOpenBooking ? onOpenBooking() : (window.location.href = '/quick-booking')}
-                          style={{
-                            flex: 1.2,
-                            background: 'linear-gradient(135deg, #D4AF37 0%, #B88E4C 100%)',
-                            color: '#1A0F0E',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.55rem',
-                            fontSize: '0.82rem',
-                            fontWeight: 700,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Book Darshan
-                        </button>
-                        <button
-                          onClick={() => onExploreTemples ? onExploreTemples() : (window.location.href = '/explore')}
-                          style={{
-                            flex: 1,
-                            background: 'rgba(200, 169, 106, 0.12)',
-                            border: '1px solid #C8A96A',
-                            color: '#6E4D2C',
-                            borderRadius: '8px',
-                            padding: '0.55rem',
-                            fontSize: '0.82rem',
-                            fontWeight: 600,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Details
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -2103,28 +1900,6 @@ export default function UserDashboardPage({
                       <Edit3 size={15} /> Edit Personal Information
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    style={{
-                      width: '100%',
-                      padding: '0.6rem',
-                      borderRadius: '10px',
-                      border: '1px solid rgba(234, 67, 53, 0.25)',
-                      background: 'rgba(234, 67, 53, 0.08)',
-                      color: '#D93025',
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem'
-                    }}
-                  >
-                    <LogOut size={15} /> Sign Out of Darshan Journey
-                  </button>
                 </div>
               </form>
             </motion.div>
