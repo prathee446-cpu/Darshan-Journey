@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import GoldParticles from './GoldParticles';
 import AuthModal from './AuthModal';
 import VirtualDarshanModal from './VirtualDarshanModal';
 import { Volume2, VolumeX, Flame } from 'lucide-react';
+import { useWebsiteContent } from '../context/ContentContext';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 import shivaImg from '../assets/shiva_statue_transparent.png';
 import deity1 from '../assets/deity_1.png';
@@ -10,22 +12,43 @@ import deity2 from '../assets/deity_2.png';
 import deity3 from '../assets/deity_3.png';
 import deity4 from '../assets/deity_4.png';
 
-const HERO_IMAGES = [shivaImg, deity1, deity2, deity3, deity4];
+const DEFAULT_HERO_IMAGES = [shivaImg, deity1, deity2, deity3, deity4];
 
 export default function LandingPage({ onExplore }) {
+  const { home, lastFetched } = useWebsiteContent();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDarshanOpen, setIsDarshanOpen] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [diyaActive, setDiyaActive] = useState(true);
 
+  // Compute live hero images from published home content with rock-solid original fallbacks
+  const heroImages = useMemo(() => {
+    const list = [];
+    const shivaSrc = home?.shivaStatueImage;
+    const isDefaultOrInvalidShiva = !shivaSrc || shivaSrc.includes('e2e_test') || shivaSrc.includes('shiva_statue_transparent.png');
+    list.push(isDefaultOrInvalidShiva ? shivaImg : resolveImageUrl(shivaSrc, home?.updatedAt || lastFetched, shivaImg));
+
+    if (Array.isArray(home?.deities) && home.deities.length > 0) {
+      home.deities.forEach((d, i) => {
+        const fallback = DEFAULT_HERO_IMAGES[i + 1] || deity1;
+        const imgVal = d?.image;
+        const isDefaultDeity = !imgVal || imgVal.includes(`deity_${i + 1}.png`);
+        list.push(isDefaultDeity ? fallback : resolveImageUrl(imgVal, home?.updatedAt || lastFetched, fallback));
+      });
+    } else {
+      list.push(deity1, deity2, deity3, deity4);
+    }
+    return list;
+  }, [home, lastFetched]);
+
   // Switch center deity image every 2 seconds
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % HERO_IMAGES.length);
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
     }, 2000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroImages.length]);
 
   // Web Audio API synthesized ambient temple bell chime
   const toggleAudio = () => {
@@ -85,12 +108,16 @@ export default function LandingPage({ onExplore }) {
           </div>
 
           <div className="statue-container">
-            {HERO_IMAGES.map((imgSrc, idx) => (
+            {heroImages.map((imgSrc, idx) => (
               <img 
                 key={idx}
                 src={imgSrc} 
                 alt={`Divine Deity ${idx + 1}`} 
                 className={`shiva-img ${idx === currentImageIndex ? 'active' : ''}`}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = DEFAULT_HERO_IMAGES[idx] || shivaImg;
+                }}
                 style={{
                   position: 'absolute',
                   top: '50%',

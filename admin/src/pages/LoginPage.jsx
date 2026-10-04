@@ -35,54 +35,52 @@ export default function LoginPage() {
   }, [navigate]);
 
   // ─── Admin Credentials Login Handler ───
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
     setError('');
 
     const inputUsername = username.trim();
     const inputPassword = password;
 
-    // Strict credential check: superadmin / 1234*&#
-    if (inputUsername === 'superadmin' && inputPassword === '1234*&#') {
-      setIsLoading(true);
-      const adminUser = {
-        id: 'adm_super_01',
-        name: 'Super Admin',
-        username: 'superadmin',
-        email: 'admin@darshanjourney.com',
-        role: 'SUPER_ADMIN',
-        rawRole: 'SUPER_ADMIN',
-        designation: 'Chief Administrator',
-        branch: 'All Branches',
-        temple: 'All Temples',
-        status: 'Active',
-        assignedModules: [
-          'services',
-          'temples',
-          'bookings',
-          'users',
-          'payments',
-          'reports',
-          'media',
-          'website-content',
-          'about',
-          'admin-management',
-          'settings'
-        ],
-        permissions: 'Full Access'
-      };
+    if (!inputUsername || !inputPassword) {
+      setError('Please enter both username/email and password.');
+      return;
+    }
 
-      const token = `darshan_adm_super_${Date.now()}`;
-      saveUserSession(token, adminUser, true);
-      setAuthenticatedAdmin(adminUser);
+    setIsLoading(true);
 
-      // Authenticating splash transition
-      setFlow(FLOW.SPLASH);
-      setTimeout(() => {
-        navigate('/admin', { replace: true });
-      }, 1500);
-    } else {
-      setError('Invalid username or password');
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inputUsername, password: inputPassword })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success && data.user) {
+        const adminUser = {
+          ...data.user,
+          assignedModules: data.user.assignedModules || [
+            'services', 'temples', 'bookings', 'users', 'payments', 'reports', 'media', 'website-content', 'about', 'admin-management', 'settings'
+          ],
+          permissions: data.user.permissions || 'Full Access'
+        };
+
+        saveUserSession(data.token, adminUser, true);
+        setAuthenticatedAdmin(adminUser);
+
+        // Authenticating splash transition
+        setFlow(FLOW.SPLASH);
+        setTimeout(() => {
+          navigate(data.redirectUrl || '/admin', { replace: true });
+        }, 1500);
+      } else {
+        setError(data.message || 'Invalid username or password');
+      }
+    } catch (err) {
+      setError('Network error connecting to administrative authentication service.');
+    } finally {
       setIsLoading(false);
     }
   };

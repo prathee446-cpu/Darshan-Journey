@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useParams, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import HomePage from './components/HomePage';
 import ExploreTemplesPage from './components/ExploreTemplesPage';
@@ -17,9 +17,12 @@ import ContactPage from './components/ContactPage';
 import UserDashboardPage from './components/UserDashboardPage';
 import DateTimeWidget from './components/DateTimeWidget';
 import CookieConsent from './components/CookieConsent';
+import FloatingChatbot from './components/FloatingChatbot';
 import { AuthProvider } from './context/AuthContext';
+import { ContentProvider } from './context/ContentContext';
 import MaintenanceGuard from './components/MaintenanceGuard';
 import ProtectedRoute from './components/ProtectedRoute';
+import DonationPage from './components/DonationPage';
 
 // Admin Panel Imports
 import '../admin/src/index.css';
@@ -75,6 +78,7 @@ function BlogDetailsWrapper(props) {
       onGoToAbout={() => { navigate('/about'); window.scrollTo(0, 0); }}
       onGoToDashboard={() => { navigate('/dashboard'); window.scrollTo(0, 0); }}
       onOpenBooking={() => { navigate('/quick-booking'); window.scrollTo(0, 0); }}
+      onOpenDonate={() => { navigate('/donate'); window.scrollTo(0, 0); }}
       onNavigateToBlog={(newSlug) => { navigate(`/blogs/${newSlug}`); window.scrollTo(0, 0); }}
     />
   );
@@ -94,6 +98,7 @@ function AppRoutes() {
     onGoToContact: () => { navigate('/contact'); window.scrollTo(0, 0); },
     onGoToDashboard: () => { navigate('/dashboard'); window.scrollTo(0, 0); },
     onOpenBooking: () => { navigate('/quick-booking'); window.scrollTo(0, 0); },
+    onOpenDonate: () => { navigate('/donate'); window.scrollTo(0, 0); },
   };
 
   return (
@@ -247,6 +252,22 @@ function AppRoutes() {
         } 
       />
       <Route 
+        path="/donate" 
+        element={
+          <MaintenanceGuard>
+            <DonationPage {...navProps} />
+          </MaintenanceGuard>
+        } 
+      />
+      <Route 
+        path="/donation" 
+        element={
+          <MaintenanceGuard>
+            <DonationPage {...navProps} />
+          </MaintenanceGuard>
+        } 
+      />
+      <Route 
         path="/blogs/:slug" 
         element={
           <MaintenanceGuard>
@@ -376,14 +397,28 @@ function AppRoutes() {
   );
 }
 
+function PublicChatbot() {
+  const location = useLocation();
+  const isExcludedRoute = 
+    location.pathname === '/' || 
+    location.pathname === '/landing' ||
+    location.pathname.startsWith('/admin') || 
+    location.pathname.startsWith('/sub-admin');
+  if (isExcludedRoute) return null;
+  return <FloatingChatbot />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <DateTimeWidget />
-        <CookieConsent />
-      </BrowserRouter>
+      <ContentProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <DateTimeWidget />
+          <CookieConsent />
+          <PublicChatbot />
+        </BrowserRouter>
+      </ContentProvider>
     </AuthProvider>
   );
 }

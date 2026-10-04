@@ -69,6 +69,8 @@ export default function MediaPage() {
   const [imageModalTab, setImageModalTab] = useState('upload'); // 'upload' | 'url' | 'library'
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState('');
+  const [selectedLibraryUrl, setSelectedLibraryUrl] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadFileError, setUploadFileError] = useState('');
 
   // 1. Fetch CMS Content from Server
@@ -192,6 +194,8 @@ export default function MediaPage() {
           ...prev,
           [activeCategory]: json.data
         }));
+        localStorage.setItem('darshan_last_update', Date.now().toString());
+        window.dispatchEvent(new Event('darshan_content_updated'));
         showToast(`✨ ${PAGE_CATEGORIES.find(c => c.key === activeCategory)?.label} is now published LIVE on Darshan Journey!`);
       } else {
         alert(json.message || 'Failed to publish content.');
@@ -226,26 +230,131 @@ export default function MediaPage() {
   };
 
   // 5. Open Image Picker / Uploader
-  const openImagePicker = (fieldPath, currentUrl, title) => {
+  const openImagePicker = (fieldPath, currentUrl, title, onSelect) => {
     setImageModalConfig({
       isOpen: true,
       fieldPath,
       currentUrl: currentUrl || '',
-      title: title || 'Change Photo'
+      title: title || 'Change Photo',
+      onSelect
     });
     setCustomImageUrl(currentUrl || '');
     setUploadPreviewUrl('');
+    setSelectedLibraryUrl(currentUrl || '');
     setUploadFileError('');
+    setUploadingFile(false);
     setImageModalTab('upload');
   };
 
-  const handleApplyImage = (newUrl) => {
-    if (!newUrl) return;
-    if (imageModalConfig?.fieldPath) {
-      handleFieldChange(imageModalConfig.fieldPath, newUrl);
+  const handleApplyImage = async (newUrl) => {
+    if (!newUrl) {
+      alert('Please select or upload an image first.');
+      return;
     }
-    setImageModalConfig(null);
-    showToast('Photo selected! Instant preview updated in right panel.');
+
+    setUploadingFile(true);
+
+    try {
+      let finalUrl = newUrl;
+
+      // If it's a base64 image from file input that hasn't finished uploading, upload now
+      if (finalUrl.startsWith('data:image/')) {
+        const uploadRes = await fetch('/api/media/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: finalUrl,
+            name: imageModalConfig?.title || 'media_asset'
+          })
+        });
+        if (!uploadRes.ok) {
+          const uErr = await uploadRes.json().catch(() => ({}));
+          throw new Error(uErr.message || 'Image upload to server failed');
+        }
+        const uJson = await uploadRes.json();
+        if (uJson.url) {
+          finalUrl = uJson.url;
+        }
+      }
+
+      // 1. If explicit onSelect callback was passed (e.g. Media Vault replace, article modal, etc.)
+      if (imageModalConfig?.onSelect) {
+        await imageModalConfig.onSelect(finalUrl);
+      } 
+      // 2. If fieldPath was passed from Page Controls (Home, About, Temples, Services, Booking, Login, Brand)
+      else if (imageModalConfig?.fieldPath) {
+        const field = imageModalConfig.fieldPath;
+        const pageKey = activeCategory;
+
+        let targetType = `${pageKey}.${field}`;
+        if (pageKey === 'home' && field === 'heroImage') targetType = 'home.heroImage';
+        else if (pageKey === 'home' && field === 'shivaStatueImage') targetType = 'home.shivaStatueImage';
+        else if (pageKey === 'home' && field.startsWith('deities.')) targetType = `home.${field}`;
+        else if (pageKey === 'home' && field.startsWith('darshanCards.')) targetType = `home.${field}`;
+        else if (pageKey === 'about' && field === 'heroImage') targetType = 'about.heroImage';
+        else if (pageKey === 'about' && field === 'storyImage') targetType = 'about.storyImage';
+        else if (pageKey === 'about' && field.startsWith('reviews.')) targetType = `about.${field}`;
+        else if (pageKey === 'booking' && field === 'heroImage') targetType = 'booking.heroImage';
+        else if (pageKey === 'login' && field === 'backgroundImage') targetType = 'login.backgroundImage';
+        else if (pageKey === 'brand' && field === 'logoMain') targetType = 'brand.logoMain';
+        else if (pageKey === 'brand' && field === 'logoTransparent') targetType = 'brand.favicon';
+        else if (pageKey === 'temples' && field === 'heroImage') targetType = 'temples.heroImage';
+        else if (pageKey === 'services' && field === 'heroImage') targetType = 'services.heroImage';
+
+        const repRes = await fetch('/api/media/replace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetType,
+            url: finalUrl,
+            newUrl: finalUrl,
+            title: imageModalConfig.title || field
+          })
+        });
+
+        if (!repRes.ok) {
+          const errData = await repRes.json().catch(() => ({}));
+          throw new Error(errData.message || errData.error || `Server responded with status ${repRes.status}`);
+        }
+
+        const repJson = await repRes.json();
+        const savedUrl = repJson.url || finalUrl;
+
+        // Immediately update currentEditData in local state for live preview
+        handleFieldChange(field, savedUrl);
+
+        // Keep pagesContent state updated
+        setPagesContent(prev => {
+          const updated = JSON.parse(JSON.stringify(prev));
+          if (updated[pageKey]) {
+            const keys = field.split('.');
+            let targetObj = updated[pageKey].published || updated[pageKey].draft || {};
+            for (let i = 0; i < keys.length - 1; i++) {
+              if (!targetObj[keys[i]]) targetObj[keys[i]] = {};
+              targetObj = targetObj[keys[i]];
+            }
+            targetObj[keys[keys.length - 1]] = savedUrl;
+          }
+          return updated;
+        });
+
+        // Broadcast to public site
+        localStorage.setItem('darshan_last_update', Date.now().toString());
+        window.dispatchEvent(new Event('darshan_content_updated'));
+
+        showToast('✨ Photo applied successfully! Updated across Darshan Journey.');
+        await fetchAllContent();
+      }
+
+      // Close modal on success
+      setImageModalConfig(null);
+    } catch (err) {
+      console.error('Apply Photo Error:', err);
+      alert('Failed to update photo: ' + err.message);
+      // Keep previous image unchanged, do not show success message!
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const handleFileUploadChange = async (e) => {
@@ -260,12 +369,15 @@ export default function MediaPage() {
       return;
     }
 
+    setUploadingFile(true);
+    setUploadFileError('');
+
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const base64 = evt.target?.result;
       setUploadPreviewUrl(base64);
 
-      // Upload to server
+      // Upload to server and get permanent static URL
       try {
         const uploadRes = await fetch('/api/media/upload', {
           method: 'POST',
@@ -280,8 +392,14 @@ export default function MediaPage() {
           setUploadPreviewUrl(uploadJson.url);
         }
       } catch (uploadErr) {
-        console.warn('Server upload notice, using local base64 preview:', uploadErr);
+        console.warn('Server upload notice, using local preview:', uploadErr);
+      } finally {
+        setUploadingFile(false);
       }
+    };
+    reader.onerror = () => {
+      setUploadFileError('Failed to read image file.');
+      setUploadingFile(false);
     };
     reader.readAsDataURL(file);
   };
@@ -650,6 +768,34 @@ export default function MediaPage() {
             showToast('Asset URL copied to clipboard!');
           }}
           onOpenUpload={() => setIsUploadModalOpen(true)}
+          onReplaceAsset={(item) => {
+            openImagePicker(
+              null,
+              item.url,
+              `Replace Photo: ${item.title}`,
+              async (newUrl) => {
+                const res = await fetch('/api/media/replace', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    id: item.id,
+                    targetType: item.targetType || 'media',
+                    targetId: item.targetId || item.id,
+                    newUrl,
+                    title: item.title
+                  })
+                });
+                if (!res.ok) {
+                  const errJson = await res.json().catch(() => ({}));
+                  throw new Error(errJson.message || errJson.error || `Failed to update image (Status: ${res.status})`);
+                }
+                showToast(`✨ Successfully updated "${item.title}"! Changes are live.`);
+                localStorage.setItem('darshan_last_update', Date.now().toString());
+                window.dispatchEvent(new Event('darshan_content_updated'));
+                await fetchAllContent();
+              }
+            );
+          }}
         />
       ) : (
         /* STANDARD PAGE SPLIT STUDIO (CONTROLS ON LEFT, LIVE PREVIEW ON RIGHT) */
@@ -950,21 +1096,26 @@ export default function MediaPage() {
                       borderRadius: '12px',
                       border: '2px dashed rgba(234, 179, 8, 0.3)',
                       background: 'rgba(234, 179, 8, 0.03)',
-                      cursor: 'pointer',
+                      cursor: uploadingFile ? 'wait' : 'pointer',
                       textAlign: 'center'
                     }}>
-                      <Upload size={32} className="text-yellow-400" />
+                      {uploadingFile ? (
+                        <RefreshCw size={32} className="text-yellow-400 animate-spin" />
+                      ) : (
+                        <Upload size={32} className="text-yellow-400" />
+                      )}
                       <div>
                         <p style={{ margin: 0, fontWeight: 600, color: '#fef08a', fontSize: '0.92rem' }}>
-                          Click to select a photo from your computer
+                          {uploadingFile ? 'Uploading photo to server...' : 'Click to select a photo from your computer'}
                         </p>
                         <p style={{ margin: '0.3rem 0 0 0', color: '#71717a', fontSize: '0.78rem' }}>
-                          Supports PNG, JPG, WEBP (Max 8MB)
+                          Supports PNG, JPG, WEBP, SVG (Max 8MB)
                         </p>
                       </div>
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingFile}
                         onChange={handleFileUploadChange}
                         style={{ display: 'none' }}
                       />
@@ -976,13 +1127,15 @@ export default function MediaPage() {
                       </p>
                     )}
 
-                    {uploadPreviewUrl && (
+                    {(uploadPreviewUrl || imageModalConfig?.currentUrl) && (
                       <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                        <p style={{ fontSize: '0.8rem', color: '#a1a1aa', marginBottom: '0.4rem' }}>Selected Preview:</p>
+                        <p style={{ fontSize: '0.8rem', color: '#a1a1aa', marginBottom: '0.4rem' }}>
+                          {uploadPreviewUrl ? 'Selected File Preview:' : 'Current Photo:'}
+                        </p>
                         <img
-                          src={uploadPreviewUrl}
+                          src={uploadPreviewUrl || imageModalConfig?.currentUrl}
                           alt="Preview"
-                          style={{ maxHeight: '160px', borderRadius: '8px', border: '1px solid rgba(234,179,8,0.3)', objectFit: 'cover' }}
+                          style={{ maxHeight: '160px', maxWidth: '100%', borderRadius: '8px', border: '1px solid rgba(234,179,8,0.3)', objectFit: 'contain' }}
                         />
                       </div>
                     )}
@@ -992,13 +1145,13 @@ export default function MediaPage() {
                 {imageModalTab === 'url' && (
                   <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', color: '#d4d4d8', marginBottom: '0.4rem' }}>
-                      Image Direct Link / Path:
+                      Image Direct Link / Relative Path:
                     </label>
                     <input
                       type="text"
                       value={customImageUrl}
                       onChange={(e) => setCustomImageUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/... or /assets/photo.jpg"
+                      placeholder="https://images.unsplash.com/... or /assets/photo.jpg or /uploads/..."
                       style={{
                         width: '100%',
                         padding: '0.65rem 0.8rem',
@@ -1016,7 +1169,7 @@ export default function MediaPage() {
                           src={customImageUrl}
                           alt="URL Preview"
                           onError={(e) => { e.target.style.display = 'none'; }}
-                          style={{ maxHeight: '160px', borderRadius: '8px', border: '1px solid rgba(234,179,8,0.3)', objectFit: 'cover' }}
+                          style={{ maxHeight: '160px', maxWidth: '100%', borderRadius: '8px', border: '1px solid rgba(234,179,8,0.3)', objectFit: 'contain' }}
                         />
                       </div>
                     )}
@@ -1024,26 +1177,44 @@ export default function MediaPage() {
                 )}
 
                 {imageModalTab === 'library' && (
-                  <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
-                    {mediaVaultList.slice(0, 15).map((item, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => handleApplyImage(item.url)}
-                        style={{
-                          cursor: 'pointer',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          overflow: 'hidden',
-                          background: '#000',
-                          position: 'relative'
-                        }}
-                      >
-                        <img src={item.url} alt={item.title} style={{ width: '100%', height: '70px', objectFit: 'cover' }} />
-                        <div style={{ padding: '0.3rem', fontSize: '0.68rem', color: '#d4d4d8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.title}
-                        </div>
-                      </div>
-                    ))}
+                  <div>
+                    <p style={{ fontSize: '0.8rem', color: '#a1a1aa', margin: '0 0 0.8rem 0' }}>
+                      Click any photo from the Media Vault library to select it:
+                    </p>
+                    <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+                      {mediaVaultList.map((item, idx) => {
+                        const isSelected = (selectedLibraryUrl === item.url) || (!selectedLibraryUrl && imageModalConfig?.currentUrl === item.url);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => {
+                              setSelectedLibraryUrl(item.url);
+                              setCustomImageUrl(item.url);
+                            }}
+                            onDoubleClick={() => handleApplyImage(item.url)}
+                            style={{
+                              cursor: 'pointer',
+                              borderRadius: '8px',
+                              border: isSelected ? '2px solid #eab308' : '1px solid rgba(255,255,255,0.1)',
+                              boxShadow: isSelected ? '0 0 10px rgba(234,179,8,0.4)' : 'none',
+                              overflow: 'hidden',
+                              background: '#000',
+                              position: 'relative'
+                            }}
+                          >
+                            <img src={item.url} alt={item.title} style={{ width: '100%', height: '70px', objectFit: 'cover' }} />
+                            {isSelected && (
+                              <div style={{ position: 'absolute', top: '4px', right: '4px', background: '#eab308', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Check size={12} color="#181510" strokeWidth={3} />
+                              </div>
+                            )}
+                            <div style={{ padding: '0.3rem', fontSize: '0.68rem', color: isSelected ? '#fef08a' : '#d4d4d8', fontWeight: isSelected ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {item.title}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1054,9 +1225,11 @@ export default function MediaPage() {
                 borderTop: '1px solid rgba(255,255,255,0.08)',
                 display: 'flex',
                 justifyContent: 'flex-end',
-                gap: '0.6rem'
+                alignItems: 'center',
+                gap: '0.8rem'
               }}>
                 <button
+                  type="button"
                   onClick={() => setImageModalConfig(null)}
                   style={{
                     padding: '0.55rem 1rem',
@@ -1071,23 +1244,41 @@ export default function MediaPage() {
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
-                    const finalUrl = imageModalTab === 'upload' ? uploadPreviewUrl : customImageUrl;
+                    let finalUrl = '';
+                    if (imageModalTab === 'upload') {
+                      finalUrl = uploadPreviewUrl || imageModalConfig?.currentUrl;
+                    } else if (imageModalTab === 'url') {
+                      finalUrl = customImageUrl || uploadPreviewUrl || imageModalConfig?.currentUrl;
+                    } else if (imageModalTab === 'library') {
+                      finalUrl = selectedLibraryUrl || customImageUrl || uploadPreviewUrl || imageModalConfig?.currentUrl;
+                    }
+                    if (!finalUrl) {
+                      alert('Please choose or upload a photo first.');
+                      return;
+                    }
                     handleApplyImage(finalUrl);
                   }}
-                  disabled={!(imageModalTab === 'upload' ? uploadPreviewUrl : customImageUrl)}
+                  disabled={uploadingFile}
                   style={{
-                    padding: '0.55rem 1.2rem',
+                    padding: '0.6rem 1.4rem',
                     borderRadius: '8px',
                     border: 'none',
                     background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
                     color: '#1a1306',
-                    fontSize: '0.85rem',
+                    fontSize: '0.88rem',
                     fontWeight: 700,
-                    cursor: 'pointer'
+                    cursor: uploadingFile ? 'wait' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)',
+                    opacity: uploadingFile ? 0.6 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
                   }}
                 >
-                  Apply Photo
+                  {uploadingFile ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} strokeWidth={3} />}
+                  <span>{uploadingFile ? 'Uploading...' : 'Apply Photo'}</span>
                 </button>
               </div>
             </motion.div>
@@ -1259,6 +1450,75 @@ function HomePageControls({ data = {}, onChange, onOpenImagePicker, expandedSect
                     const cards = [...(data.darshanCards || [])];
                     cards[idx].buttonLink = val;
                     onChange('darshanCards', cards);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      {/* 3. Shiva Statue Centerpiece */}
+      <SectionCard
+        title="3. Sacred Shiva Statue (Centerpiece)"
+        isOpen={expandedSections.shivaStatue || false}
+        onToggle={() => toggleSection('shivaStatue')}
+      >
+        <ImageField
+          label="Adiyogi Shiva Statue Image"
+          value={data.shivaStatueImage || '/shiva_statue.png'}
+          onChange={(val) => onChange('shivaStatueImage', val)}
+          onOpenPicker={() => onOpenImagePicker('shivaStatueImage', data.shivaStatueImage, 'Adiyogi Shiva Statue Centerpiece')}
+        />
+      </SectionCard>
+
+      {/* 4. Temple Deities (Hero Cards) */}
+      <SectionCard
+        title="4. Temple Deities (Hero Cards)"
+        isOpen={expandedSections.deities || false}
+        onToggle={() => toggleSection('deities')}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {(data.deities || [
+            { id: 'murugan', name: 'Lord Murugan', subtitle: 'God of War & Wisdom', image: '/murugan.png' },
+            { id: 'krishna', name: 'Lord Krishna', subtitle: 'The Supreme Divine', image: '/krishna.png' },
+            { id: 'ganesha', name: 'Lord Ganesha', subtitle: 'Remover of Obstacles', image: '/ganesha.png' },
+            { id: 'shiva', name: 'Lord Shiva', subtitle: 'The Cosmic Transformer', image: '/shiva_lingam.png' }
+          ]).map((deity, idx) => (
+            <div key={deity.id || idx} style={{ background: '#090806', borderRadius: '10px', padding: '0.8rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fef08a' }}>Deity {idx + 1}: {deity.name}</span>
+              </div>
+              <ImageField
+                label={`${deity.name} Image`}
+                value={deity.image}
+                onChange={(val) => {
+                  const deities = [...(data.deities || [])];
+                  if (!deities[idx]) deities[idx] = { ...deity };
+                  deities[idx].image = val;
+                  onChange('deities', deities);
+                }}
+                onOpenPicker={() => onOpenImagePicker(`deities.${idx}.image`, deity.image, `${deity.name} Image`)}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.4rem' }}>
+                <TextInput
+                  label="Deity Name"
+                  value={deity.name || ''}
+                  onChange={(val) => {
+                    const deities = [...(data.deities || [])];
+                    if (!deities[idx]) deities[idx] = { ...deity };
+                    deities[idx].name = val;
+                    onChange('deities', deities);
+                  }}
+                />
+                <TextInput
+                  label="Subtitle / Epithet"
+                  value={deity.subtitle || ''}
+                  onChange={(val) => {
+                    const deities = [...(data.deities || [])];
+                    if (!deities[idx]) deities[idx] = { ...deity };
+                    deities[idx].subtitle = val;
+                    onChange('deities', deities);
                   }}
                 />
               </div>
@@ -1952,7 +2212,7 @@ function ArticlesManagementView({ articlesList, searchQuery, setSearchQuery, cat
   );
 }
 
-function MediaVaultView({ mediaList, searchQuery, setSearchQuery, onCopyLink, onOpenUpload }) {
+function MediaVaultView({ mediaList, searchQuery, setSearchQuery, onCopyLink, onOpenUpload, onReplaceAsset }) {
   return (
     <div style={{ background: 'rgba(20, 18, 14, 0.75)', borderRadius: '16px', border: '1px solid rgba(234,179,8,0.15)', padding: '1.4rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.2rem' }}>
@@ -1972,22 +2232,66 @@ function MediaVaultView({ mediaList, searchQuery, setSearchQuery, onCopyLink, on
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
         {mediaList.map((item, idx) => (
-          <div key={idx} style={{ background: '#0d0c0a', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            <img src={item.url} alt={item.title} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
-            <div style={{ padding: '0.8rem' }}>
-              <h5 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fef08a', margin: '0 0 0.2rem 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {item.title}
-              </h5>
-              <p style={{ fontSize: '0.72rem', color: '#71717a', margin: '0 0 0.5rem 0' }}>{item.category || 'Asset'} • {item.page || 'Website'}</p>
-              <button
-                onClick={() => onCopyLink(item.url)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', padding: '0.4rem', borderRadius: '6px', border: '1px solid rgba(234,179,8,0.2)', background: 'rgba(234,179,8,0.08)', color: '#fef08a', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
-              >
-                <Copy size={12} />
-                <span>Copy Asset URL</span>
-              </button>
+          <div key={idx} style={{ background: '#0d0c0a', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ position: 'relative', height: '140px', background: '#000' }}>
+              <img src={item.url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div style={{ padding: '0.9rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+              <div>
+                <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fef08a', margin: '0 0 0.2rem 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {item.title}
+                </h5>
+                <p style={{ fontSize: '0.72rem', color: '#a1a1aa', margin: '0 0 0.8rem 0' }}>
+                  <span style={{ color: '#eab308', fontWeight: 600 }}>{item.category || 'Asset'}</span> • {item.page || 'Website'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => onReplaceAsset && onReplaceAsset(item)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    padding: '0.45rem',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(234,179,8,0.4)',
+                    background: 'linear-gradient(135deg, rgba(234,179,8,0.2) 0%, rgba(202,138,4,0.1) 100%)',
+                    color: '#fef08a',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Edit3 size={13} />
+                  <span>Change Photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCopyLink(item.url)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    padding: '0.35rem',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'transparent',
+                    color: '#a1a1aa',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Copy size={12} />
+                  <span>Copy Asset URL</span>
+                </button>
+              </div>
             </div>
           </div>
         ))}

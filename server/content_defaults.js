@@ -267,6 +267,33 @@ export const DEFAULT_PAGE_CONTENT = {
         buttonLink: "/about"
       }
     ],
+    shivaStatueImage: "/assets/shiva_statue_transparent.png",
+    deities: [
+      {
+        id: "deity-1",
+        name: "Meenakshi Amman (Madurai)",
+        location: "Madurai Sanctum",
+        image: "/assets/deity_1.png"
+      },
+      {
+        id: "deity-2",
+        name: "Kapaleeshwarar Shiva (Chennai)",
+        location: "Chennai Sanctum",
+        image: "/assets/deity_2.png"
+      },
+      {
+        id: "deity-3",
+        name: "Brihadeeswarar (Thanjavur)",
+        location: "Thanjavur Sanctum",
+        image: "/assets/deity_3.png"
+      },
+      {
+        id: "deity-4",
+        name: "Dhandayuthapani Murugan (Palani)",
+        location: "Palani Sanctum",
+        image: "/assets/deity_4.png"
+      }
+    ],
     updatedAt: new Date().toISOString()
   },
 

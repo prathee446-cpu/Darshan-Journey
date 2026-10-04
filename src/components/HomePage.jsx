@@ -21,8 +21,9 @@ import heroBg from '../assets/temple_hero_bg.png';
 import TempleCalendar from './TempleCalendar';
 import TestimonialsSection from './TestimonialsSection';
 import Navbar from './Navbar';
-import ContactSection from './ContactSection';
 import Footer from './Footer';
+import { useWebsiteContent } from '../context/ContentContext';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 export default function HomePage({ 
   onGoToHome,
@@ -38,22 +39,12 @@ export default function HomePage({
   onOpenBooking,
   onOpenDonate 
 }) {
+  const { home, brand, articles, lastFetched } = useWebsiteContent();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState('home');
-  const [isDonateOpen, setIsDonateOpen] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
-  const [readBlog, setReadBlog] = useState(null);
-  const [websiteContent, setWebsiteContent] = useState(null);
 
-  useEffect(() => {
-    fetch('/api/website-content')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data) setWebsiteContent(data.data || data);
-      })
-      .catch(() => {});
-  }, []);
+  const heroImageSrc = home?.heroImage ? resolveImageUrl(home.heroImage, home?.updatedAt || lastFetched, heroBg) : heroBg;
+  const logoSrc = brand?.logoMain ? resolveImageUrl(brand.logoMain, brand?.updatedAt || lastFetched, logoImg) : logoImg;
 
   const handleBlogClick = (slug) => {
     if (onGoToBlog) {
@@ -86,10 +77,6 @@ export default function HomePage({
     }
   };
 
-  const handlePlaceholderNav = (menuName) => {
-    alert(`Navigating to ${menuName} (Placeholder for Demo). You are currently exploring the active Home Page.`);
-  };
-
   return (
     <div className="home-website-wrapper">
       {/* ---------------- NAVBAR ---------------- */}
@@ -104,26 +91,23 @@ export default function HomePage({
         onGoToContact={onGoToContact}
         onGoToDashboard={onGoToDashboard}
         onGoToLogin={onGoToLogin}
-        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
-        onOpenDonate={onOpenDonate || (() => setIsDonateOpen(true))}
+        onOpenBooking={onOpenBooking || (() => { window.location.href = '/quick-booking'; })}
+        onOpenDonate={onOpenDonate || onGoToContact || (() => { window.location.href = '/contact'; })}
       />
-
 
       {/* ---------------- HERO SECTION ---------------- */}
       <section
         id="hero"
         className="hero-section"
         style={{
-          backgroundImage: websiteContent?.heroImage && !websiteContent.heroImage.includes('temple_hero_bg')
-            ? `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${websiteContent.heroImage}")`
-            : `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${heroBg}")`
+          backgroundImage: `linear-gradient(180deg, rgba(8, 7, 5, 0.6) 0%, rgba(10, 8, 5, 0.85) 100%), url("${heroImageSrc}")`
         }}
       >
         <div className="hero-overlay" />
         <div className="hero-content">
           <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
             <img 
-              src={logoImg} 
+              src={logoSrc} 
               alt="Darshan Journey Logo" 
               style={{ 
                 height: '85px', 
@@ -133,18 +117,18 @@ export default function HomePage({
               }} 
             />
           </div>
-          <span className="hero-subtitle-tag">{websiteContent?.heroSubtitle || "WELCOME TO OUR TEMPLE"}</span>
-          <h1 className="hero-heading">{websiteContent?.heroTitle || "Experience Divine Peace & Spiritual Heritage"}</h1>
+          <span className="hero-subtitle-tag">{home?.heroSubtitle || "WELCOME TO OUR SACRED SANCTUARY"}</span>
+          <h1 className="hero-heading">{home?.heroTitle || "Experience Divine Peace & Spiritual Heritage"}</h1>
           <p className="hero-desc">
-            {websiteContent?.heroDescription || "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace and devotion."}
+            {home?.heroDescription || "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace and devotion."}
           </p>
 
           <div className="hero-buttons">
             <button className="btn-primary" onClick={onExploreTemples}>
-              {websiteContent?.ctaPrimaryText || "Explore Temple"} <ArrowRight size={18} />
+              {home?.ctaPrimaryText || "Explore Temple"} <ArrowRight size={18} />
             </button>
-            <button className="btn-outline" onClick={() => setIsBookingOpen(true)}>
-              {websiteContent?.ctaSecondaryText || "Book Darshan"}
+            <button className="btn-outline" onClick={onOpenBooking || (() => { window.location.href = '/quick-booking'; })}>
+              {home?.ctaSecondaryText || "Book Darshan"}
             </button>
           </div>
         </div>
@@ -162,68 +146,60 @@ export default function HomePage({
           </div>
 
           <div className="blogs-grid">
-            {/* Article Card 1 */}
-            <div className="blog-card" style={{ cursor: 'pointer' }} onClick={() => handleBlogClick('gopuram-geometry-vastu')}>
-              <div className="blog-img-box">
-                <img src="https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80" alt="Temple Architecture" className="blog-img" />
-                <span className="blog-tag">HERITAGE & VASTU</span>
-              </div>
-              <div className="blog-body">
-                <div className="blog-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  <span>AUG 12, 2026 • 5 MIN READ</span>
-                  <span style={{ fontWeight: 600, color: 'var(--gold-primary)' }}>By Acharya Sundaram</span>
+            {(articles && articles.length > 0 ? articles.slice(0, 3) : [
+              {
+                slug: 'gopuram-geometry-vastu',
+                title: 'The Sacred Geometry & Vastu of Indian Gopuram Towers',
+                categoryBadge: 'HERITAGE & VASTU',
+                author: 'Acharya Sundaram',
+                date: 'AUG 12, 2026',
+                readTime: '5 MIN READ',
+                image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80',
+                snippet: 'Discover how ancient Dravidian and Nagara temple architecture channels cosmic energy through geometric alignment and stone acoustics.'
+              },
+              {
+                slug: 'om-namah-shivaya-benefits',
+                title: 'Spiritual Benefits of Chanting Om Namah Shivaya at Dawn',
+                categoryBadge: 'VEDIC PRACTICE',
+                author: 'Pandit Ramanathan',
+                date: 'JUL 28, 2026',
+                readTime: '4 MIN READ',
+                image: 'https://images.unsplash.com/photo-1609946782701-790100780287?auto=format&fit=crop&w=800&q=80',
+                snippet: 'Uncover the sound vibration frequency of the Panchakshari Mantra and its therapeutic effect on stress, focus, and inner peace.'
+              },
+              {
+                slug: 'panchamrit-divine-nectars',
+                title: 'Understanding Panchamrit: The 5 Divine Nectars of Abhishekam',
+                categoryBadge: 'RITUAL EXPLANATIONS',
+                author: 'Dr. Ananya Sharma',
+                date: 'JUL 15, 2026',
+                readTime: '6 MIN READ',
+                image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80',
+                snippet: 'Why milk, curd, honey, ghee, and jaggery are offered to the Lingam and how each nectar symbolizes purity and health.'
+              }
+            ]).map((art, idx) => (
+              <div key={art.id || art.slug || idx} className="blog-card" style={{ cursor: 'pointer' }} onClick={() => handleBlogClick(art.slug)}>
+                <div className="blog-img-box">
+                  <img 
+                    src={resolveImageUrl(art.image, art.updatedAt || lastFetched, 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80')} 
+                    alt={art.title} 
+                    className="blog-img" 
+                  />
+                  <span className="blog-tag">{art.categoryBadge || art.category || 'SPIRITUAL WISDOM'}</span>
                 </div>
-                <h3 className="blog-title">The Sacred Geometry & Vastu of Indian Gopuram Towers</h3>
-                <p className="blog-snippet">
-                  Discover how ancient Dravidian and Nagara temple architecture channels cosmic energy through geometric alignment and stone acoustics.
-                </p>
-                <button className="service-btn" onClick={(e) => { e.stopPropagation(); handleBlogClick('gopuram-geometry-vastu'); }}>
-                  Read More <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Article Card 2 */}
-            <div className="blog-card" style={{ cursor: 'pointer' }} onClick={() => handleBlogClick('om-namah-shivaya-benefits')}>
-              <div className="blog-img-box">
-                <img src="https://images.unsplash.com/photo-1609946782701-790100780287?auto=format&fit=crop&w=800&q=80" alt="Om Chanting" className="blog-img" />
-                <span className="blog-tag">VEDIC PRACTICE</span>
-              </div>
-              <div className="blog-body">
-                <div className="blog-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  <span>JUL 28, 2026 • 4 MIN READ</span>
-                  <span style={{ fontWeight: 600, color: 'var(--gold-primary)' }}>By Pandit Ramanathan</span>
+                <div className="blog-body">
+                  <div className="blog-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    <span>{art.date || 'AUG 2026'} • {art.readTime || '5 MIN READ'}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--gold-primary)' }}>By {art.author || 'Vedic Scholar'}</span>
+                  </div>
+                  <h3 className="blog-title">{art.title}</h3>
+                  <p className="blog-snippet">{art.snippet}</p>
+                  <button className="service-btn" onClick={(e) => { e.stopPropagation(); handleBlogClick(art.slug); }}>
+                    Read More <ArrowRight size={16} />
+                  </button>
                 </div>
-                <h3 className="blog-title">Spiritual Benefits of Chanting Om Namah Shivaya at Dawn</h3>
-                <p className="blog-snippet">
-                  Uncover the sound vibration frequency of the Panchakshari Mantra and its therapeutic effect on stress, focus, and inner peace.
-                </p>
-                <button className="service-btn" onClick={(e) => { e.stopPropagation(); handleBlogClick('om-namah-shivaya-benefits'); }}>
-                  Read More <ArrowRight size={16} />
-                </button>
               </div>
-            </div>
-
-            {/* Article Card 3 */}
-            <div className="blog-card" style={{ cursor: 'pointer' }} onClick={() => handleBlogClick('panchamrit-divine-nectars')}>
-              <div className="blog-img-box">
-                <img src="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80" alt="Panchamrit Ritual" className="blog-img" />
-                <span className="blog-tag">RITUAL EXPLANATIONS</span>
-              </div>
-              <div className="blog-body">
-                <div className="blog-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  <span>JUL 15, 2026 • 6 MIN READ</span>
-                  <span style={{ fontWeight: 600, color: 'var(--gold-primary)' }}>By Dr. Ananya Sharma</span>
-                </div>
-                <h3 className="blog-title">Understanding Panchamrit: The 5 Divine Nectars of Abhishekam</h3>
-                <p className="blog-snippet">
-                  Why milk, curd, honey, ghee, and jaggery are offered to the Lingam and how each nectar symbolizes purity and health.
-                </p>
-                <button className="service-btn" onClick={(e) => { e.stopPropagation(); handleBlogClick('panchamrit-divine-nectars'); }}>
-                  Read More <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -241,11 +217,8 @@ export default function HomePage({
 
           <TempleCalendar 
             onBookPooja={(templeName) => {
-              setSelectedService({
-                title: templeName ? `Special Pooja at ${templeName}` : "Temple Pooja & Darshan Pass",
-                price: "₹501"
-              });
-              setIsBookingOpen(true);
+              if (onOpenBooking) onOpenBooking();
+              else window.location.href = '/quick-booking';
             }} 
           />
         </div>
@@ -303,10 +276,7 @@ export default function HomePage({
       </section>
 
       {/* ---------------- 5. DEVOTEE TESTIMONIALS & TRUST STATS ---------------- */}
-      <TestimonialsSection onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))} />
-
-      {/* ---------------- 6. CONTACT US SECTION ---------------- */}
-      <ContactSection />
+      <TestimonialsSection onOpenBooking={onOpenBooking || (() => { if (onOpenBooking) onOpenBooking(); else window.location.href = '/quick-booking'; })} />
 
       {/* ---------------- 6. FOOTER ---------------- */}
       <Footer 
@@ -316,85 +286,8 @@ export default function HomePage({
         onGoToServices={onGoToServices}
         onGoToAbout={onGoToAbout}
         onGoToContact={onGoToContact}
-        onOpenBooking={onOpenBooking || (() => setIsBookingOpen(true))}
+        onOpenBooking={onOpenBooking || (() => { if (onOpenBooking) onOpenBooking(); else window.location.href = '/quick-booking'; })}
       />
-
-      {/* ---------------- DONATE MODAL ---------------- */}
-      <div className={`modal-overlay ${isDonateOpen ? 'active' : ''}`} onClick={() => setIsDonateOpen(false)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-btn" onClick={() => setIsDonateOpen(false)}>
-            <X size={22} />
-          </button>
-          <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', color: 'var(--primary-brown-dark)', marginBottom: '0.4rem' }}>
-              Support Our Temple Seva
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Your sacred contributions help sustain daily poojas, Anna Daan (free meals), and Goshala maintenance.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-            <button className="btn-primary" style={{ textAlign: 'center', padding: '0.8rem' }} onClick={() => { alert('Thank you for donating ₹501 to Anna Daan Seva!'); setIsDonateOpen(false); }}>
-              ₹501 • Anna Daan
-            </button>
-            <button className="btn-primary" style={{ textAlign: 'center', padding: '0.8rem' }} onClick={() => { alert('Thank you for donating ₹1,008 to Temple Renovation!'); setIsDonateOpen(false); }}>
-              ₹1,008 • Renovation
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ---------------- BOOKING MODAL ---------------- */}
-      <div className={`modal-overlay ${isBookingOpen ? 'active' : ''}`} onClick={() => setIsBookingOpen(false)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-btn" onClick={() => setIsBookingOpen(false)}>
-            <X size={22} />
-          </button>
-          <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', color: 'var(--primary-brown-dark)', marginBottom: '0.4rem' }}>
-              {selectedService ? `Book ${selectedService}` : 'Book Darshan & Pooja'}
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Select your preferred date and time slot for special priority entry and archana.
-            </p>
-          </div>
-
-          <form onSubmit={(e) => { e.preventDefault(); alert('Booking confirmed! Slot details sent to your registered phone.'); setIsBookingOpen(false); }}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary-brown-dark)', marginBottom: '0.4rem' }}>Devotee Name</label>
-              <input type="text" required placeholder="Enter full name" style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: '10px', border: '1px solid rgba(200, 169, 106, 0.4)', outline: 'none' }} />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary-brown-dark)', marginBottom: '0.4rem' }}>Preferred Date</label>
-              <input type="date" required style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: '10px', border: '1px solid rgba(200, 169, 106, 0.4)', outline: 'none' }} />
-            </div>
-
-            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              Confirm Booking <CheckCircle2 size={18} />
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* ---------------- READ BLOG MODAL ---------------- */}
-      <div className={`modal-overlay ${readBlog ? 'active' : ''}`} onClick={() => setReadBlog(null)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-btn" onClick={() => setReadBlog(null)}>
-            <X size={22} />
-          </button>
-          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: 'var(--primary-brown-dark)', marginBottom: '1rem' }}>
-            {readBlog}
-          </h3>
-          <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-            Ancient Vedic texts emphasize that temple structures function as physical representations of the human subtle body. From the garbhagriha (sanctum) to the gopuram, every stone is carved to resonate with specific acoustic frequencies during morning and evening Aartis.
-          </p>
-          <button className="btn-primary" onClick={() => setReadBlog(null)}>
-            Close Article
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

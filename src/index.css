@@ -11191,3 +11191,1357 @@ img {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   SACRED TEMPLE DONATION / SEVA PAGE STYLING (BROWN, CREAM, GOLD THEME)
+   ========================================================================== */
+
+.donate-page-wrapper {
+  background-color: var(--bg-dark, #120C08);
+  min-height: 100vh;
+  color: var(--text-primary, #EEDCB9);
+  position: relative;
+}
+
+/* ---------------- 1. HERO SECTION ---------------- */
+.donate-hero-section {
+  position: relative;
+  padding: 8rem 0 3.5rem 0;
+  text-align: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 20%, #2A1715 0%, #170E0A 60%, #0E0805 100%);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.donate-hero-ambient-glow {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70vw;
+  height: 50vh;
+  max-width: 900px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.donate-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.donate-sanskrit-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #FBE6C2;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 1.1rem;
+  border-radius: 9999px;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.donate-gold-sparkle {
+  color: #D4AF37;
+  animation: pulse 2.5s infinite ease-in-out;
+}
+
+.donate-hero-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 0.9rem;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FBE6C2 40%, #D4AF37 80%, #C8A96A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(212, 175, 55, 0.25);
+  letter-spacing: 0.02em;
+}
+
+.donate-hero-subtitle {
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: clamp(1rem, 1.8vw, 1.18rem);
+  color: #EEDCB9;
+  line-height: 1.65;
+  max-width: 720px;
+  margin: 0 auto 1.5rem auto;
+  opacity: 0.92;
+}
+
+.donate-gold-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 1.2rem auto 2rem auto;
+  max-width: 320px;
+}
+
+.donate-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6), transparent);
+}
+
+.donate-divider-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #D4AF37;
+}
+
+.donate-divider-icon {
+  color: #D4AF37;
+}
+
+.donate-trust-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.donate-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(38, 22, 18, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  padding: 0.45rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #F7EFE6;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+
+.donate-pill-icon {
+  color: #D4AF37;
+  flex-shrink: 0;
+}
+
+/* ---------------- 2. MAIN DONATION SECTION & GRID ---------------- */
+.donate-main-section {
+  padding: 3.5rem 0 5rem 0;
+  background: linear-gradient(180deg, #120C08 0%, #180F0B 50%, #120C08 100%);
+}
+
+.donate-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* LEFT COLUMN - STEPS */
+.donate-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.donate-card-step {
+  background: linear-gradient(135deg, rgba(38, 22, 18, 0.85) 0%, rgba(25, 15, 11, 0.95) 100%);
+  border: 1.2px solid rgba(212, 175, 55, 0.22);
+  border-radius: 18px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  position: relative;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.donate-card-step:hover {
+  border-color: rgba(212, 175, 55, 0.38);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), 0 0 15px rgba(212, 175, 55, 0.08);
+}
+
+.donate-step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.donate-step-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D4AF37 0%, #9B7536 100%);
+  color: #1A0E0C;
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(212, 175, 55, 0.35);
+}
+
+.donate-step-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #FBE6C2;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.02em;
+}
+
+.donate-step-desc {
+  font-size: 0.88rem;
+  color: #BC9F7A;
+  line-height: 1.45;
+}
+
+/* STEP 1: SEVA CAUSE CARDS */
+.donate-seva-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.15rem;
+}
+
+.donate-seva-card {
+  background: rgba(22, 13, 9, 0.65);
+  border: 1.2px solid rgba(212, 175, 55, 0.18);
+  border-radius: 14px;
+  padding: 1.3rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.donate-seva-card:hover {
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(35, 20, 15, 0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.donate-seva-card.active {
+  border-color: #D4AF37;
+  background: linear-gradient(135deg, rgba(62, 36, 28, 0.9) 0%, rgba(35, 20, 15, 0.95) 100%);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2), inset 0 0 12px rgba(212, 175, 55, 0.12);
+}
+
+.donate-seva-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.donate-seva-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #D4AF37;
+  transition: all 0.25s ease;
+}
+
+.donate-seva-icon-box.active {
+  background: linear-gradient(135deg, #D4AF37 0%, #B89230 100%);
+  color: #1A0E0C;
+  border-color: #D4AF37;
+}
+
+.donate-seva-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(212, 175, 55, 0.15);
+  color: #FBE6C2;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+}
+
+.donate-seva-sanskrit {
+  font-size: 0.75rem;
+  color: #D4AF37;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.donate-seva-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #F7EFE6;
+  margin-bottom: 0.45rem;
+}
+
+.donate-seva-desc {
+  font-size: 0.83rem;
+  color: #BC9F7A;
+  line-height: 1.45;
+  margin-bottom: 0.85rem;
+  flex: 1;
+}
+
+.donate-seva-impact {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  color: #FBE6C2;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.donate-seva-radio-indicator {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.donate-seva-card.active .donate-seva-radio-indicator {
+  background: #D4AF37;
+  border-color: #D4AF37;
+}
+
+/* STEP 2: AMOUNT SELECTION */
+.donate-amounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.95rem;
+  margin-bottom: 1.2rem;
+}
+
+.donate-amount-btn {
+  background: rgba(22, 13, 9, 0.65);
+  border: 1.2px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 1.1rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donate-amount-btn:hover {
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(35, 20, 15, 0.85);
+  transform: translateY(-2px);
+}
+
+.donate-amount-btn.active {
+  background: linear-gradient(135deg, #D4AF37 0%, #C8A96A 100%);
+  border-color: #D4AF37;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  transform: translateY(-2px);
+}
+
+.donate-amount-popular-tag {
+  position: absolute;
+  top: -9px;
+  background: #E53E3E;
+  color: #FFFFFF;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(229, 62, 62, 0.4);
+}
+
+.donate-amount-value {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #FBE6C2;
+  margin-bottom: 0.2rem;
+}
+
+.donate-amount-btn.active .donate-amount-value {
+  color: #1A0E0C;
+}
+
+.donate-amount-label {
+  font-size: 0.74rem;
+  color: #BC9F7A;
+  font-weight: 500;
+}
+
+.donate-amount-btn.active .donate-amount-label {
+  color: #2A1715;
+  font-weight: 600;
+}
+
+.donate-amount-custom-btn .donate-amount-value {
+  font-size: 1.05rem;
+}
+
+/* Custom Input Field */
+.donate-custom-input-wrap {
+  background: rgba(20, 12, 8, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.donate-custom-input-box {
+  display: flex;
+  align-items: center;
+  background: rgba(14, 8, 5, 0.9);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border-radius: 10px;
+  padding: 0.3rem 0.9rem;
+  margin-top: 0.4rem;
+  transition: border-color 0.2s ease;
+}
+
+.donate-custom-input-box:focus-within {
+  border-color: #D4AF37;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+}
+
+.donate-currency-prefix {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin-right: 0.5rem;
+}
+
+.donate-custom-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #FBE6C2;
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.donate-custom-input::placeholder {
+  color: rgba(188, 159, 122, 0.4);
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.donate-custom-helpers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  color: #BC9F7A;
+}
+
+.donate-chip-btn {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #FBE6C2;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.donate-chip-btn:hover {
+  background: rgba(212, 175, 55, 0.25);
+  border-color: #D4AF37;
+  color: #FFFFFF;
+}
+
+/* STEP 3: FORM FIELDS */
+.donate-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.donate-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem;
+}
+
+.donate-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.donate-input-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #EEDCB9;
+  letter-spacing: 0.01em;
+}
+
+.donate-req-star {
+  color: #E53E3E;
+  margin-left: 2px;
+}
+
+.donate-opt-tag {
+  font-size: 0.75rem;
+  color: #BC9F7A;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.donate-text-input {
+  width: 100%;
+  background: rgba(14, 8, 5, 0.75);
+  border: 1.2px solid rgba(212, 175, 55, 0.22);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: #F7EFE6;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.92rem;
+  outline: none;
+  transition: all 0.22s ease;
+}
+
+.donate-text-input:focus {
+  border-color: #D4AF37;
+  background: rgba(20, 11, 7, 0.9);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+.donate-text-input.has-error {
+  border-color: #E53E3E;
+  background: rgba(229, 62, 62, 0.05);
+}
+
+.donate-text-input::placeholder {
+  color: rgba(188, 159, 122, 0.45);
+}
+
+.donate-field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #FC8181;
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+.donate-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+  background: rgba(16, 9, 6, 0.5);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.donate-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.83rem;
+  color: #EEDCB9;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.donate-checkbox-label input[type="checkbox"] {
+  accent-color: #D4AF37;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---------------- 3. RIGHT SIDEBAR / SUMMARY CARD ---------------- */
+.donate-sidebar-column {
+  position: sticky;
+  top: 100px;
+}
+
+.donate-summary-card {
+  background: linear-gradient(135deg, rgba(42, 23, 17, 0.92) 0%, rgba(26, 14, 10, 0.96) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border-radius: 18px;
+  padding: 1.8rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+.donate-summary-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+
+.donate-summary-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #FBE6C2;
+}
+
+.donate-summary-badge {
+  font-size: 0.72rem;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #D4AF37;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.donate-summary-seva-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: rgba(14, 8, 5, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 1.2rem;
+}
+
+.donate-summary-seva-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.donate-summary-sanskrit {
+  font-size: 0.72rem;
+  color: #D4AF37;
+  font-weight: 600;
+}
+
+.donate-summary-seva-name {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #F7EFE6;
+}
+
+.donate-summary-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+  margin: 1.1rem 0;
+}
+
+.donate-summary-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.donate-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.donate-summary-label {
+  color: #BC9F7A;
+}
+
+.donate-summary-val {
+  color: #F7EFE6;
+  font-weight: 600;
+  text-align: right;
+}
+
+.donate-summary-val.green-text {
+  color: #10B981;
+}
+
+/* TOTAL AMOUNT BOX */
+.donate-total-box {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(155, 117, 54, 0.05) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 1.1rem;
+  text-align: center;
+  margin-bottom: 1.3rem;
+}
+
+.donate-total-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #BC9F7A;
+  margin-bottom: 0.25rem;
+}
+
+.donate-total-amount {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #FBE6C2;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+  margin-bottom: 0.2rem;
+}
+
+.donate-total-note {
+  font-size: 0.72rem;
+  color: #D4AF37;
+  font-style: italic;
+}
+
+/* PROCEED BUTTON */
+.donate-proceed-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #D4AF37 0%, #C8A96A 60%, #9B7536 100%);
+  color: #1E0F0C;
+  border: 1px solid #FBE6C2;
+  border-radius: 12px;
+  padding: 0.95rem 1.2rem;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.donate-proceed-btn:hover {
+  background: linear-gradient(135deg, #FBE6C2 0%, #D4AF37 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.55);
+}
+
+.donate-security-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.donate-sec-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  color: #BC9F7A;
+}
+
+.donate-vedic-quote {
+  font-size: 0.74rem;
+  color: #BC9F7A;
+  font-style: italic;
+  text-align: center;
+  margin-top: 1.2rem;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+/* ---------------- 4. FAQ SECTION ---------------- */
+.donate-faq-section {
+  padding: 4rem 0 5rem 0;
+  background: radial-gradient(circle at 50% 10%, #20130E 0%, #120C08 80%);
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.donate-faq-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3rem auto;
+}
+
+.donate-faq-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #FBE6C2;
+  margin: 0.6rem 0 0.5rem 0;
+}
+
+.donate-faq-subtitle {
+  font-size: 0.95rem;
+  color: #BC9F7A;
+}
+
+.donate-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.donate-faq-card {
+  background: rgba(30, 17, 12, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 14px;
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.donate-faq-q {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F7EFE6;
+  margin-bottom: 0.6rem;
+  line-height: 1.4;
+}
+
+.donate-faq-a {
+  font-size: 0.85rem;
+  color: #BC9F7A;
+  line-height: 1.55;
+}
+
+/* ---------------- 5. SECURE MODAL / CHECKOUT ---------------- */
+.donate-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 6, 4, 0.82);
+  backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.donate-modal-dialog {
+  background: linear-gradient(135deg, #261612 0%, #180D09 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(212, 175, 55, 0.2);
+  color: #F7EFE6;
+}
+
+.donate-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.6rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  background: rgba(18, 10, 7, 0.6);
+}
+
+.donate-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.donate-modal-logo img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.donate-modal-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FBE6C2;
+}
+
+.donate-modal-sub {
+  font-size: 0.78rem;
+  color: #BC9F7A;
+}
+
+.donate-modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #EEDCB9;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.donate-modal-close:hover {
+  background: rgba(212, 175, 55, 0.25);
+  color: #FFFFFF;
+}
+
+.donate-modal-body {
+  padding: 1.6rem;
+}
+
+.donate-modal-amount-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(155, 117, 54, 0.08) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 0.95rem 1.2rem;
+  margin-bottom: 1.4rem;
+}
+
+.donate-banner-sub {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #FBE6C2;
+}
+
+.donate-banner-name {
+  font-size: 0.76rem;
+  color: #BC9F7A;
+}
+
+.donate-banner-amt {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #D4AF37;
+}
+
+/* QR & UPI SECTION */
+.donate-qr-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background: rgba(14, 8, 5, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.donate-qr-box {
+  text-align: center;
+  margin-bottom: 0.9rem;
+}
+
+.donate-qr-inner {
+  position: relative;
+  background: #FFFFFF;
+  padding: 10px;
+  border-radius: 12px;
+  display: inline-block;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.donate-qr-img {
+  width: 160px;
+  height: 160px;
+  display: block;
+}
+
+.donate-qr-center-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1E0F0C;
+  border: 1.5px solid #D4AF37;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donate-qr-hint {
+  font-size: 0.78rem;
+  color: #BC9F7A;
+  margin-top: 0.6rem;
+}
+
+.donate-vpa-copy-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(26, 15, 10, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  margin-bottom: 0.85rem;
+}
+
+.donate-vpa-label {
+  font-size: 0.76rem;
+  color: #BC9F7A;
+}
+
+.donate-vpa-value {
+  font-family: monospace;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #FBE6C2;
+}
+
+.donate-copy-btn {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #FBE6C2;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.donate-copy-btn:hover {
+  background: #D4AF37;
+  color: #1A0E0C;
+}
+
+.donate-mobile-upi-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(155, 117, 54, 0.15) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #FBE6C2;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.donate-mobile-upi-btn:hover {
+  background: #D4AF37;
+  color: #1A0E0C;
+}
+
+/* REFERENCE NUMBER FORM */
+.donate-ref-form {
+  background: rgba(18, 10, 7, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.donate-ref-info-box {
+  margin-bottom: 1rem;
+}
+
+.donate-ref-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #FBE6C2;
+  margin-bottom: 0.2rem;
+}
+
+.donate-ref-desc {
+  font-size: 0.78rem;
+  color: #BC9F7A;
+  line-height: 1.4;
+}
+
+.donate-confirm-pay-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  transition: all 0.22s ease;
+}
+
+.donate-confirm-pay-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+  transform: translateY(-1px);
+}
+
+.donate-confirm-pay-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.donate-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* CONFIRMATION / E-RECEIPT VIEW */
+.donate-confirmed-view {
+  text-align: center;
+}
+
+.donate-success-icon-wrap {
+  margin-bottom: 0.8rem;
+}
+
+.donate-success-icon {
+  color: #10B981;
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.4));
+}
+
+.donate-confirmed-heading {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #FBE6C2;
+  margin-bottom: 0.4rem;
+}
+
+.donate-confirmed-sub {
+  font-size: 0.86rem;
+  color: #BC9F7A;
+  margin-bottom: 1.4rem;
+  line-height: 1.45;
+}
+
+.donate-receipt-card {
+  background: #FFFDF9;
+  color: #2A1715;
+  border-radius: 14px;
+  padding: 1.4rem;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  border: 1.5px solid #D4AF37;
+  margin-bottom: 1.5rem;
+}
+
+.donate-receipt-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px dashed #D4AF37;
+  margin-bottom: 1rem;
+}
+
+.donate-receipt-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.donate-receipt-title {
+  font-family: var(--font-serif, 'Cinzel', serif);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #341F1D;
+  margin-bottom: 0.15rem;
+}
+
+.donate-receipt-reg {
+  font-size: 0.7rem;
+  color: #785A3A;
+  font-weight: 600;
+}
+
+.donate-receipt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.donate-rc-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #785A3A;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.donate-rc-val {
+  color: #2A1715;
+  font-size: 0.84rem;
+}
+
+.donate-receipt-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F8F1E7;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #E2C285;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #341F1D;
+  margin-bottom: 0.85rem;
+}
+
+.donate-receipt-footer-notes {
+  font-size: 0.76rem;
+  color: #785A3A;
+  line-height: 1.4;
+  border-top: 1px dashed #D4AF37;
+  padding-top: 0.75rem;
+}
+
+.donate-confirmed-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.donate-print-btn {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1.2px solid #D4AF37;
+  color: #FBE6C2;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.donate-print-btn:hover {
+  background: #D4AF37;
+  color: #1A0E0C;
+}
+
+.donate-done-btn {
+  background: linear-gradient(135deg, #D4AF37 0%, #C8A96A 100%);
+  border: none;
+  color: #1E0F0C;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.35);
+  transition: all 0.22s ease;
+}
+
+.donate-done-btn:hover {
+  background: #FBE6C2;
+  transform: translateY(-1px);
+}
+
+/* ---------------- 6. RESPONSIVE BREAKPOINTS ---------------- */
+@media (max-width: 1024px) {
+  .donate-grid-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .donate-sidebar-column {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .donate-hero-section {
+    padding: 6.5rem 0 2.5rem 0;
+  }
+
+  .donate-hero-title {
+    font-size: 2.2rem;
+  }
+
+  .donate-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .donate-card-step {
+    padding: 1.4rem;
+  }
+
+  .donate-seva-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .donate-receipt-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .donate-confirmed-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .donate-print-btn, .donate-done-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
