@@ -1478,11 +1478,29 @@ export default function QuickBookingPage({
               </div>
 
               {!isEditingCustomer && customer.fullName ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem', fontSize: '0.82rem' }}>
-                  <div><span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem' }}>Name</span><strong>{customer.fullName}</strong></div>
-                  <div><span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem' }}>Mobile</span><strong>{customer.mobile}</strong></div>
-                  <div><span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem' }}>Email</span><strong>{customer.email}</strong></div>
-                  <div><span style={{ color: '#e05252', display: 'block', fontSize: '0.7rem', fontWeight: 700 }}>Emergency Contact *</span><strong style={{ color: '#341F1D' }}>{customer.emergencyContact || 'Required'}</strong></div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                  gap: '0.85rem 1.25rem',
+                  fontSize: '0.82rem',
+                  alignItems: 'start'
+                }}>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem', marginBottom: '0.2rem' }}>Name</span>
+                    <strong style={{ display: 'block', wordBreak: 'break-word', color: '#341F1D' }}>{customer.fullName}</strong>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem', marginBottom: '0.2rem' }}>Mobile</span>
+                    <strong style={{ display: 'block', wordBreak: 'break-word', color: '#341F1D' }}>{customer.mobile}</strong>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#9E7D3F', display: 'block', fontSize: '0.7rem', marginBottom: '0.2rem' }}>Email</span>
+                    <strong style={{ display: 'block', wordBreak: 'break-word', overflowWrap: 'anywhere', color: '#341F1D' }}>{customer.email}</strong>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#e05252', display: 'block', fontSize: '0.7rem', fontWeight: 700, marginBottom: '0.2rem' }}>Emergency Contact *</span>
+                    <strong style={{ display: 'block', wordBreak: 'break-word', color: '#341F1D' }}>{customer.emergencyContact || 'Required'}</strong>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleSaveCustomer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem' }}>
