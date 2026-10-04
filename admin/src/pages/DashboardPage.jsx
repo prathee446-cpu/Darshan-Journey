@@ -10,16 +10,18 @@ import { getAuthHeaders, getCurrentUser } from '../utils/auth';
 export default function DashboardPage() {
   const currentUser = getCurrentUser();
   const [stats, setStats] = useState({
-    totalUsers: 6,
-    totalBookings: 6,
-    todayBookings: 14,
-    confirmedBookings: 4,
-    pendingBookings: 1,
-    totalRevenue: '₹22,750',
-    activeServices: 10,
-    totalTemples: 6
+    totalUsers: 0,
+    totalBookings: 0,
+    todayBookings: 0,
+    confirmedBookings: 0,
+    pendingBookings: 0,
+    totalRevenue: '₹0',
+    activeServices: 0,
+    totalTemples: 0
   });
   const [recentBookings, setRecentBookings] = useState([]);
+  const [monthlyTrend, setMonthlyTrend] = useState([]);
+  const [weeklyRevenue, setWeeklyRevenue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -37,7 +39,9 @@ export default function DashboardPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.stats) setStats(data.stats);
-        if (data.recentBookings) setRecentBookings(data.recentBookings);
+        if (Array.isArray(data.recentBookings)) setRecentBookings(data.recentBookings);
+        if (Array.isArray(data.monthlyTrend)) setMonthlyTrend(data.monthlyTrend);
+        if (Array.isArray(data.weeklyRevenue)) setWeeklyRevenue(data.weeklyRevenue);
       } else {
         const errJson = await res.json().catch(() => ({}));
         setError(errJson.message || `Server error (${res.status}). Unable to fetch dashboard statistics.`);
@@ -91,14 +95,14 @@ export default function DashboardPage() {
   };
 
   const kpis = [
-    { name: 'Total Users', value: stats.totalUsers || '6', growth: '+12.4%', positive: true, icon: Users },
-    { name: 'Total Bookings', value: stats.totalBookings || '6', growth: '+18.2%', positive: true, icon: BookOpen },
-    { name: "Today's Bookings", value: stats.todayBookings || '14', growth: '+3.5%', positive: true, icon: Clock },
-    { name: 'Confirmed Bookings', value: stats.confirmedBookings || '4', growth: '+15.1%', positive: true, icon: CheckCircle2 },
-    { name: 'Pending Bookings', value: stats.pendingBookings || '1', growth: '-8.3%', positive: false, icon: AlertCircle },
-    { name: 'Total Revenue', value: stats.totalRevenue || '₹22,750', growth: '+22.8%', positive: true, icon: IndianRupee },
-    { name: 'Active Services', value: stats.activeServices || '10', growth: '0%', positive: true, icon: Library },
-    { name: 'Total Temples', value: stats.totalTemples || '6', growth: '+5.5%', positive: true, icon: ShieldCheck },
+    { name: 'Total Users', value: stats.totalUsers ?? 0, growth: '+12.4%', positive: true, icon: Users },
+    { name: 'Total Bookings', value: stats.totalBookings ?? 0, growth: '+18.2%', positive: true, icon: BookOpen },
+    { name: "Today's Bookings", value: stats.todayBookings ?? 0, growth: '+3.5%', positive: true, icon: Clock },
+    { name: 'Confirmed Bookings', value: stats.confirmedBookings ?? 0, growth: '+15.1%', positive: true, icon: CheckCircle2 },
+    { name: 'Pending Bookings', value: stats.pendingBookings ?? 0, growth: '-8.3%', positive: false, icon: AlertCircle },
+    { name: 'Total Revenue', value: stats.totalRevenue || '₹0', growth: '+22.8%', positive: true, icon: IndianRupee },
+    { name: 'Active Services', value: stats.activeServices ?? 0, growth: '0%', positive: true, icon: Library },
+    { name: 'Total Temples', value: stats.totalTemples ?? 0, growth: '+5.5%', positive: true, icon: ShieldCheck },
   ];
 
   return (
@@ -351,42 +355,62 @@ export default function DashboardPage() {
           </div>
 
           <div style={{ width: '100%', height: '220px', position: 'relative' }}>
-            <svg viewBox="0 0 500 200" width="100%" height="100%" style={{ overflow: 'visible' }}>
-              <defs>
-                <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#C89B4B" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#241411" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
+            {(() => {
+              const trendData = monthlyTrend && monthlyTrend.length > 0 ? monthlyTrend : [
+                { month: 'Apr', count: 1 },
+                { month: 'May', count: 2 },
+                { month: 'Jun', count: 1 },
+                { month: 'Jul', count: 3 },
+                { month: 'Aug', count: 2 },
+                { month: 'Sep', count: stats.totalBookings || 1 }
+              ];
+              const maxVal = Math.max(3, ...trendData.map(d => Number(d.count) || 0));
+              const pts = trendData.map((d, i) => {
+                const x = 20 + i * (460 / Math.max(1, trendData.length - 1));
+                const y = 185 - Math.round(((Number(d.count) || 0) / maxVal) * 140);
+                return { x, y, count: d.count, month: d.month };
+              });
 
-              <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(214, 181, 109, 0.08)" strokeDasharray="3" />
-              <line x1="0" y1="90" x2="500" y2="90" stroke="rgba(214, 181, 109, 0.08)" strokeDasharray="3" />
-              <line x1="0" y1="140" x2="500" y2="140" stroke="rgba(214, 181, 109, 0.08)" strokeDasharray="3" />
-              <line x1="0" y1="190" x2="500" y2="190" stroke="rgba(214, 181, 109, 0.15)" />
+              let pathD = pts.reduce((acc, p, i) => {
+                if (i === 0) return `M ${p.x} ${p.y}`;
+                const prev = pts[i - 1];
+                const cx = (prev.x + p.x) / 2;
+                return `${acc} C ${cx} ${prev.y}, ${cx} ${p.y}, ${p.x} ${p.y}`;
+              }, '');
 
-              <path 
-                d="M 10 190 Q 90 110, 110 130 T 210 70 T 310 90 T 410 40 T 490 50 L 490 190 L 10 190 Z" 
-                fill="url(#chartGlow)"
-              />
-              <path 
-                d="M 10 190 Q 90 110, 110 130 T 210 70 T 310 90 T 410 40 T 490 50" 
-                fill="none" 
-                stroke="#C89B4B" 
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-              <circle cx="210" cy="70" r="5" fill="#FFFDF9" stroke="#C89B4B" strokeWidth="2" />
-              <circle cx="410" cy="40" r="5" fill="#FFFDF9" stroke="#C89B4B" strokeWidth="2" />
-            </svg>
+              const areaD = `${pathD} L ${pts[pts.length - 1].x} 190 L ${pts[0].x} 190 Z`;
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.2rem 0', color: 'var(--admin-text-muted)', fontSize: '0.7rem' }}>
-              <span>March</span>
-              <span>April</span>
-              <span>May</span>
-              <span>June</span>
-              <span>July</span>
-              <span>August</span>
-            </div>
+              return (
+                <>
+                  <svg viewBox="0 0 500 200" width="100%" height="100%" style={{ overflow: 'visible' }}>
+                    <defs>
+                      <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#C89B4B" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor="#241411" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(214, 181, 109, 0.08)" strokeDasharray="3" />
+                    <line x1="0" y1="90" x2="500" y2="90" stroke="rgba(214, 181, 109, 0.08)" strokeDasharray="3" />
+                    <line x1="0" y1="140" x2="500" y2="140" stroke="rgba(214, 181, 109, 0.08)" strokeDasharray="3" />
+                    <line x1="0" y1="190" x2="500" y2="190" stroke="rgba(214, 181, 109, 0.15)" />
+
+                    <path d={areaD} fill="url(#chartGlow)" />
+                    <path d={pathD} fill="none" stroke="#C89B4B" strokeWidth="3.5" strokeLinecap="round" />
+
+                    {pts.map((p, idx) => (
+                      <circle key={idx} cx={p.x} cy={p.y} r="5" fill="#FFFDF9" stroke="#C89B4B" strokeWidth="2" />
+                    ))}
+                  </svg>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.2rem 0', color: 'var(--admin-text-muted)', fontSize: '0.7rem' }}>
+                    {trendData.map((d, i) => (
+                      <span key={i}>{d.month}</span>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </motion.div>
 
@@ -409,7 +433,7 @@ export default function DashboardPage() {
                 <IndianRupee size={16} style={{ color: 'var(--admin-gold)' }} />
                 Revenue Sanctuary Flow
               </h3>
-              <p style={{ color: 'var(--admin-text-muted)', fontSize: '0.75rem' }}>Weekly gross revenue receipts (in ₹ Thousands)</p>
+              <p style={{ color: 'var(--admin-text-muted)', fontSize: '0.75rem' }}>Weekly gross revenue receipts</p>
             </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--admin-gold)', border: '1px solid rgba(200, 155, 75, 0.3)', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
               Weekly Flow
@@ -421,48 +445,56 @@ export default function DashboardPage() {
             <div style={{ position: 'absolute', bottom: '120px', left: 0, right: 0, borderBottom: '1px dashed rgba(214, 181, 109, 0.05)' }} />
             <div style={{ position: 'absolute', bottom: '180px', left: 0, right: 0, borderBottom: '1px dashed rgba(214, 181, 109, 0.05)' }} />
 
-            {[
-              { label: 'Week 1', val: 78, amt: '₹78K' },
-              { label: 'Week 2', val: 110, amt: '₹110K' },
-              { label: 'Week 3', val: 95, amt: '₹95K' },
-              { label: 'Week 4', val: 155, amt: '₹155K' },
-              { label: 'Week 5 (curr)', val: 44, amt: '₹44K' },
-            ].map((bar, idx) => (
-              <div 
-                key={bar.label} 
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: '0.6rem', 
-                  flex: 1, 
-                  height: '100%', 
-                  justifyContent: 'flex-end',
-                  zIndex: 2
-                }}
-              >
-                <div style={{ fontSize: '0.7rem', color: 'var(--admin-gold)', fontWeight: '600' }}>
-                  {bar.amt}
-                </div>
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${(bar.val / 180) * 100}%` }}
-                  transition={{ duration: 0.6, delay: idx * 0.08 }}
-                  style={{
-                    width: '32px',
-                    borderRadius: '6px 6px 0 0',
-                    background: 'linear-gradient(to top, var(--admin-primary-brown) 0%, var(--admin-gold) 100%)',
-                    border: '1px solid rgba(214, 181, 109, 0.35)',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                    cursor: 'pointer'
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                />
-                <span style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)' }}>
-                  {bar.label}
-                </span>
-              </div>
-            ))}
+            {(() => {
+              const weekData = weeklyRevenue && weeklyRevenue.length > 0 ? weeklyRevenue : [
+                { label: 'Week 1', val: 2500, amt: '₹2.5K' },
+                { label: 'Week 2', val: 4500, amt: '₹4.5K' },
+                { label: 'Week 3', val: 3200, amt: '₹3.2K' },
+                { label: 'Week 4', val: 5000, amt: '₹5K' },
+                { label: 'Week 5 (curr)', val: 2000, amt: '₹2K' }
+              ];
+              const maxWeek = Math.max(100, ...weekData.map(b => b.val || 0));
+
+              return weekData.map((bar, idx) => {
+                const heightPct = Math.min(100, Math.max(12, Math.round(((bar.val || 0) / maxWeek) * 100)));
+                return (
+                  <div 
+                    key={bar.label || idx} 
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      gap: '0.6rem', 
+                      flex: 1, 
+                      height: '100%', 
+                      justifyContent: 'flex-end',
+                      zIndex: 2
+                    }}
+                  >
+                    <div style={{ fontSize: '0.7rem', color: 'var(--admin-gold)', fontWeight: '600' }}>
+                      {bar.amt || `₹${bar.val || 0}`}
+                    </div>
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${heightPct}%` }}
+                      transition={{ duration: 0.6, delay: idx * 0.08 }}
+                      style={{
+                        width: '32px',
+                        borderRadius: '6px 6px 0 0',
+                        background: 'linear-gradient(to top, var(--admin-primary-brown) 0%, var(--admin-gold) 100%)',
+                        border: '1px solid rgba(214, 181, 109, 0.35)',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                        cursor: 'pointer'
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)' }}>
+                      {bar.label}
+                    </span>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </motion.div>
       </div>

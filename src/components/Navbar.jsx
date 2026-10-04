@@ -247,7 +247,13 @@ export default function Navbar({
             <button
               type="button"
               className="btn-donate darshan-btn-donate"
-              onClick={() => onOpenDonate && onOpenDonate()}
+              onClick={() => {
+                if (onOpenDonate) onOpenDonate();
+                else {
+                  navTo('/donate');
+                  window.scrollTo(0, 0);
+                }
+              }}
               title="Support Sacred Temple Sevas"
             >
               <Heart size={15} className="darshan-donate-heart" fill="#C8A96A" />
@@ -442,7 +448,11 @@ export default function Navbar({
                   className="btn-donate darshan-btn-donate darshan-mobile-full-donate"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    onOpenDonate && onOpenDonate();
+                    if (onOpenDonate) onOpenDonate();
+                    else {
+                      navTo('/donate');
+                      window.scrollTo(0, 0);
+                    }
                   }}
                 >
                   <Heart size={16} fill="#C8A96A" />

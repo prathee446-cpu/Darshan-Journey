@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { useWebsiteContent } from '../context/ContentContext';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 // Refactored Devotee (Customer) and Temple reviews dataset
 const DEVOTEE_REVIEWS = [
@@ -93,6 +95,7 @@ export default function AboutPage({
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingTempleName, setBookingTempleName] = useState('');
+  const { content } = useWebsiteContent();
   const [aboutData, setAboutData] = useState(null);
 
   // Fetch live about content & scroll to top on load
@@ -105,6 +108,8 @@ export default function AboutPage({
       })
       .catch(() => {});
   }, []);
+
+  const effectiveAbout = aboutData || content?.about || {};
 
   // Framer Motion Animation Variants
   const containerVariants = {
@@ -142,6 +147,12 @@ export default function AboutPage({
     }
   };
 
+  const heroImgSrc = resolveImageUrl(effectiveAbout.heroImage, templeSculpture);
+  const storyImgSrc = resolveImageUrl(effectiveAbout.storyImage, pilgrimageImg);
+  const templeReviews = (effectiveAbout.reviews && effectiveAbout.reviews.length > 0)
+    ? effectiveAbout.reviews
+    : TEMPLE_REVIEWS;
+
   return (
     <div className="home-website-wrapper">
       {/* ---------------- NAVBAR ---------------- */}
@@ -166,7 +177,7 @@ export default function AboutPage({
         <div className="about-hero-left">
           <div className="about-hero-img-container">
             <motion.img
-              src={(aboutData?.heroImage && !aboutData.heroImage.includes('temple_sculpture_about')) ? aboutData.heroImage : templeSculpture}
+              src={heroImgSrc}
               alt="Temple Sculpture Carving"
               className="about-hero-img"
               initial="hidden"
@@ -186,12 +197,12 @@ export default function AboutPage({
               animate="visible"
               variants={rightContentVariants}
             >
-              <span className="about-hero-tag">{aboutData?.heroTag || "Who We Are"}</span>
-              <h1 className="about-hero-title">{aboutData?.heroTitle || "About Darshan Journey"}</h1>
-              <h2 className="about-hero-subtitle">{aboutData?.heroSubtitle || "Where Technology Meets Spirituality."}</h2>
+              <span className="about-hero-tag">{effectiveAbout.heroTag || "Who We Are"}</span>
+              <h1 className="about-hero-title">{effectiveAbout.heroTitle || "About Darshan Journey"}</h1>
+              <h2 className="about-hero-subtitle">{effectiveAbout.heroSubtitle || "Where Technology Meets Spirituality."}</h2>
               <div className="temple-accent" style={{ margin: '0.5rem 0 1.5rem 0' }} />
               <p className="about-hero-desc">
-                {aboutData?.heroDescription || "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling."}
+                {effectiveAbout.heroDescription || "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling."}
               </p>
             </motion.div>
           </div>
@@ -212,7 +223,7 @@ export default function AboutPage({
               variants={itemVariants}
             >
               <img 
-                src={(aboutData?.storyImage && !aboutData.storyImage.includes('kedarnath')) ? aboutData.storyImage : pilgrimageImg} 
+                src={storyImgSrc} 
                 alt="Pilgrimage Experience" 
                 className="about-story-img" 
               />
@@ -226,18 +237,18 @@ export default function AboutPage({
               viewport={{ once: true, margin: "-100px" }}
               variants={itemVariants}
             >
-              <span className="section-tag">{aboutData?.storyTag || "Our Genesis"}</span>
+              <span className="section-tag">{effectiveAbout.storyTag || "Our Genesis"}</span>
               <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-                {aboutData?.storyTitle || "Our Journey Began With a Simple Question"}
+                {effectiveAbout.storyTitle || "Our Journey Began With a Simple Question"}
               </h2>
               <p className="about-story-text">
-                {aboutData?.storyParagraph1 || "Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find."}
+                {effectiveAbout.storyParagraph1 || "Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find."}
               </p>
               <p className="about-story-text">
-                {aboutData?.storyParagraph2 || "Darshan Journey was created to bridge this gap between timeless Vedic traditions and modern digital convenience."}
+                {effectiveAbout.storyParagraph2 || "Darshan Journey was created to bridge this gap between timeless Vedic traditions and modern digital convenience."}
               </p>
               <p className="about-story-text">
-                {aboutData?.storyParagraph3 || "Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place."}
+                {effectiveAbout.storyParagraph3 || "Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place."}
               </p>
             </motion.div>
           </div>
@@ -535,15 +546,15 @@ export default function AboutPage({
             viewport={{ once: true, margin: "-100px" }}
             variants={containerVariants}
           >
-            {TEMPLE_REVIEWS.map((review) => (
+            {templeReviews.map((review, idx) => (
               <motion.div
-                key={review.id}
+                key={review.id || idx}
                 className="compact-temple-card"
                 variants={itemVariants}
               >
                 <div className="temple-review-thumbnail-wrap">
                   <img
-                    src={review.image}
+                    src={resolveImageUrl(review.image)}
                     alt={review.templeName}
                     className="temple-review-thumbnail"
                   />
@@ -551,7 +562,7 @@ export default function AboutPage({
                 <div className="temple-review-content">
                   <div>
                     <div className="temple-review-stars">
-                      {Array.from({ length: review.stars }).map((_, i) => (
+                      {Array.from({ length: review.stars || 5 }).map((_, i) => (
                         <Star key={i} size={14} fill="#D4AF37" color="#D4AF37" style={{ display: 'inline-block', marginRight: '2px' }} />
                       ))}
                     </div>

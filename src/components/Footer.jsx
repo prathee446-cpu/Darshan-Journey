@@ -9,7 +9,8 @@ export default function Footer({
   onGoToServices,
   onGoToAbout,
   onGoToContact,
-  onOpenBooking
+  onOpenBooking,
+  onOpenDonate
 }) {
   const navigate = useNavigate();
 
@@ -77,6 +78,15 @@ export default function Footer({
                   onClick={(e) => handleLinkClick(e, onGoToServices || onGoToProducts, '/services')}
                 >
                   Services & Sevas
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/donate"
+                  className="footer-link"
+                  onClick={(e) => handleLinkClick(e, onOpenDonate, '/donate')}
+                >
+                  Support Temple Seva
                 </a>
               </li>
               <li>

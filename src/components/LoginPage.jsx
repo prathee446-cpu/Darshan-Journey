@@ -10,6 +10,8 @@ import GoldParticles from './GoldParticles';
 import templeNightBg from '../assets/temple_night_bg.png';
 import darshanLogo from '../assets/darshan-logo.jpeg';
 import Navbar from './Navbar';
+import { useWebsiteContent } from '../context/ContentContext';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 import { useAuth } from '../context/AuthContext';
 import { getGoogleClientId, ensureGoogleGisLoaded, triggerGoogleOAuthRedirect, checkOriginMatches, AUTHORIZED_ORIGIN } from '../utils/googleAuth';
@@ -79,6 +81,10 @@ export default function LoginPage({
   const navigate = useNavigate();
   const location = useLocation();
   const { user, login, isAuthenticated } = useAuth();
+  const { content } = useWebsiteContent();
+
+  const dynamicBg = resolveImageUrl(content?.login?.backgroundImage, templeNightBg);
+  const dynamicLogo = resolveImageUrl(content?.brand?.logoMain || content?.login?.logo, darshanLogo);
 
   // ─── Default flow is Screen 1: SIGNIN ───
   const [flow, setFlow] = useState(FLOW.SIGNIN);
@@ -1654,7 +1660,7 @@ export default function LoginPage({
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundImage: `url(${templeNightBg})`,
+          backgroundImage: `url(${dynamicBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.25,
@@ -1689,7 +1695,7 @@ export default function LoginPage({
               justifyContent: 'center',
               background: '#1C120D'
             }}>
-              <img src={darshanLogo} alt="Darshan Journey" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={dynamicLogo} alt="Darshan Journey" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <h1 style={{
               fontFamily: 'Cinzel, Georgia, serif',

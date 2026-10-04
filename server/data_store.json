@@ -1,9 +1,9 @@
 {
   "websiteContent": {
-    "heroTitle": "TEST DARSHAN JOURNEY",
+    "heroTitle": "Experience Divine Peace & Spiritual Heritage",
     "heroSubtitle": "WELCOME TO OUR SACRED SANCTUARY",
     "heroDescription": "Immerse yourself in sacred traditions, daily Vedic rituals, virtual darshan, and timeless temple heritage. Step into an oasis of peace, devotion, and divine bliss.",
-    "heroImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80",
+    "heroImage": "/temple_hero_bg.png",
     "ctaPrimaryText": "Explore Temples",
     "ctaPrimaryLink": "/temples",
     "ctaSecondaryText": "Book Darshan",
@@ -11,7 +11,7 @@
     "promotionalBannerText": "✨ Maha Shivratri 2026 Special Live Rudra Abhishekam bookings are now open! Reserve your sacred slot today.",
     "promotionalBannerActive": true,
     "featuredTagline": "SACRED HERITAGE & MODERN CONVENIENCE",
-    "updatedAt": "2026-08-30T16:28:18.479Z",
+    "updatedAt": "2026-09-21T16:24:39.314Z",
     "darshanCards": [
       {
         "id": "card-1",
@@ -46,25 +46,103 @@
         "buttonLink": "/about"
       }
     ],
-    "publishedAt": "2026-08-31T04:41:44.703Z"
+    "publishedAt": "2026-08-31T04:41:44.703Z",
+    "shivaStatueImage": "/assets/shiva_statue_transparent.png",
+    "deities": [
+      {
+        "id": "deity-1",
+        "name": "Meenakshi Amman (Madurai)",
+        "location": "Madurai Sanctum",
+        "image": "/assets/deity_1.png"
+      },
+      {
+        "id": "deity-2",
+        "name": "Kapaleeshwarar Shiva (Chennai)",
+        "location": "Chennai Sanctum",
+        "image": "/assets/deity_2.png"
+      },
+      {
+        "id": "deity-3",
+        "name": "Brihadeeswarar (Thanjavur)",
+        "location": "Thanjavur Sanctum",
+        "image": "/assets/deity_3.png"
+      },
+      {
+        "id": "deity-4",
+        "name": "Dhandayuthapani Murugan (Palani)",
+        "location": "Palani Sanctum",
+        "image": "/assets/deity_4.png"
+      }
+    ]
   },
   "aboutContent": {
     "heroTitle": "About Darshan Journey",
     "heroSubtitle": "Where Technology Meets Spirituality.",
-    "heroTag": "who we are",
-    "heroDescription": "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience sacred pilgrimages across India with authentic guidance. Verified at 7:56:53 pm.",
-    "heroImage": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=1200&q=80",
+    "heroTag": "Who We Are",
+    "heroDescription": "Darshan Journey is an AI-powered spiritual platform dedicated to helping devotees discover, plan, and experience meaningful pilgrimages with confidence. We combine authentic temple knowledge, intelligent planning, and modern technology to make every spiritual journey simple, accessible, and deeply fulfilling.",
+    "heroImage": "/assets/temple_sculpture_about.jpg",
     "storyTitle": "Our Journey Began With a Simple Question",
     "storyTag": "Our Genesis",
     "storyParagraph1": "Millions of devotees travel to temples every year, yet planning a pilgrimage often involves fragmented information, uncertain schedules, and unnecessary stress. Temple timings change, rituals vary, booking systems differ, and trusted guidance isn't always easy to find.",
     "storyParagraph2": "Darshan Journey was created to bridge this gap between timeless Vedic traditions and modern digital convenience.",
     "storyParagraph3": "Our vision is to build one trusted platform where devotees can explore temples, plan personalized pilgrimages, receive authentic spiritual guidance, book services seamlessly, and stay connected to their faith—all from one place.",
-    "storyImage": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80",
+    "storyImage": "/assets/kedarnath.png",
     "missionTitle": "Our Mission",
     "missionDescription": "To simplify spiritual journeys by providing reliable temple information, intelligent pilgrimage planning, and personalized devotional experiences through innovative technology while preserving India's rich spiritual and cultural heritage.",
     "visionTitle": "Our Vision",
     "visionDescription": "To become the world's most trusted AI-powered spiritual ecosystem, enabling millions of devotees to connect with temples, traditions, and divine experiences through one unified digital platform.",
-    "updatedAt": "2026-08-30T16:28:18.561Z"
+    "updatedAt": "2026-08-31T04:41:24.333Z",
+    "pillars": [
+      {
+        "id": "pillar-1",
+        "title": "Authentic Temple Knowledge",
+        "description": "Direct verified timings, rituals, dress codes, and festive calendars vetted by priests."
+      },
+      {
+        "id": "pillar-2",
+        "title": "Intelligent Pilgrimage Planning",
+        "description": "AI-guided customized temple circuits optimizing travel time, crowd flow, and pooja slots."
+      },
+      {
+        "id": "pillar-3",
+        "title": "Seamless Sacred Booking",
+        "description": "Direct reservation of VIP darshan, special Abhishekam, and consecrated prasadam delivery."
+      },
+      {
+        "id": "pillar-4",
+        "title": "Preserving Sacred Heritage",
+        "description": "Digital archiving of temple history, architectural marvels, and Vedic scriptural traditions."
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-1",
+        "templeName": "Tirupati Balaji Temple",
+        "devoteeName": "Rajesh & Priya Sharma",
+        "location": "Bengaluru, Karnataka",
+        "rating": 5,
+        "text": "Darshan Journey made our Tirupati pilgrimage seamless. The timing guidance and darshan pass coordination saved us hours of waiting in line.",
+        "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=400&q=80"
+      },
+      {
+        "id": "rev-2",
+        "templeName": "Ramanathaswamy Temple",
+        "devoteeName": "Sundaramurthy Iyer",
+        "location": "Chennai, Tamil Nadu",
+        "rating": 5,
+        "text": "The 22 holy theertham bath guidance and early morning Spatika Linga Darshan booking was handled with utmost reverence.",
+        "image": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80"
+      },
+      {
+        "id": "rev-3",
+        "templeName": "Meenakshi Amman Temple",
+        "devoteeName": "Lakshmi Narayanan",
+        "location": "Coimbatore, Tamil Nadu",
+        "rating": 5,
+        "text": "Receiving the consecrated Kumkum and Laddu prasad within two days after our virtual sankalpam was truly divine.",
+        "image": "https://images.unsplash.com/photo-1600100397608-f010e423b971?auto=format&fit=crop&w=400&q=80"
+      }
+    ]
   },
   "pageContent": {
     "home": {
@@ -113,7 +191,34 @@
           "buttonLink": "/about"
         }
       ],
-      "updatedAt": "2026-08-31T04:41:44.703Z",
+      "shivaStatueImage": "/assets/shiva_statue_transparent.png",
+      "deities": [
+        {
+          "id": "deity-1",
+          "name": "Meenakshi Amman (Madurai)",
+          "location": "Madurai Sanctum",
+          "image": "/assets/deity_1.png"
+        },
+        {
+          "id": "deity-2",
+          "name": "Kapaleeshwarar Shiva (Chennai)",
+          "location": "Chennai Sanctum",
+          "image": "/assets/deity_2.png"
+        },
+        {
+          "id": "deity-3",
+          "name": "Brihadeeswarar (Thanjavur)",
+          "location": "Thanjavur Sanctum",
+          "image": "/assets/deity_3.png"
+        },
+        {
+          "id": "deity-4",
+          "name": "Dhandayuthapani Murugan (Palani)",
+          "location": "Palani Sanctum",
+          "image": "/assets/deity_4.png"
+        }
+      ],
+      "updatedAt": "2026-09-21T16:24:39.314Z",
       "publishedAt": "2026-08-31T04:41:44.703Z"
     },
     "about": {
@@ -259,6 +364,7 @@
   "pageDrafts": {},
   "articles": [
     {
+      "_id": "6ab154a6349cf21966e4a4eb",
       "id": "art-1",
       "slug": "gopuram-geometry-vastu",
       "title": "The Sacred Geometry & Vastu of Indian Gopuram Towers",
@@ -284,6 +390,7 @@
       "updatedAt": "2026-08-30T10:00:00.000Z"
     },
     {
+      "_id": "6ab154a6349cf21966e4a4ec",
       "id": "art-2",
       "slug": "om-namah-shivaya-benefits",
       "title": "Spiritual Benefits of Chanting Om Namah Shivaya at Dawn",
@@ -309,6 +416,7 @@
       "updatedAt": "2026-08-30T10:00:00.000Z"
     },
     {
+      "_id": "6ab154a6349cf21966e4a4ed",
       "id": "art-3",
       "slug": "panchamrit-divine-nectars",
       "title": "Understanding Panchamrit: The 5 Divine Nectars of Abhishekam",
@@ -334,6 +442,7 @@
       "updatedAt": "2026-08-30T10:00:00.000Z"
     },
     {
+      "_id": "6ab154a6349cf21966e4a4ee",
       "id": "art-4",
       "slug": "daily-pooja-benefits",
       "title": "Daily Pooja Benefits: Elevating Home Energy & Inner Tranquility",
@@ -359,6 +468,7 @@
       "updatedAt": "2026-08-30T10:00:00.000Z"
     },
     {
+      "_id": "6ab154a6349cf21966e4a4ef",
       "id": "art-5",
       "slug": "sacred-prashad-significance",
       "title": "Sacred Prashad Significance: Divine Blessings & Spiritual Nectar",
@@ -2012,6 +2122,86 @@
       "transactionId": "UPI-TXN-1788884662727",
       "createdAt": "2026-09-08T16:24:22.727Z",
       "date": "2026-09-23"
+    },
+    {
+      "_id": "6aabfeeea57af1416a3017a7",
+      "bookingType": "DARSHAN",
+      "templeId": 6,
+      "templeName": "Ramanathaswamy Temple (Rameswaram)",
+      "location": "Ramanathapuram",
+      "darshanType": "Special Darshan",
+      "serviceName": "Aarti",
+      "bookingDate": "2026-09-25",
+      "bookingTime": "7:00 PM – 8:00 PM",
+      "numberOfPeople": 5,
+      "devoteesBreakdown": {
+        "adults": 1,
+        "children": 2,
+        "seniors": 2
+      },
+      "devoteeName": "Rajii",
+      "mobile": "7826860201",
+      "email": "rajielite28@gmail.com",
+      "address": "",
+      "emergencyContact": "09876543768",
+      "amount": 4568,
+      "paymentMethod": "UPI",
+      "paymentStatus": "PAID",
+      "bookingStatus": "CONFIRMED",
+      "bookingReference": "DJ-B5R4ZG",
+      "instructions": "Please arrive 15 minutes prior. Carry a valid government photo ID.",
+      "bookingId": "DJ-B5R4ZG",
+      "timestamp": "2026-09-17T14:53:34.724Z",
+      "status": "CONFIRMED",
+      "id": "BK-1265",
+      "customer": "Rajii",
+      "service": "Special Pooja Pass",
+      "serviceType": "Special Pooja Pass",
+      "temple": "Ramanathaswamy Temple (Rameswaram)",
+      "totalAmount": 501,
+      "transactionId": "UPI-TXN-1789656814730",
+      "createdAt": "2026-09-17T14:53:34.730Z",
+      "date": "2026-09-25"
+    },
+    {
+      "_id": "6ab23cbd0f483b3e1b5da730",
+      "bookingType": "DARSHAN",
+      "templeId": 5,
+      "templeName": "Arulmigu Dhandayuthapani Swamy Temple (Palani)",
+      "location": "Dindigul",
+      "darshanType": "Special Darshan",
+      "serviceName": "Aarti",
+      "bookingDate": "2026-09-26",
+      "bookingTime": "5:00 PM – 6:00 PM",
+      "numberOfPeople": 1,
+      "devoteesBreakdown": {
+        "adults": 1,
+        "children": 0,
+        "seniors": 0
+      },
+      "devoteeName": "Rajii",
+      "mobile": "7826860201",
+      "email": "rajielite28@gmail.com",
+      "address": "",
+      "emergencyContact": "09876543768",
+      "amount": 1208,
+      "paymentMethod": "UPI",
+      "paymentStatus": "PAID",
+      "bookingStatus": "CONFIRMED",
+      "bookingReference": "DJ-XPVJKW",
+      "instructions": "Please arrive 15 minutes prior. Carry a valid government photo ID.",
+      "bookingId": "DJ-XPVJKW",
+      "timestamp": "2026-09-22T08:30:53.415Z",
+      "status": "CONFIRMED",
+      "id": "BK-9106",
+      "customer": "Rajii",
+      "service": "Special Pooja Pass",
+      "serviceType": "Special Pooja Pass",
+      "temple": "Arulmigu Dhandayuthapani Swamy Temple (Palani)",
+      "totalAmount": 501,
+      "transactionId": "UPI-TXN-1790065853439",
+      "createdAt": "2026-09-22T08:30:53.439Z",
+      "date": "2026-09-26"
     }
   ],
   "users": [
@@ -2124,14 +2314,15 @@
       "googleId": "109161774221264938410",
       "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKk2dcNZsc0wtpy5We33pUUMyc7hRuXVjzpoB-xf6vwhWoVew=s96-c",
       "role": "Devotee",
-      "status": "Active",
+      "status": "active",
       "emailVerified": true,
       "bookingCount": 0,
       "totalSpent": "₹0",
       "createdAt": "2026-08-30T10:30:35.920Z",
-      "updatedAt": "2026-09-13T16:24:42.801Z",
-      "lastLogin": "2026-08-30T10:30:35.920Z",
-      "registrationDate": "2026-08-30"
+      "updatedAt": "2026-09-16T15:42:26.977Z",
+      "lastLogin": "2026-09-16T15:42:26.977Z",
+      "registrationDate": "2026-08-30",
+      "googleSub": "109161774221264938410"
     },
     {
       "_id": "6a950074672f90a2db9ecaad",
@@ -2183,11 +2374,11 @@
       "name": "Rajii",
       "username": "rajielite28",
       "email": "rajielite28@gmail.com",
-      "phone": "",
+      "phone": "7826860201",
       "mobile": "",
       "passwordHash": null,
       "address": "",
-      "emergencyContact": "",
+      "emergencyContact": "09876543768",
       "authProvider": "google",
       "googleId": "113383827365448941466",
       "googleSub": "113383827365448941466",
@@ -2195,8 +2386,8 @@
       "status": "active",
       "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJdmtTuZnMw7riIObgLYN3I7lmSfdZhX9e39iJijipCxe-wkqQ=s96-c",
       "createdAt": "2026-08-31T12:03:41.597Z",
-      "updatedAt": "2026-09-01T14:33:11.868Z",
-      "lastLogin": "2026-09-01T14:33:11.868Z",
+      "updatedAt": "2026-09-22T08:30:47.106Z",
+      "lastLogin": "2026-09-15T14:55:47.239Z",
       "id": "6a956d9ddd8a395992c02ea2"
     },
     {
@@ -2230,15 +2421,15 @@
       "mobile": "9791323853",
       "passwordHash": "$2b$10$1dd9HvloMyT3GtVI/SEF6u7aNPDAOF9ciFBqToBCDQrcP2vZ1wU4S",
       "address": "",
-      "emergencyContact": "",
+      "emergencyContact": "09876543247",
       "authProvider": "local",
       "googleId": null,
       "emailVerified": true,
       "status": "active",
       "avatar": "Z",
       "createdAt": "2026-08-31T13:58:31.396Z",
-      "updatedAt": "2026-09-15T05:47:08.881Z",
-      "lastLogin": "2026-09-15T05:47:08.881Z",
+      "updatedAt": "2026-09-22T08:31:56.769Z",
+      "lastLogin": "2026-09-22T08:31:06.989Z",
       "id": "6a9588871fe22e2665ebcdec"
     },
     {
@@ -2336,11 +2527,11 @@
       "email": "admin@darshanjourney.com",
       "role": "Super Admin",
       "status": "Active",
-      "lastLogin": "2026-08-31 13:59",
+      "lastLogin": "2026-09-16 15:54",
       "permissions": "Full Access (All Operations, Settings & Financials)",
-      "passwordHash": "914d005625805d5687ff5dbb335c781466ed4fc166a61634f72a163b203f7f3415b0b73f23205560b20938b361c8d42e47efd7fa3cb0416b23ca7004d53fd056",
-      "salt": "fb0ce17ed1772a7a2edeb90ff170114c",
-      "updatedAt": "2026-08-30T09:27:22.995Z"
+      "passwordHash": "7e80fe9a76c8e6d59e5cf767b33271587dd2a2de074a238b0a8eb044809989984d609d05db3b76901efe0a4f22d262e932edf34d86d0913a2ec9f88fab3f930a",
+      "salt": "3958cb5dbbbec0e07a4fdc228c0f31b9",
+      "updatedAt": "2026-09-17T14:52:26.373Z"
     },
     {
       "_id": "6a841ded5111d231ae67e642",
@@ -2750,6 +2941,89 @@
       "size": "1.2 MB",
       "id": "med-1788150731000",
       "uploadedAt": "2026-08-31"
+    },
+    {
+      "_id": "6ab14abc6b5b3c36ef53538d",
+      "title": "Home Hero Banner",
+      "url": "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1790003900245",
+      "uploadedAt": "2026-09-21"
+    },
+    {
+      "_id": "6ab14abc6b5b3c36ef53538e",
+      "title": "About Us Hero",
+      "url": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1790003900305",
+      "uploadedAt": "2026-09-21"
+    },
+    {
+      "_id": "6ab14abc6b5b3c36ef53538f",
+      "title": "Home Hero Banner",
+      "url": "/temple_hero_bg.png",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1790003900606",
+      "uploadedAt": "2026-09-21"
+    },
+    {
+      "_id": "6ab14abc6b5b3c36ef535390",
+      "title": "About Us Hero",
+      "url": "/assets/temple_sculpture_about.jpg",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1790003900915",
+      "uploadedAt": "2026-09-21"
+    },
+    {
+      "_id": "6ab154bb349cf21966e4a4f0",
+      "title": "Test Upload Badge",
+      "url": "/uploads/test_upload_badge_1790006459652_bf2cfebd.png",
+      "category": "Custom Uploads",
+      "page": "Media Vault",
+      "uploadedAt": "2026-09-21",
+      "id": "med-1790006459652",
+      "size": "1.2 MB"
+    },
+    {
+      "_id": "6ab15818349cf21966e4a4f1",
+      "title": "Article Cover Photo",
+      "url": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1790007320787",
+      "uploadedAt": "2026-09-21"
+    },
+    {
+      "_id": "6ab15829349cf21966e4a4f2",
+      "title": "madurai meenakshi temple east gopuram.jpg",
+      "url": "/uploads/madurai_meenakshi_temple_east__1790007337079_e3be6a11.jpg",
+      "category": "Custom Uploads",
+      "page": "Media Vault",
+      "uploadedAt": "2026-09-21",
+      "id": "med-1790007337083",
+      "size": "1.2 MB"
+    },
+    {
+      "_id": "6ab1582c349cf21966e4a4f3",
+      "title": "Article Cover Photo",
+      "url": "/uploads/madurai_meenakshi_temple_east__1790007337079_e3be6a11.jpg",
+      "category": "Website Assets",
+      "size": "1.2 MB",
+      "id": "med-1790007340378",
+      "uploadedAt": "2026-09-21"
+    },
+    {
+      "_id": "6ab15a478a4b1c90b9ef80d7",
+      "title": "e2e_test_shiva_badge",
+      "url": "/uploads/e2e_test_shiva_badge_1790007879263_a6ab25ab.png",
+      "category": "Uploads",
+      "size": "1.2 MB",
+      "id": "med-1790007879264",
+      "uploadedAt": "2026-09-21"
     }
   ],
   "settings": {
@@ -3113,5 +3387,5 @@
       "updatedAt": "2026-08-24T16:06:36.854Z"
     }
   ],
-  "lastSaved": "2026-09-15T06:14:05.284Z"
+  "lastSaved": "2026-09-22T14:25:31.541Z"
 }
